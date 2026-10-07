@@ -1,0 +1,20 @@
+
+spring:
+  application:
+    name: mecadetect
+  datasource:
+    url: ${DB_URL:jdbc:oracle:thin:@localhost:1521/FREEPDB1}
+    username: ${DB_USER:mecadetect}
+    password: ${DB_PASSWORD:mecadetect_dev}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    locations: classpath:db/migration
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

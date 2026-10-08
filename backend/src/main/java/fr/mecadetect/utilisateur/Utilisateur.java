@@ -96,16 +96,18 @@ public class Utilisateur {
         return actif;
     }
 
-    // Égalité basée sur l'identifiant : recommandée pour les entités JPA
+    // Égalité basée sur l'identifiant, compatible avec les proxys Hibernate :
+    // getId() plutôt que le champ (un proxy LAZY n'initialise pas ses champs),
+    // et un hashCode constant, stable avant et après l'enregistrement.
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Utilisateur autre)) return false;
-        return id != null && id.equals(autre.id);
+        return getId() != null && getId().equals(autre.getId());
     }
 
     @Override
     public int hashCode() {
-        return getClass().hashCode();
+        return Utilisateur.class.hashCode();
     }
 }

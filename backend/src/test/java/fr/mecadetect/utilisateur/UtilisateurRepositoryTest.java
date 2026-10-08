@@ -27,9 +27,9 @@ class UtilisateurRepositoryTest {
     @Test
     @DisplayName("Un utilisateur enregistré est retrouvé par son email, sans tenir compte de la casse")
     void trouveParEmailSansTenirCompteDeLaCasse() {
-        repository.saveAndFlush(new Utilisateur("Durand", "Alice", "alice.durand@mecatrack.fr", "hash", Role.TECHNICIEN));
+        repository.saveAndFlush(new Utilisateur("Durand", "Alice", "alice.durand@mecadetect.fr", "hash", Role.TECHNICIEN));
 
-        var trouve = repository.findByEmailIgnoreCase("ALICE.DURAND@mecatrack.fr");
+        var trouve = repository.findByEmailIgnoreCase("ALICE.DURAND@mecadetect.fr");
 
         assertThat(trouve).isPresent();
         assertThat(trouve.get().getId()).isNotNull();
@@ -40,7 +40,7 @@ class UtilisateurRepositoryTest {
     @DisplayName("Un nouvel utilisateur est actif par défaut")
     void nouvelUtilisateurEstActif() {
         var utilisateur = repository.saveAndFlush(
-                new Utilisateur("Martin", "Paul", "paul.martin@mecatrack.fr", "hash", Role.DEMANDEUR));
+                new Utilisateur("Martin", "Paul", "paul.martin@mecadetect.fr", "hash", Role.DEMANDEUR));
 
         assertThat(utilisateur.isActif()).isTrue();
     }
@@ -49,7 +49,7 @@ class UtilisateurRepositoryTest {
     @DisplayName("Un utilisateur désactivé reste en base mais n'est plus actif")
     void desactiverUnUtilisateur() {
         var utilisateur = repository.saveAndFlush(
-                new Utilisateur("Petit", "Lea", "lea.petit@mecatrack.fr", "hash", Role.ADMIN));
+                new Utilisateur("Petit", "Lea", "lea.petit@mecadetect.fr", "hash", Role.ADMIN));
 
         utilisateur.desactiver();
         repository.flush();
@@ -63,19 +63,19 @@ class UtilisateurRepositoryTest {
     @Test
     @DisplayName("Deux utilisateurs ne peuvent pas avoir le même email (contrainte uk_utilisateur_email)")
     void emailUnique() {
-        repository.saveAndFlush(new Utilisateur("Roux", "Jean", "jean.roux@mecatrack.fr", "hash", Role.TECHNICIEN));
+        repository.saveAndFlush(new Utilisateur("Roux", "Jean", "jean.roux@mecadetect.fr", "hash", Role.TECHNICIEN));
 
         assertThatThrownBy(() -> repository.saveAndFlush(
-                new Utilisateur("Roux", "Julie", "jean.roux@mecatrack.fr", "hash", Role.DEMANDEUR)))
+                new Utilisateur("Roux", "Julie", "jean.roux@mecadetect.fr", "hash", Role.DEMANDEUR)))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
     @DisplayName("existsByEmailIgnoreCase détecte un email déjà utilisé")
     void emailDejaUtilise() {
-        repository.saveAndFlush(new Utilisateur("Blanc", "Hugo", "hugo.blanc@mecatrack.fr", "hash", Role.TECHNICIEN));
+        repository.saveAndFlush(new Utilisateur("Blanc", "Hugo", "hugo.blanc@mecadetect.fr", "hash", Role.TECHNICIEN));
 
-        assertThat(repository.existsByEmailIgnoreCase("Hugo.Blanc@mecatrack.fr")).isTrue();
-        assertThat(repository.existsByEmailIgnoreCase("inconnu@mecatrack.fr")).isFalse();
+        assertThat(repository.existsByEmailIgnoreCase("Hugo.Blanc@mecadetect.fr")).isTrue();
+        assertThat(repository.existsByEmailIgnoreCase("inconnu@mecadetect.fr")).isFalse();
     }
 }

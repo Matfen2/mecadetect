@@ -1,0 +1,1119 @@
+openapi: 3.0.3
+info:
+  title: MécaDétect API
+  version: 1.0.0
+  description: |
+    API de suivi de maintenance industrielle : référentiel des équipements,
+    déclaration et traitement des interventions, tableau de bord.
+    Contrat écrit avant le code (contract-first) : les interfaces Spring
+    et le client Angular sont générés à partir de ce fichier.
+  contact:
+    name: Mathieu Fenouil
+    url: https://github.com/Matfen2/mecadetect
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Développement local
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Auth
+    description: Authentification
+  - name: Referentiel
+    description: Zones et types d'équipement
+  - name: Equipements
+    description: Gestion du parc d'équipements
+  - name: Interventions
+    description: Déclaration et cycle de vie des interventions
+  - name: Techniciens
+    description: Techniciens et habilitations
+  - name: Dashboard
+    description: Indicateurs et exports
+
+paths:
+  # ------------------------------------------------------------------
+  # Auth
+  # ------------------------------------------------------------------
+  /auth/login:
+    post:
+      tags: [Auth]
+      operationId: login
+      summary: Authentifier un utilisateur et obtenir un JWT
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authentification réussie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ------------------------------------------------------------------
+  # Référentiel
+  # ------------------------------------------------------------------
+  /zones:
+    get:
+      tags: [Referentiel]
+      operationId: listerZones
+      summary: Lister les zones
+      responses:
+        '200':
+          description: Liste des zones
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Zone'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /types-equipement:
+    get:
+      tags: [Referentiel]
+      operationId: listerTypesEquipement
+      summary: Lister les types d'équipement
+      responses:
+        '200':
+          description: Liste des types d'équipement
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TypeEquipement'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ------------------------------------------------------------------
+  # Équipements
+  # ------------------------------------------------------------------
+  /equipements:
+    get:
+      tags: [Equipements]
+      operationId: rechercherEquipements
+      summary: Rechercher des équipements (paginé, filtrable)
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/SortEquipements'
+        - name: statut
+          in: query
+          schema:
+            $ref: '#/components/schemas/StatutEquipement'
+        - name: idType
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: idZone
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: recherche
+          in: query
+          description: Recherche texte sur la référence ou le nom
+          schema:
+            type: string
+            maxLength: 100
+      responses:
+        '200':
+          description: Page d'équipements
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageEquipement'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Equipements]
+      operationId: creerEquipement
+      summary: Créer un équipement (ADMIN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipementRequest'
+      responses:
+        '201':
+          description: Équipement créé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Equipement'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /equipements/{idEquipement}:
+    parameters:
+      - $ref: '#/components/parameters/IdEquipement'
+    get:
+      tags: [Equipements]
+      operationId: obtenirEquipement
+      summary: Consulter la fiche d'un équipement
+      responses:
+        '200':
+          description: Fiche équipement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Equipement'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Equipements]
+      operationId: modifierEquipement
+      summary: Modifier un équipement (ADMIN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipementRequest'
+      responses:
+        '200':
+          description: Équipement modifié
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Equipement'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      tags: [Equipements]
+      operationId: archiverEquipement
+      summary: Archiver un équipement (suppression logique, ADMIN)
+      responses:
+        '204':
+          description: Équipement archivé
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /equipements/{idEquipement}/interventions:
+    parameters:
+      - $ref: '#/components/parameters/IdEquipement'
+    get:
+      tags: [Equipements]
+      operationId: historiqueInterventionsEquipement
+      summary: Historique des interventions d'un équipement
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Page d'interventions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageIntervention'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ------------------------------------------------------------------
+  # Interventions
+  # ------------------------------------------------------------------
+  /interventions:
+    get:
+      tags: [Interventions]
+      operationId: rechercherInterventions
+      summary: Rechercher des interventions (paginé, filtrable)
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/SortInterventions'
+        - name: statut
+          in: query
+          schema:
+            $ref: '#/components/schemas/StatutIntervention'
+        - name: priorite
+          in: query
+          schema:
+            $ref: '#/components/schemas/Priorite'
+        - name: idTechnicien
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: depuis
+          in: query
+          description: Date de demande minimale (incluse)
+          schema:
+            type: string
+            format: date
+        - name: jusqua
+          in: query
+          description: Date de demande maximale (incluse)
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Page d'interventions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageIntervention'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Interventions]
+      operationId: declarerPanne
+      summary: Déclarer une panne (DEMANDEUR, ADMIN)
+      description: Crée une intervention au statut DEMANDEE et passe l'équipement EN_PANNE (RG-06).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeclarationPanneRequest'
+      responses:
+        '201':
+          description: Intervention créée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterventionDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /interventions/mes-interventions:
+    get:
+      tags: [Interventions]
+      operationId: mesInterventions
+      summary: Interventions assignées au technicien connecté (TECHNICIEN)
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Page d'interventions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageIntervention'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /interventions/{idIntervention}:
+    parameters:
+      - $ref: '#/components/parameters/IdIntervention'
+    get:
+      tags: [Interventions]
+      operationId: obtenirIntervention
+      summary: Détail d'une intervention avec son historique de statuts
+      responses:
+        '200':
+          description: Détail de l'intervention
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterventionDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /interventions/{idIntervention}/planifier:
+    parameters:
+      - $ref: '#/components/parameters/IdIntervention'
+    post:
+      tags: [Interventions]
+      operationId: planifierIntervention
+      summary: Planifier et assigner un technicien (ADMIN)
+      description: DEMANDEE vers PLANIFIEE. Le technicien doit être habilité (RG-09).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanificationRequest'
+      responses:
+        '200':
+          description: Intervention planifiée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterventionDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /interventions/{idIntervention}/demarrer:
+    parameters:
+      - $ref: '#/components/parameters/IdIntervention'
+    post:
+      tags: [Interventions]
+      operationId: demarrerIntervention
+      summary: Démarrer l'intervention (technicien assigné)
+      description: PLANIFIEE vers EN_COURS. Une seule intervention EN_COURS par technicien (RG-04).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VersionRequest'
+      responses:
+        '200':
+          description: Intervention démarrée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterventionDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /interventions/{idIntervention}/cloturer:
+    parameters:
+      - $ref: '#/components/parameters/IdIntervention'
+    post:
+      tags: [Interventions]
+      operationId: cloturerIntervention
+      summary: Clôturer l'intervention avec un compte rendu (technicien assigné)
+      description: EN_COURS vers TERMINEE (RG-03).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClotureRequest'
+      responses:
+        '200':
+          description: Intervention clôturée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterventionDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /interventions/{idIntervention}/annuler:
+    parameters:
+      - $ref: '#/components/parameters/IdIntervention'
+    post:
+      tags: [Interventions]
+      operationId: annulerIntervention
+      summary: Annuler une intervention avec un motif (ADMIN)
+      description: DEMANDEE ou PLANIFIEE vers ANNULEE (RG-03).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnnulationRequest'
+      responses:
+        '200':
+          description: Intervention annulée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterventionDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  # ------------------------------------------------------------------
+  # Techniciens
+  # ------------------------------------------------------------------
+  /techniciens:
+    get:
+      tags: [Techniciens]
+      operationId: listerTechniciens
+      summary: Lister les techniciens avec habilitations et charge (ADMIN)
+      parameters:
+        - name: idType
+          in: query
+          description: Ne retourner que les techniciens habilités sur ce type
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Liste des techniciens
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Technicien'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # ------------------------------------------------------------------
+  # Dashboard et exports
+  # ------------------------------------------------------------------
+  /dashboard:
+    get:
+      tags: [Dashboard]
+      operationId: obtenirDashboard
+      summary: Indicateurs du tableau de bord (ADMIN)
+      responses:
+        '200':
+          description: Indicateurs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dashboard'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /exports/interventions:
+    get:
+      tags: [Dashboard]
+      operationId: exporterInterventions
+      summary: Export CSV des interventions sur une période (ADMIN)
+      parameters:
+        - name: depuis
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: jusqua
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Fichier CSV
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # ------------------------------------------------------------------
+  # Administration
+  # ------------------------------------------------------------------
+  /admin/archivage:
+    post:
+      tags: [Dashboard]
+      operationId: archiverInterventions
+      summary: Archiver les interventions anciennes via PL/SQL (ADMIN, UC-DB4)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArchivageRequest'
+      responses:
+        '200':
+          description: Archivage effectué
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArchivageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    Page:
+      name: page
+      in: query
+      description: Numéro de page (commence à 0)
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    Size:
+      name: size
+      in: query
+      description: Taille de page
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    SortEquipements:
+      name: sort
+      in: query
+      description: "Tri au format champ,asc ou champ,desc. Champs : reference, nom, dateMiseService, statut, zone, type"
+      schema:
+        type: string
+        example: reference,asc
+    SortInterventions:
+      name: sort
+      in: query
+      description: "Tri au format champ,asc ou champ,desc"
+      schema:
+        type: string
+        example: dateDemande,desc
+    IdEquipement:
+      name: idEquipement
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    IdIntervention:
+      name: idIntervention
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+
+  responses:
+    BadRequest:
+      description: Données invalides
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    Unauthorized:
+      description: Non authentifié ou jeton expiré
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    Forbidden:
+      description: Rôle insuffisant ou action non autorisée pour cet utilisateur
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    NotFound:
+      description: Ressource introuvable
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    Conflict:
+      description: Transition interdite, conflit de version ou violation d'une règle métier
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+
+  schemas:
+    # ---------------- Énumérations ----------------
+    Role:
+      type: string
+      enum: [DEMANDEUR, TECHNICIEN, ADMIN]
+    StatutEquipement:
+      type: string
+      enum: [EN_SERVICE, EN_PANNE, EN_MAINTENANCE, ARCHIVE]
+    StatutIntervention:
+      type: string
+      enum: [DEMANDEE, PLANIFIEE, EN_COURS, TERMINEE, ANNULEE]
+    Priorite:
+      type: string
+      enum: [BASSE, NORMALE, HAUTE, CRITIQUE]
+
+    # ---------------- Erreurs (RFC 9457) ----------------
+    ProblemDetail:
+      type: object
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        code:
+          type: string
+          description: Code métier, par exemple TRANSITION_INTERDITE ou TECHNICIEN_NON_HABILITE
+        erreurs:
+          type: array
+          description: Détail des champs invalides (erreurs 400)
+          items:
+            $ref: '#/components/schemas/ErreurChamp'
+    ErreurChamp:
+      type: object
+      required: [champ, message]
+      properties:
+        champ:
+          type: string
+        message:
+          type: string
+
+    # ---------------- Auth ----------------
+    LoginRequest:
+      type: object
+      required: [email, motDePasse]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 255
+        motDePasse:
+          type: string
+          minLength: 8
+          maxLength: 100
+    LoginResponse:
+      type: object
+      required: [token, expireDans, utilisateur]
+      properties:
+        token:
+          type: string
+        expireDans:
+          type: integer
+          description: Durée de validité du jeton, en secondes
+        utilisateur:
+          $ref: '#/components/schemas/UtilisateurResume'
+    UtilisateurResume:
+      type: object
+      required: [idUtilisateur, nom, prenom, role]
+      properties:
+        idUtilisateur:
+          type: integer
+          format: int64
+        nom:
+          type: string
+        prenom:
+          type: string
+        role:
+          $ref: '#/components/schemas/Role'
+
+    # ---------------- Référentiel ----------------
+    Zone:
+      type: object
+      required: [idZone, code, libelle]
+      properties:
+        idZone:
+          type: integer
+          format: int64
+        code:
+          type: string
+        libelle:
+          type: string
+    TypeEquipement:
+      type: object
+      required: [idType, libelle]
+      properties:
+        idType:
+          type: integer
+          format: int64
+        libelle:
+          type: string
+
+    # ---------------- Équipements ----------------
+    EquipementRequest:
+      type: object
+      required: [reference, nom, dateMiseService, idType, idZone]
+      properties:
+        reference:
+          type: string
+          minLength: 1
+          maxLength: 30
+        nom:
+          type: string
+          minLength: 1
+          maxLength: 100
+        dateMiseService:
+          type: string
+          format: date
+        idType:
+          type: integer
+          format: int64
+        idZone:
+          type: integer
+          format: int64
+    Equipement:
+      type: object
+      required: [idEquipement, reference, nom, dateMiseService, statut, type, zone]
+      properties:
+        idEquipement:
+          type: integer
+          format: int64
+        reference:
+          type: string
+        nom:
+          type: string
+        dateMiseService:
+          type: string
+          format: date
+        statut:
+          $ref: '#/components/schemas/StatutEquipement'
+        type:
+          $ref: '#/components/schemas/TypeEquipement'
+        zone:
+          $ref: '#/components/schemas/Zone'
+    PageEquipement:
+      allOf:
+        - $ref: '#/components/schemas/PageMetadata'
+        - type: object
+          required: [contenu]
+          properties:
+            contenu:
+              type: array
+              items:
+                $ref: '#/components/schemas/Equipement'
+    PageMetadata:
+      type: object
+      required: [page, taille, totalElements, totalPages]
+      properties:
+        page:
+          type: integer
+        taille:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+
+    # ---------------- Interventions ----------------
+    DeclarationPanneRequest:
+      type: object
+      required: [idEquipement, titre, description, priorite]
+      properties:
+        idEquipement:
+          type: integer
+          format: int64
+        titre:
+          type: string
+          minLength: 3
+          maxLength: 100
+        description:
+          type: string
+          minLength: 10
+          maxLength: 1000
+        priorite:
+          $ref: '#/components/schemas/Priorite'
+    VersionRequest:
+      type: object
+      description: Version connue par le client, pour le verrouillage optimiste (UC-DB6)
+      required: [version]
+      properties:
+        version:
+          type: integer
+          format: int64
+    PlanificationRequest:
+      allOf:
+        - $ref: '#/components/schemas/VersionRequest'
+        - type: object
+          required: [idTechnicien, datePlanifiee]
+          properties:
+            idTechnicien:
+              type: integer
+              format: int64
+            datePlanifiee:
+              type: string
+              format: date-time
+    ClotureRequest:
+      allOf:
+        - $ref: '#/components/schemas/VersionRequest'
+        - type: object
+          required: [compteRendu, tempsPasseMin]
+          properties:
+            compteRendu:
+              type: string
+              minLength: 10
+              maxLength: 2000
+            tempsPasseMin:
+              type: integer
+              minimum: 1
+              maximum: 999999
+    AnnulationRequest:
+      allOf:
+        - $ref: '#/components/schemas/VersionRequest'
+        - type: object
+          required: [motif]
+          properties:
+            motif:
+              type: string
+              minLength: 5
+              maxLength: 500
+    InterventionResume:
+      type: object
+      description: Vue liste, projetée directement en DTO (UC-DB5)
+      required: [idIntervention, numero, titre, priorite, statut, dateDemande, equipementReference, equipementNom]
+      properties:
+        idIntervention:
+          type: integer
+          format: int64
+        numero:
+          type: string
+          example: INT-2026-000123
+        titre:
+          type: string
+        priorite:
+          $ref: '#/components/schemas/Priorite'
+        statut:
+          $ref: '#/components/schemas/StatutIntervention'
+        dateDemande:
+          type: string
+          format: date-time
+        datePlanifiee:
+          type: string
+          format: date-time
+        equipementReference:
+          type: string
+        equipementNom:
+          type: string
+        technicienNomComplet:
+          type: string
+    InterventionDetail:
+      type: object
+      required: [idIntervention, numero, titre, description, priorite, statut, dateDemande, version, equipement, demandeur, historique]
+      properties:
+        idIntervention:
+          type: integer
+          format: int64
+        numero:
+          type: string
+        titre:
+          type: string
+        description:
+          type: string
+        priorite:
+          $ref: '#/components/schemas/Priorite'
+        statut:
+          $ref: '#/components/schemas/StatutIntervention'
+        dateDemande:
+          type: string
+          format: date-time
+        datePlanifiee:
+          type: string
+          format: date-time
+        dateDebut:
+          type: string
+          format: date-time
+        dateFin:
+          type: string
+          format: date-time
+        tempsPasseMin:
+          type: integer
+        compteRendu:
+          type: string
+        motifAnnulation:
+          type: string
+        version:
+          type: integer
+          format: int64
+        equipement:
+          $ref: '#/components/schemas/Equipement'
+        demandeur:
+          $ref: '#/components/schemas/UtilisateurResume'
+        technicien:
+          $ref: '#/components/schemas/UtilisateurResume'
+        historique:
+          type: array
+          items:
+            $ref: '#/components/schemas/HistoriqueStatut'
+    PageIntervention:
+      allOf:
+        - $ref: '#/components/schemas/PageMetadata'
+        - type: object
+          required: [contenu]
+          properties:
+            contenu:
+              type: array
+              items:
+                $ref: '#/components/schemas/InterventionResume'
+    HistoriqueStatut:
+      type: object
+      required: [nouveauStatut, dateChangement, auteur]
+      properties:
+        ancienStatut:
+          $ref: '#/components/schemas/StatutIntervention'
+        nouveauStatut:
+          $ref: '#/components/schemas/StatutIntervention'
+        dateChangement:
+          type: string
+          format: date-time
+        auteur:
+          $ref: '#/components/schemas/UtilisateurResume'
+
+    # ---------------- Techniciens ----------------
+    Technicien:
+      type: object
+      required: [idUtilisateur, nom, prenom, habilitations, interventionsOuvertes]
+      properties:
+        idUtilisateur:
+          type: integer
+          format: int64
+        nom:
+          type: string
+        prenom:
+          type: string
+        habilitations:
+          type: array
+          items:
+            $ref: '#/components/schemas/TypeEquipement'
+        interventionsOuvertes:
+          type: integer
+          description: Nombre d'interventions PLANIFIEE ou EN_COURS
+        interventionEnCours:
+          $ref: '#/components/schemas/InterventionResume'
+
+    # ---------------- Dashboard ----------------
+    Dashboard:
+      type: object
+      required: [ouvertesParPriorite, equipementsEnPanne, tempsMoyenResolutionHeures, topEquipements, evolutionMensuelle, chargeTechniciens]
+      properties:
+        ouvertesParPriorite:
+          type: array
+          items:
+            type: object
+            required: [priorite, nombre]
+            properties:
+              priorite:
+                $ref: '#/components/schemas/Priorite'
+              nombre:
+                type: integer
+        equipementsEnPanne:
+          type: integer
+        tempsMoyenResolutionHeures:
+          type: number
+          format: double
+        topEquipements:
+          type: array
+          description: Top 10 des équipements les plus en panne sur 12 mois (RANK)
+          items:
+            type: object
+            required: [rang, reference, nom, nombrePannes]
+            properties:
+              rang:
+                type: integer
+              reference:
+                type: string
+              nom:
+                type: string
+              nombrePannes:
+                type: integer
+        evolutionMensuelle:
+          type: array
+          description: Interventions par mois et variation par rapport au mois précédent (LAG)
+          items:
+            type: object
+            required: [mois, nombre]
+            properties:
+              mois:
+                type: string
+                example: 2026-09
+              nombre:
+                type: integer
+              variation:
+                type: integer
+        chargeTechniciens:
+          type: array
+          items:
+            type: object
+            required: [technicien, interventionsMois, tempsPasseMinMois]
+            properties:
+              technicien:
+                $ref: '#/components/schemas/UtilisateurResume'
+              interventionsMois:
+                type: integer
+              tempsPasseMinMois:
+                type: integer
+
+    # ---------------- Archivage ----------------
+    ArchivageRequest:
+      type: object
+      required: [dateLimite]
+      properties:
+        dateLimite:
+          type: string
+          format: date
+          description: Les interventions terminées ou annulées avant cette date sont archivées
+    ArchivageResponse:
+      type: object
+      required: [lignesArchivees]
+      properties:
+        lignesArchivees:
+          type: integer
+          format: int64

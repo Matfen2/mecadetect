@@ -5,27 +5,14 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>4.2.0-M2</version>
+		<version>4.1.1</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>fr.mecadetect</groupId>
 	<artifactId>backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name/>
-	<description/>
-	<url/>
-	<licenses>
-		<license/>
-	</licenses>
-	<developers>
-		<developer/>
-	</developers>
-	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
-	</scm>
+	<name>mecadetect</name>
+	<description>MécaDétect - API de suivi de maintenance industrielle</description>
 	<properties>
 		<java.version>25</java.version>
 	</properties>
@@ -100,13 +87,67 @@
 			<artifactId>testcontainers-oracle-free</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- Swagger UI (springdoc 3.x = Spring Boot 4) -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>3.1.1</version>
+		</dependency>
 	</dependencies>
 
 	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+			</resource>
+			<!-- Copie du contrat OpenAPI dans les ressources statiques (Swagger UI) -->
+			<resource>
+				<directory>${project.basedir}/../api</directory>
+				<targetPath>static</targetPath>
+				<includes>
+					<include>openapi.yaml</include>
+				</includes>
+			</resource>
+		</resources>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<!-- Génération des interfaces Spring et des DTO depuis le contrat OpenAPI -->
+			<plugin>
+				<groupId>org.openapitools</groupId>
+				<artifactId>openapi-generator-maven-plugin</artifactId>
+				<version>7.25.0</version>
+				<executions>
+					<execution>
+						<id>generer-api-spring</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>${project.basedir}/../api/openapi.yaml</inputSpec>
+							<generatorName>spring</generatorName>
+							<apiPackage>fr.mecadetect.api</apiPackage>
+							<modelPackage>fr.mecadetect.api.dto</modelPackage>
+							<modelNameSuffix>Dto</modelNameSuffix>
+							<generateSupportingFiles>false</generateSupportingFiles>
+							<configOptions>
+								<interfaceOnly>true</interfaceOnly>
+								<skipDefaultInterface>true</skipDefaultInterface>
+								<useTags>true</useTags>
+								<useSpringBoot3>true</useSpringBoot3>
+								<useBeanValidation>true</useBeanValidation>
+								<openApiNullable>false</openApiNullable>
+								<documentationProvider>none</documentationProvider>
+								<annotationLibrary>none</annotationLibrary>
+								<dateLibrary>java8</dateLibrary>
+								<!-- Préfixe /api/v1 (champ servers du contrat) porté par les interfaces générées -->
+								<requestMappingMode>api_interface</requestMappingMode>
+							</configOptions>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

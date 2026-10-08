@@ -18,3 +18,7 @@ management:
     web:
       exposure:
         include: health,info
+
+springdoc:
+  swagger-ui:
+    url: /openapi.yaml

@@ -28,3 +28,5 @@ mecadetect:
       # Clé de développement uniquement. En production : variable JWT_SECRET.
       secret: ${JWT_SECRET:6EgiNsm6jLGArERlaUOsgsRwZrvCka4bwOW4tlbqHMQ=}
       duree: PT1H
+  demo:
+    mot-de-passe: ${DEMO_PASSWORD:Demo2026!}

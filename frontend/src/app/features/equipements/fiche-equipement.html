@@ -1,0 +1,67 @@
+<a mat-button routerLink="/equipements">← Retour à la liste</a>
+
+@switch (etat().statut) {
+  @case ('chargement') {
+    <mat-progress-bar mode="indeterminate" />
+  }
+  @case ('introuvable') {
+    <p class="message" role="alert">Cet équipement n'existe pas.</p>
+  }
+  @case ('erreur') {
+    <p class="message erreur" role="alert">
+      Impossible de charger l'équipement. Vérifiez votre connexion et réessayez.
+    </p>
+  }
+}
+
+@if (equipement(); as equipement) {
+  <header class="entete">
+    <div>
+      <p class="reference">{{ equipement.reference }}</p>
+      <h1>{{ equipement.nom }}</h1>
+    </div>
+    <app-statut-equipement-badge [statut]="equipement.statut" />
+  </header>
+
+  <dl class="details">
+    <div>
+      <dt>Type</dt>
+      <dd>{{ equipement.type.libelle }}</dd>
+    </div>
+    <div>
+      <dt>Zone</dt>
+      <dd>{{ equipement.zone.code }} · {{ equipement.zone.libelle }}</dd>
+    </div>
+    <div>
+      <dt>Mise en service</dt>
+      <dd>{{ equipement.dateMiseService | date: 'dd/MM/yyyy' }}</dd>
+    </div>
+  </dl>
+
+  @if (estAdmin() && !estArchive()) {
+    <section class="actions" aria-label="Actions">
+      @if (confirmationArchivage()) {
+        <div class="confirmation" role="alertdialog" aria-labelledby="titre-confirmation">
+          <p id="titre-confirmation">
+            Confirmer l'archivage de {{ equipement.reference }} ? L'équipement restera consultable,
+            mais ne pourra plus être modifié.
+          </p>
+          <button mat-flat-button (click)="confirmerArchivage()" [disabled]="archivageEnCours()">Confirmer</button>
+          <button mat-button (click)="annulerArchivage()" [disabled]="archivageEnCours()">Annuler</button>
+        </div>
+      } @else {
+        <a mat-flat-button [routerLink]="['/equipements', equipement.idEquipement, 'modifier']">Modifier</a>
+        <button mat-stroked-button (click)="demanderArchivage()">Archiver</button>
+      }
+    </section>
+  }
+
+  @if (erreurArchivage(); as message) {
+    <p class="message erreur" role="alert">{{ message }}</p>
+  }
+
+  <section class="historique">
+    <h2>Historique des interventions</h2>
+    <p class="message">L'historique des interventions sera disponible prochainement.</p>
+  </section>
+}

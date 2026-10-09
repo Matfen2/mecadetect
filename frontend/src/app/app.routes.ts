@@ -25,6 +25,29 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/equipements/list-equipements').then((m) => m.ListeEquipements),
       },
+      {
+        // Déclarée avant :id, sinon « nouveau » serait lu comme un identifiant
+        path: 'equipements/nouveau',
+        title: 'Nouvel équipement · MécaDétect',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./features/equipements/formulaire-equipement').then((m) => m.FormulaireEquipement),
+      },
+      {
+        path: 'equipements/:id',
+        title: 'Fiche équipement · MécaDétect',
+        loadComponent: () =>
+          import('./features/equipements/fiche-equipement').then((m) => m.FicheEquipement),
+      },
+      {
+        path: 'equipements/:id/modifier',
+        title: 'Modifier un équipement · MécaDétect',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./features/equipements/formulaire-equipement').then((m) => m.FormulaireEquipement),
+      },
       // Pages provisoires, remplacées aux sprints suivants
       {
         path: 'dashboard',

@@ -1,6 +1,7 @@
 package fr.mecadetect.erreur;
 
 import fr.mecadetect.auth.AuthentificationEchoueeException;
+import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -11,6 +12,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.List;
@@ -59,6 +61,13 @@ public class GestionErreursApi {
     ProblemDetail parametreInvalide(MethodArgumentTypeMismatchException exception) {
         return probleme(HttpStatus.BAD_REQUEST, "Paramètre invalide",
                 "La valeur du paramètre « " + exception.getName() + " » est invalide.", "PARAMETRE_INVALIDE");
+    }
+
+    /** Contrainte du contrat non respectée sur un paramètre de l'URL (ex. size > 100). */
+    @ExceptionHandler({HandlerMethodValidationException.class, ConstraintViolationException.class})
+    ProblemDetail parametresHorsLimites(Exception exception) {
+        return probleme(HttpStatus.BAD_REQUEST, "Paramètre invalide",
+                "Un ou plusieurs paramètres ne respectent pas les limites autorisées.", "PARAMETRE_INVALIDE");
     }
 
     // --------------------------------------------------------------- 401

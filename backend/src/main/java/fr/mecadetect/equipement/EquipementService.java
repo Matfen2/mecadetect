@@ -7,6 +7,8 @@ import fr.mecadetect.referentiel.TypeEquipement;
 import fr.mecadetect.referentiel.TypeEquipementRepository;
 import fr.mecadetect.referentiel.Zone;
 import fr.mecadetect.referentiel.ZoneRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +36,12 @@ public class EquipementService {
                 chargerType(commande.idType()), chargerZone(commande.idZone()));
 
         return equipementRepository.save(equipement);
+    }
+
+    /** Recherche paginée et filtrée ; zone et type sont chargés par jointure (pas de N+1). */
+    @Transactional(readOnly = true)
+    public Page<Equipement> rechercher(CriteresRechercheEquipement criteres, Pageable pageable) {
+        return equipementRepository.findAll(EquipementSpecifications.selon(criteres), pageable);
     }
 
     @Transactional(readOnly = true)

@@ -51,12 +51,15 @@ public class EquipementController implements EquipementsApi {
         return ResponseEntity.noContent().build();
     }
 
-    // Tâche 2.3 (prochaine étape)
     @Override
     public ResponseEntity<PageEquipementDto> rechercherEquipements(
             Integer page, Integer size, String sort, StatutEquipementDto statut,
             Long idType, Long idZone, String recherche) {
-        throw new FonctionnaliteNonDisponibleException("recherche des équipements");
+        var criteres = new CriteresRechercheEquipement(
+                statut != null ? StatutEquipement.valueOf(statut.getValue()) : null,
+                idType, idZone, recherche);
+        var resultat = service.rechercher(criteres, PaginationEquipement.versPageable(page, size, sort));
+        return ResponseEntity.ok(EquipementMapper.versPageDto(resultat));
     }
 
     // Sprint 3 : nécessite les interventions

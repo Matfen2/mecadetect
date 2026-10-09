@@ -1,0 +1,53 @@
+.entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+
+  h1 {
+    margin: 0;
+  }
+}
+
+.filtres {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.75rem;
+
+  mat-form-field {
+    width: 220px;
+  }
+
+  .recherche {
+    width: 320px;
+  }
+}
+
+.tableau {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+}
+
+.ligne {
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--mat-sys-surface-container-high);
+    outline: none;
+  }
+}
+
+.message {
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--mat-sys-on-surface-variant);
+
+  &.erreur {
+    color: var(--mat-sys-error);
+  }
+}

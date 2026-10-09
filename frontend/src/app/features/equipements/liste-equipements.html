@@ -1,0 +1,113 @@
+<header class="entete">
+  <h1>Équipements</h1>
+  @if (estAdmin()) {
+    <button mat-flat-button (click)="creer()">Nouvel équipement</button>
+  }
+</header>
+
+<section class="filtres" aria-label="Filtres">
+  <mat-form-field appearance="outline" class="recherche">
+    <mat-label>Rechercher (référence ou nom)</mat-label>
+    <input matInput [formControl]="champRecherche" />
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Statut</mat-label>
+    <mat-select [value]="criteres().statut" (selectionChange)="modifier({ statut: $event.value, page: 0 })">
+      <mat-option [value]="null">Actifs (hors archivés)</mat-option>
+      @for (statut of statuts; track statut.valeur) {
+        <mat-option [value]="statut.valeur">{{ statut.libelle }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Type</mat-label>
+    <mat-select [value]="criteres().idType" (selectionChange)="modifier({ idType: $event.value, page: 0 })">
+      <mat-option [value]="null">Tous</mat-option>
+      @for (type of types(); track type.idType) {
+        <mat-option [value]="type.idType">{{ type.libelle }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Zone</mat-label>
+    <mat-select [value]="criteres().idZone" (selectionChange)="modifier({ idZone: $event.value, page: 0 })">
+      <mat-option [value]="null">Toutes</mat-option>
+      @for (zone of zones(); track zone.idZone) {
+        <mat-option [value]="zone.idZone">{{ zone.code }} · {{ zone.libelle }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <button mat-button (click)="reinitialiser()">Réinitialiser</button>
+</section>
+
+@switch (etat().statut) {
+  @case ('erreur') {
+    <p class="message erreur" role="alert">
+      Impossible de charger les équipements. Vérifiez votre connexion et réessayez.
+    </p>
+  }
+  @default {
+    <div class="tableau">
+      @if (etat().statut === 'chargement') {
+        <mat-progress-bar mode="indeterminate" />
+      }
+
+      @if (etat(); as e) {
+        @if (e.statut === 'succes') {
+          <table mat-table [dataSource]="e.page.contenu" matSort matSortActive="reference"
+                 matSortDirection="asc" matSortDisableClear (matSortChange)="changerTri($event)">
+            <ng-container matColumnDef="reference">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Référence</th>
+              <td mat-cell *matCellDef="let equipement">{{ equipement.reference }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="nom">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Nom</th>
+              <td mat-cell *matCellDef="let equipement">{{ equipement.nom }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="type">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
+              <td mat-cell *matCellDef="let equipement">{{ equipement.type.libelle }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="zone">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Zone</th>
+              <td mat-cell *matCellDef="let equipement">{{ equipement.zone.code }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="dateMiseService">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Mise en service</th>
+              <td mat-cell *matCellDef="let equipement">{{ equipement.dateMiseService | date: 'dd/MM/yyyy' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="statut">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Statut</th>
+              <td mat-cell *matCellDef="let equipement">
+                <app-statut-equipement-badge [statut]="equipement.statut" />
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="colonnes"></tr>
+            <tr mat-row *matRowDef="let equipement; columns: colonnes"
+                class="ligne" tabindex="0"
+                (click)="ouvrir(equipement.idEquipement)"
+                (keydown.enter)="ouvrir(equipement.idEquipement)"></tr>
+          </table>
+
+          @if (e.page.totalElements === 0) {
+            <p class="message">Aucun équipement ne correspond à ces critères.</p>
+          }
+
+          <mat-paginator [length]="e.page.totalElements" [pageIndex]="e.page.page" [pageSize]="e.page.taille"
+                         [pageSizeOptions]="[10, 20, 50]" (page)="changerPage($event)"
+                         aria-label="Pagination des équipements" />
+        }
+      }
+    </div>
+  }
+}

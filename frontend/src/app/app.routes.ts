@@ -1,8 +1,10 @@
+import { inject } from '@angular/core';
 import { Routes } from '@angular/router';
 
 import { authGuard, roleGuard, visiteurGuard } from './core/auth/auth.guards';
+import { SessionService } from './core/auth/session.service';
 
-const pageAccueil = () => import('./features/accueil/accueil').then((m) => m.Accueil);
+const pageProvisoire = () => import('./features/accueil/accueil').then((m) => m.Accueil);
 
 export const routes: Routes = [
   {
@@ -11,28 +13,42 @@ export const routes: Routes = [
     canActivate: [visiteurGuard],
     loadComponent: () => import('./features/auth/login').then((m) => m.Login),
   },
-  // Pages provisoires : elles seront remplacées par les vrais écrans aux sprints suivants
   {
-    path: 'dashboard',
-    title: 'Tableau de bord · MécaDétect',
-    canActivate: [authGuard, roleGuard],
-    data: { roles: ['ADMIN'], titre: 'Tableau de bord' },
-    loadComponent: pageAccueil,
-  },
-  {
-    path: 'mes-interventions',
-    title: 'Mes interventions · MécaDétect',
-    canActivate: [authGuard, roleGuard],
-    data: { roles: ['TECHNICIEN'], titre: 'Mes interventions' },
-    loadComponent: pageAccueil,
-  },
-  {
-    path: 'interventions',
-    title: 'Interventions · MécaDétect',
+    // Toutes les pages connectées partagent le shell (barre de navigation)
+    path: '',
     canActivate: [authGuard],
-    data: { titre: 'Interventions' },
-    loadComponent: pageAccueil,
+    loadComponent: () => import('./layout/shell').then((m) => m.Shell),
+    children: [
+      {
+        path: 'equipements',
+        title: 'Équipements · MécaDétect',
+        loadComponent: () =>
+          import('./features/equipements/list-equipements').then((m) => m.ListeEquipements),
+      },
+      // Pages provisoires, remplacées aux sprints suivants
+      {
+        path: 'dashboard',
+        title: 'Tableau de bord · MécaDétect',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'], titre: 'Tableau de bord' },
+        loadComponent: pageProvisoire,
+      },
+      {
+        path: 'mes-interventions',
+        title: 'Mes interventions · MécaDétect',
+        canActivate: [roleGuard],
+        data: { roles: ['TECHNICIEN'], titre: 'Mes interventions' },
+        loadComponent: pageProvisoire,
+      },
+      {
+        path: 'interventions',
+        title: 'Interventions · MécaDétect',
+        data: { titre: 'Interventions' },
+        loadComponent: pageProvisoire,
+      },
+      // La racine redirige vers la page d'accueil du rôle connecté
+      { path: '', pathMatch: 'full', redirectTo: () => inject(SessionService).routeAccueil() },
+    ],
   },
-  { path: '', pathMatch: 'full', redirectTo: 'login' },
-  { path: '**', redirectTo: 'login' },
+  { path: '**', redirectTo: '' },
 ];

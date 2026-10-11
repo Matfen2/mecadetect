@@ -27,6 +27,9 @@ public interface InterventionRepository extends JpaRepository<Intervention, Long
     /** RG-04 : le technicien a-t-il déjà une intervention dans ce statut ? */
     boolean existsByTechnicienIdAndStatut(Long idTechnicien, StatutIntervention statut);
 
+    /** RG-05 : l'équipement a-t-il une intervention dans ce statut ? */
+    boolean existsByEquipementIdAndStatut(Long idEquipement, StatutIntervention statut);
+
     /** RG-05 : l'équipement a-t-il encore une intervention ouverte ? */
     boolean existsByEquipementIdAndStatutIn(Long idEquipement, Collection<StatutIntervention> statuts);
 }

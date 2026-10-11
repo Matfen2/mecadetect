@@ -84,6 +84,47 @@ public class InterventionService {
         return detail(interventionRepository.saveAndFlush(intervention));
     }
 
+    /** PLANIFIEE → EN_COURS par le technicien assigné (RG-02), une seule à la fois (RG-04). */
+    public DetailIntervention demarrer(Long idIntervention, long version, Long idAuteur) {
+        var auteur = chargerUtilisateur(idAuteur);
+        var intervention = chargerIntervention(idIntervention);
+        verifierVersion(intervention, version);
+
+        if (auteur.equals(intervention.getTechnicien())
+                && interventionRepository.existsByTechnicienIdAndStatut(auteur.getId(), StatutIntervention.EN_COURS)) {
+            throw new RegleMetierException("INTERVENTION_DEJA_EN_COURS",
+                    "Vous avez déjà une intervention en cours : clôturez-la avant d'en démarrer une autre.");
+        }
+
+        intervention.demarrer(auteur, maintenant());
+        interventionRepository.saveAndFlush(intervention);
+        mettreAJourStatutEquipement(intervention.getEquipement());
+        return detail(intervention);
+    }
+
+    /** EN_COURS → TERMINEE par le technicien assigné, avec compte rendu et temps passé (RG-02, RG-03). */
+    public DetailIntervention cloturer(Long idIntervention, ClotureCommande commande, Long idAuteur) {
+        var auteur = chargerUtilisateur(idAuteur);
+        var intervention = chargerIntervention(idIntervention);
+        verifierVersion(intervention, commande.version());
+
+        intervention.cloturer(commande.compteRendu(), commande.tempsPasseMin(), auteur, maintenant());
+        interventionRepository.saveAndFlush(intervention);
+        mettreAJourStatutEquipement(intervention.getEquipement());
+        return detail(intervention);
+    }
+
+    /**
+     * RG-05 : recalcule le statut de l'équipement d'après ses interventions en base.
+     * Appelé après le flush de l'intervention, pour que les requêtes voient son nouveau statut.
+     */
+    private void mettreAJourStatutEquipement(Equipement equipement) {
+        equipement.recalculerStatut(
+                interventionRepository.existsByEquipementIdAndStatut(equipement.getId(), StatutIntervention.EN_COURS),
+                interventionRepository.existsByEquipementIdAndStatutIn(equipement.getId(), StatutIntervention.OUVERTS));
+        equipementRepository.flush();
+    }
+
     /**
      * UC-DB6 : le client renvoie la version qu'il a affichée. Si elle a changé entre-temps,
      * quelqu'un d'autre a modifié l'intervention : on refuse plutôt que d'écraser son travail.

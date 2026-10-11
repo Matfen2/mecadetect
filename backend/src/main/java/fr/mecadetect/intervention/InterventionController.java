@@ -68,15 +68,20 @@ public class InterventionController implements InterventionsApi {
     }
 
     @Override
+    @PreAuthorize("hasRole('TECHNICIEN')")
     public ResponseEntity<InterventionDetailDto> demarrerIntervention(
             Long idIntervention, VersionRequestDto versionRequestDto) {
-        throw new FonctionnaliteNonDisponibleException("démarrage");
+        var detail = service.demarrer(idIntervention, versionRequestDto.getVersion(), utilisateurCourant.id());
+        return ResponseEntity.ok(InterventionMapper.versDetailDto(detail));
     }
 
     @Override
+    @PreAuthorize("hasRole('TECHNICIEN')")
     public ResponseEntity<InterventionDetailDto> cloturerIntervention(
             Long idIntervention, ClotureRequestDto clotureRequestDto) {
-        throw new FonctionnaliteNonDisponibleException("clôture");
+        var detail = service.cloturer(idIntervention, InterventionMapper.versCommande(clotureRequestDto),
+                utilisateurCourant.id());
+        return ResponseEntity.ok(InterventionMapper.versDetailDto(detail));
     }
 
     @Override

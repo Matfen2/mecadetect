@@ -87,6 +87,24 @@ public class Equipement {
         }
     }
 
+    /**
+     * RG-05 : le statut suit les interventions de l'équipement.
+     * Une intervention en cours : EN_MAINTENANCE. D'autres interventions ouvertes : EN_PANNE.
+     * Plus aucune intervention ouverte : l'équipement repasse EN_SERVICE.
+     */
+    public void recalculerStatut(boolean interventionEnCours, boolean interventionOuverte) {
+        if (estArchive()) {
+            return;
+        }
+        if (interventionEnCours) {
+            this.statut = StatutEquipement.EN_MAINTENANCE;
+        } else if (interventionOuverte) {
+            this.statut = StatutEquipement.EN_PANNE;
+        } else {
+            this.statut = StatutEquipement.EN_SERVICE;
+        }
+    }
+
     public boolean estArchive() {
         return statut == StatutEquipement.ARCHIVE;
     }

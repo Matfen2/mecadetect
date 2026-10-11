@@ -78,7 +78,7 @@ public final class InterventionMapper {
                 .contenu(page.getContent().stream().map(InterventionMapper::versResumeDto).toList());
     }
 
-    static InterventionResumeDto versResumeDto(InterventionResume resume) {
+    public static InterventionResumeDto versResumeDto(InterventionResume resume) {
         return new InterventionResumeDto()
                 .idIntervention(resume.idIntervention())
                 .numero(resume.numero())

@@ -16,6 +16,7 @@ public record InterventionResume(
         LocalDateTime datePlanifiee,
         String equipementReference,
         String equipementNom,
+        Long idTechnicien,
         String technicienPrenom,
         String technicienNom) {
 

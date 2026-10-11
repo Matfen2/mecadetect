@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public interface InterventionRepository extends JpaRepository<Intervention, Long> {
@@ -34,7 +35,7 @@ public interface InterventionRepository extends JpaRepository<Intervention, Long
     @Query(value = """
             select new fr.mecadetect.intervention.InterventionResume(
                 i.id, i.numero, i.titre, i.priorite, i.statut, i.dateDemande, i.datePlanifiee,
-                e.reference, e.nom, t.prenom, t.nom)
+                e.reference, e.nom, t.id, t.prenom, t.nom)
             from Intervention i
             join i.equipement e
             left join i.technicien t
@@ -69,7 +70,7 @@ public interface InterventionRepository extends JpaRepository<Intervention, Long
     @Query(value = """
             select new fr.mecadetect.intervention.InterventionResume(
                 i.id, i.numero, i.titre, i.priorite, i.statut, i.dateDemande, i.datePlanifiee,
-                e.reference, e.nom, t.prenom, t.nom)
+                e.reference, e.nom, t.id, t.prenom, t.nom)
             from Intervention i
             join i.equipement e
             join i.technicien t
@@ -94,4 +95,25 @@ public interface InterventionRepository extends JpaRepository<Intervention, Long
 
     /** RG-05 : l'équipement a-t-il encore une intervention ouverte ? */
     boolean existsByEquipementIdAndStatutIn(Long idEquipement, Collection<StatutIntervention> statuts);
+
+    /** Nombre d'interventions dans ces statuts, par technicien assigné (une ligne par technicien concerné). */
+    @Query("""
+            select new fr.mecadetect.intervention.ChargeTechnicien(i.technicien.id, count(i))
+            from Intervention i
+            where i.technicien is not null and i.statut in :statuts
+            group by i.technicien.id
+            """)
+    List<ChargeTechnicien> chargeParTechnicien(@Param("statuts") Collection<StatutIntervention> statuts);
+
+    /** Interventions EN_COURS, au plus une par technicien (RG-04), projetées en résumé. */
+    @Query("""
+            select new fr.mecadetect.intervention.InterventionResume(
+                i.id, i.numero, i.titre, i.priorite, i.statut, i.dateDemande, i.datePlanifiee,
+                e.reference, e.nom, t.id, t.prenom, t.nom)
+            from Intervention i
+            join i.equipement e
+            join i.technicien t
+            where i.statut = fr.mecadetect.intervention.StatutIntervention.EN_COURS
+            """)
+    List<InterventionResume> enCours();
 }

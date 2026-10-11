@@ -12,11 +12,14 @@ import fr.mecadetect.utilisateur.Role;
 import fr.mecadetect.utilisateur.Utilisateur;
 import fr.mecadetect.utilisateur.UtilisateurRepository;
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.Set;
 
 /**
  * Cas d'usage des interventions. Les règles propres à une intervention sont dans l'entité ;
@@ -46,6 +49,42 @@ public class InterventionService {
         this.habilitationRepository = habilitationRepository;
         this.clock = clock;
     }
+
+    // ------------------------------------------------------------------ lecture
+
+    @Transactional(readOnly = true)
+    public DetailIntervention obtenir(Long idIntervention) {
+        return detail(chargerIntervention(idIntervention));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<InterventionResume> rechercher(CriteresRechercheIntervention criteres, Pageable pageable) {
+        return interventionRepository.rechercher(
+                criteres.statut(), criteres.priorite(), criteres.idTechnicien(), null,
+                criteres.depuis() == null ? null : criteres.depuis().atStartOfDay(),
+                // jusqua est inclus : on prend tout ce qui précède le lendemain à minuit
+                criteres.jusqua() == null ? null : criteres.jusqua().plusDays(1).atStartOfDay(),
+                pageable);
+    }
+
+    /** Les interventions planifiées ou en cours du technicien connecté. */
+    @Transactional(readOnly = true)
+    public Page<InterventionResume> aTraiterPar(Long idTechnicien, Pageable pageable) {
+        return interventionRepository.aTraiterPar(idTechnicien,
+                Set.of(StatutIntervention.PLANIFIEE, StatutIntervention.EN_COURS), pageable);
+    }
+
+    /** Historique des interventions d'un équipement, les plus récentes d'abord. */
+    @Transactional(readOnly = true)
+    public Page<InterventionResume> historiqueEquipement(Long idEquipement, Pageable pageable) {
+        if (!equipementRepository.existsById(idEquipement)) {
+            throw new RessourceIntrouvableException("EQUIPEMENT_INTROUVABLE",
+                    "L'équipement " + idEquipement + " n'existe pas.");
+        }
+        return interventionRepository.rechercher(null, null, null, idEquipement, null, null, pageable);
+    }
+
+    // ------------------------------------------------------------------ écriture
 
     /** Déclaration d'une panne : intervention DEMANDEE et équipement EN_PANNE (RG-06, RG-07). */
     public DetailIntervention declarer(DeclarationCommande commande, Long idAuteur) {

@@ -6,7 +6,9 @@ import fr.mecadetect.api.dto.EquipementRequestDto;
 import fr.mecadetect.api.dto.PageEquipementDto;
 import fr.mecadetect.api.dto.PageInterventionDto;
 import fr.mecadetect.api.dto.StatutEquipementDto;
-import fr.mecadetect.erreur.FonctionnaliteNonDisponibleException;
+import fr.mecadetect.intervention.InterventionMapper;
+import fr.mecadetect.intervention.InterventionService;
+import fr.mecadetect.intervention.PaginationIntervention;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,9 +22,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class EquipementController implements EquipementsApi {
 
     private final EquipementService service;
+    private final InterventionService interventionService;
 
-    public EquipementController(EquipementService service) {
+    public EquipementController(EquipementService service, InterventionService interventionService) {
         this.service = service;
+        this.interventionService = interventionService;
     }
 
     @Override
@@ -62,10 +66,11 @@ public class EquipementController implements EquipementsApi {
         return ResponseEntity.ok(EquipementMapper.versPageDto(resultat));
     }
 
-    // Sprint 3 : nécessite les interventions
     @Override
     public ResponseEntity<PageInterventionDto> historiqueInterventionsEquipement(
             Long idEquipement, Integer page, Integer size) {
-        throw new FonctionnaliteNonDisponibleException("historique des interventions");
+        var resultat = interventionService.historiqueEquipement(
+                idEquipement, PaginationIntervention.versPageable(page, size, null));
+        return ResponseEntity.ok(InterventionMapper.versPageDto(resultat));
     }
 }

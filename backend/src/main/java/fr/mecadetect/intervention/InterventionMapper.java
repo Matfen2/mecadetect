@@ -5,6 +5,8 @@ import fr.mecadetect.api.dto.ClotureRequestDto;
 import fr.mecadetect.api.dto.DeclarationPanneRequestDto;
 import fr.mecadetect.api.dto.HistoriqueStatutDto;
 import fr.mecadetect.api.dto.InterventionDetailDto;
+import fr.mecadetect.api.dto.InterventionResumeDto;
+import fr.mecadetect.api.dto.PageInterventionDto;
 import fr.mecadetect.api.dto.PlanificationRequestDto;
 import fr.mecadetect.api.dto.PrioriteDto;
 import fr.mecadetect.api.dto.RoleDto;
@@ -12,6 +14,7 @@ import fr.mecadetect.api.dto.StatutInterventionDto;
 import fr.mecadetect.api.dto.UtilisateurResumeDto;
 import fr.mecadetect.equipement.EquipementMapper;
 import fr.mecadetect.utilisateur.Utilisateur;
+import org.springframework.data.domain.Page;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -64,6 +67,29 @@ public final class InterventionMapper {
                 .demandeur(versResume(intervention.getDemandeur()))
                 .technicien(intervention.getTechnicien() == null ? null : versResume(intervention.getTechnicien()))
                 .historique(detail.historique().stream().map(InterventionMapper::versHistoriqueDto).toList());
+    }
+
+    public static PageInterventionDto versPageDto(Page<InterventionResume> page) {
+        return new PageInterventionDto()
+                .page(page.getNumber())
+                .taille(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .contenu(page.getContent().stream().map(InterventionMapper::versResumeDto).toList());
+    }
+
+    static InterventionResumeDto versResumeDto(InterventionResume resume) {
+        return new InterventionResumeDto()
+                .idIntervention(resume.idIntervention())
+                .numero(resume.numero())
+                .titre(resume.titre())
+                .priorite(PrioriteDto.fromValue(resume.priorite().name()))
+                .statut(versStatutDto(resume.statut()))
+                .dateDemande(enUtc(resume.dateDemande()))
+                .datePlanifiee(enUtc(resume.datePlanifiee()))
+                .equipementReference(resume.equipementReference())
+                .equipementNom(resume.equipementNom())
+                .technicienNomComplet(resume.technicienNomComplet());
     }
 
     static HistoriqueStatutDto versHistoriqueDto(HistoriqueStatut historique) {

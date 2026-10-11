@@ -10,7 +10,6 @@ import fr.mecadetect.api.dto.PlanificationRequestDto;
 import fr.mecadetect.api.dto.PrioriteDto;
 import fr.mecadetect.api.dto.StatutInterventionDto;
 import fr.mecadetect.api.dto.VersionRequestDto;
-import fr.mecadetect.erreur.FonctionnaliteNonDisponibleException;
 import fr.mecadetect.securite.UtilisateurCourant;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +20,7 @@ import java.time.LocalDate;
 
 /**
  * Implémente l'interface InterventionsApi générée depuis le contrat.
- * Les endpoints arrivent au fil du Sprint 3 ; ceux qui ne sont pas encore prêts répondent 501.
+ * Consultation : tout utilisateur connecté. Actions : selon le rôle (RG-01, RG-02).
  */
 @RestController
 public class InterventionController implements InterventionsApi {
@@ -43,19 +42,26 @@ public class InterventionController implements InterventionsApi {
 
     @Override
     public ResponseEntity<InterventionDetailDto> obtenirIntervention(Long idIntervention) {
-        throw new FonctionnaliteNonDisponibleException("détail d'une intervention");
+        return ResponseEntity.ok(InterventionMapper.versDetailDto(service.obtenir(idIntervention)));
     }
 
     @Override
     public ResponseEntity<PageInterventionDto> rechercherInterventions(
             Integer page, Integer size, String sort, StatutInterventionDto statut, PrioriteDto priorite,
             Long idTechnicien, LocalDate depuis, LocalDate jusqua) {
-        throw new FonctionnaliteNonDisponibleException("recherche des interventions");
+        var criteres = new CriteresRechercheIntervention(
+                statut != null ? StatutIntervention.valueOf(statut.getValue()) : null,
+                priorite != null ? Priorite.valueOf(priorite.getValue()) : null,
+                idTechnicien, depuis, jusqua);
+        var resultat = service.rechercher(criteres, PaginationIntervention.versPageable(page, size, sort));
+        return ResponseEntity.ok(InterventionMapper.versPageDto(resultat));
     }
 
     @Override
+    @PreAuthorize("hasRole('TECHNICIEN')")
     public ResponseEntity<PageInterventionDto> mesInterventions(Integer page, Integer size) {
-        throw new FonctionnaliteNonDisponibleException("mes interventions");
+        var resultat = service.aTraiterPar(utilisateurCourant.id(), PaginationIntervention.sansTri(page, size));
+        return ResponseEntity.ok(InterventionMapper.versPageDto(resultat));
     }
 
     @Override

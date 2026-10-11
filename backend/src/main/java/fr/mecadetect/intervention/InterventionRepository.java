@@ -1,9 +1,12 @@
 package fr.mecadetect.intervention;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
+import java.util.Optional;
 
 public interface InterventionRepository extends JpaRepository<Intervention, Long> {
 
@@ -15,6 +18,11 @@ public interface InterventionRepository extends JpaRepository<Intervention, Long
     default String prochainNumero(int annee) {
         return "INT-%d-%06d".formatted(annee, valeurSuivanteSequence().longValue());
     }
+
+    /** Intervention avec tout ce que le détail affiche, en une seule requête. */
+    @EntityGraph(attributePaths = {"equipement", "equipement.type", "equipement.zone", "demandeur", "technicien"})
+    @Query("select i from Intervention i where i.id = :id")
+    Optional<Intervention> trouverDetail(@Param("id") Long id);
 
     /** RG-04 : le technicien a-t-il déjà une intervention dans ce statut ? */
     boolean existsByTechnicienIdAndStatut(Long idTechnicien, StatutIntervention statut);

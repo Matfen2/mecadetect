@@ -59,9 +59,12 @@ public class InterventionController implements InterventionsApi {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<InterventionDetailDto> planifierIntervention(
             Long idIntervention, PlanificationRequestDto planificationRequestDto) {
-        throw new FonctionnaliteNonDisponibleException("planification");
+        var detail = service.planifier(idIntervention, InterventionMapper.versCommande(planificationRequestDto),
+                utilisateurCourant.id());
+        return ResponseEntity.ok(InterventionMapper.versDetailDto(detail));
     }
 
     @Override

@@ -3,6 +3,7 @@ package fr.mecadetect.intervention;
 import fr.mecadetect.api.dto.DeclarationPanneRequestDto;
 import fr.mecadetect.api.dto.HistoriqueStatutDto;
 import fr.mecadetect.api.dto.InterventionDetailDto;
+import fr.mecadetect.api.dto.PlanificationRequestDto;
 import fr.mecadetect.api.dto.PrioriteDto;
 import fr.mecadetect.api.dto.RoleDto;
 import fr.mecadetect.api.dto.StatutInterventionDto;
@@ -26,6 +27,10 @@ public final class InterventionMapper {
                 requete.getTitre(),
                 requete.getDescription(),
                 Priorite.valueOf(requete.getPriorite().getValue()));
+    }
+
+    public static PlanificationCommande versCommande(PlanificationRequestDto requete) {
+        return new PlanificationCommande(requete.getVersion(), requete.getIdTechnicien(), versUtc(requete.getDatePlanifiee()));
     }
 
     public static InterventionDetailDto versDetailDto(DetailIntervention detail) {
@@ -69,6 +74,11 @@ public final class InterventionMapper {
 
     static StatutInterventionDto versStatutDto(StatutIntervention statut) {
         return StatutInterventionDto.fromValue(statut.name());
+    }
+
+    /** Date reçue avec son fuseau, ramenée en UTC pour le stockage. */
+    static LocalDateTime versUtc(OffsetDateTime date) {
+        return date == null ? null : date.withOffsetSameInstant(ZoneOffset.UTC).toLocalDateTime();
     }
 
     /** Les dates sont stockées en UTC : on les expose avec leur fuseau (format ISO 8601). */

@@ -73,6 +73,20 @@ public class Equipement {
         this.statut = StatutEquipement.ARCHIVE;
     }
 
+    /**
+     * RG-06 : une panne déclarée passe l'équipement EN_PANNE.
+     * Un équipement déjà EN_MAINTENANCE le reste : une intervention y est en cours.
+     */
+    public void signalerPanne() {
+        if (estArchive()) {
+            throw new RegleMetierException("EQUIPEMENT_ARCHIVE",
+                    "Un équipement archivé ne peut plus recevoir de nouvelle intervention.");
+        }
+        if (statut == StatutEquipement.EN_SERVICE) {
+            this.statut = StatutEquipement.EN_PANNE;
+        }
+    }
+
     public boolean estArchive() {
         return statut == StatutEquipement.ARCHIVE;
     }

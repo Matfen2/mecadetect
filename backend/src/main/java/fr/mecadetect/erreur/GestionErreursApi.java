@@ -78,6 +78,14 @@ public class GestionErreursApi {
                 exception.getMessage(), "AUTHENTIFICATION_ECHOUEE");
     }
 
+    // --------------------------------------------------------------- 403
+
+    /** Bon rôle, mais pas le droit d'agir sur cette ressource précise (ex. RG-02). */
+    @ExceptionHandler(ActionNonAutoriseeException.class)
+    ProblemDetail actionNonAutorisee(ActionNonAutoriseeException exception) {
+        return probleme(HttpStatus.FORBIDDEN, "Action non autorisée", exception.getMessage(), exception.getCode());
+    }
+
     // --------------------------------------------------------------- 404
 
     @ExceptionHandler(RessourceIntrouvableException.class)

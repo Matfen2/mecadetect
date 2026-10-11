@@ -85,8 +85,11 @@ public class InterventionController implements InterventionsApi {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<InterventionDetailDto> annulerIntervention(
             Long idIntervention, AnnulationRequestDto annulationRequestDto) {
-        throw new FonctionnaliteNonDisponibleException("annulation");
+        var detail = service.annuler(idIntervention, InterventionMapper.versCommande(annulationRequestDto),
+                utilisateurCourant.id());
+        return ResponseEntity.ok(InterventionMapper.versDetailDto(detail));
     }
 }

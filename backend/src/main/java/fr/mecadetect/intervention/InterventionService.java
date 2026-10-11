@@ -114,6 +114,18 @@ public class InterventionService {
         return detail(intervention);
     }
 
+    /** DEMANDEE ou PLANIFIEE → ANNULEE par l'admin, avec un motif (RG-01, RG-03). */
+    public DetailIntervention annuler(Long idIntervention, AnnulationCommande commande, Long idAuteur) {
+        var auteur = chargerUtilisateur(idAuteur);
+        var intervention = chargerIntervention(idIntervention);
+        verifierVersion(intervention, commande.version());
+
+        intervention.annuler(commande.motif(), auteur);
+        interventionRepository.saveAndFlush(intervention);
+        mettreAJourStatutEquipement(intervention.getEquipement());
+        return detail(intervention);
+    }
+
     /**
      * RG-05 : recalcule le statut de l'équipement d'après ses interventions en base.
      * Appelé après le flush de l'intervention, pour que les requêtes voient son nouveau statut.

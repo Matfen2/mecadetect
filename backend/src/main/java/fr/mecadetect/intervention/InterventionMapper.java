@@ -1,5 +1,6 @@
 package fr.mecadetect.intervention;
 
+import fr.mecadetect.api.dto.AnnulationRequestDto;
 import fr.mecadetect.api.dto.ClotureRequestDto;
 import fr.mecadetect.api.dto.DeclarationPanneRequestDto;
 import fr.mecadetect.api.dto.HistoriqueStatutDto;
@@ -36,6 +37,10 @@ public final class InterventionMapper {
 
     public static ClotureCommande versCommande(ClotureRequestDto requete) {
         return new ClotureCommande(requete.getVersion(), requete.getCompteRendu(), requete.getTempsPasseMin());
+    }
+
+    public static AnnulationCommande versCommande(AnnulationRequestDto requete) {
+        return new AnnulationCommande(requete.getVersion(), requete.getMotif());
     }
 
     public static InterventionDetailDto versDetailDto(DetailIntervention detail) {

@@ -66,13 +66,39 @@ describe('FicheEquipement', () => {
     ) as HTMLButtonElement | undefined;
   }
 
+  const pageHistorique = {
+    page: 0,
+    taille: 10,
+    totalElements: 1,
+    totalPages: 1,
+    contenu: [
+      {
+        idIntervention: 42,
+        numero: 'INT-2026-000042',
+        titre: "Fuite d'huile",
+        priorite: 'HAUTE',
+        statut: 'TERMINEE',
+        dateDemande: '2026-03-08T08:00:00Z',
+        equipementReference: 'PRS-001',
+        equipementNom: 'Presse 250 tonnes',
+      },
+    ],
+  };
+
+  /** Répond à la fiche, puis à l'historique des interventions qu'elle affiche. */
+  async function charger(equipement: object, historique: object = pageHistorique): Promise<void> {
+    http.expectOne('/api/v1/equipements/5').flush(equipement);
+    await rafraichir();
+    http.expectOne((r) => r.url === '/api/v1/equipements/5/interventions').flush(historique);
+    await rafraichir();
+  }
+
   beforeEach(() => sessionStorage.clear());
   afterEach(() => http.verify());
 
   it("affiche les informations de l'équipement", async () => {
     await afficher('TECHNICIEN');
-    http.expectOne('/api/v1/equipements/5').flush(presse);
-    await rafraichir();
+    await charger(presse);
 
     expect(texte()).toContain('PRS-001');
     expect(texte()).toContain('Presse 250 tonnes');
@@ -84,8 +110,7 @@ describe('FicheEquipement', () => {
 
   it("n'affiche les actions de modification qu'à l'administrateur", async () => {
     await afficher('TECHNICIEN');
-    http.expectOne('/api/v1/equipements/5').flush(presse);
-    await rafraichir();
+    await charger(presse);
 
     expect(bouton('Modifier')).toBeUndefined();
     expect(bouton('Archiver')).toBeUndefined();
@@ -103,8 +128,7 @@ describe('FicheEquipement', () => {
 
   it("archive l'équipement après confirmation, puis recharge la fiche", async () => {
     await afficher('ADMIN');
-    http.expectOne('/api/v1/equipements/5').flush(presse);
-    await rafraichir();
+    await charger(presse);
 
     // Premier clic : demande de confirmation, aucun appel à l'API
     bouton('Archiver')!.click();
@@ -117,10 +141,33 @@ describe('FicheEquipement', () => {
     await rafraichir();
     http.expectOne({ method: 'DELETE', url: '/api/v1/equipements/5' }).flush(null, { status: 204, statusText: 'No Content' });
     await rafraichir();
-    http.expectOne('/api/v1/equipements/5').flush({ ...presse, statut: 'ARCHIVE' });
-    await rafraichir();
+    await charger({ ...presse, statut: 'ARCHIVE' });
 
     expect(texte()).toContain('Archivé');
     expect(bouton('Archiver')).toBeUndefined();
+  });
+
+  it("affiche l'historique des interventions de l'équipement", async () => {
+    await afficher('TECHNICIEN');
+    await charger(presse);
+
+    expect(texte()).toContain('INT-2026-000042');
+    expect(texte()).toContain("Fuite d'huile");
+    expect(texte()).toContain('Terminée');
+  });
+
+  it('propose au demandeur de déclarer une panne sur cet équipement', async () => {
+    await afficher('DEMANDEUR');
+    await charger(presse);
+
+    const lien = bouton('Déclarer une panne') as unknown as HTMLAnchorElement;
+    expect(lien.getAttribute('href')).toBe('/interventions/declarer?equipement=5');
+  });
+
+  it('ne propose pas la déclaration au technicien', async () => {
+    await afficher('TECHNICIEN');
+    await charger(presse);
+
+    expect(bouton('Déclarer une panne')).toBeUndefined();
   });
 });

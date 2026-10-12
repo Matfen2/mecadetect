@@ -1,0 +1,128 @@
+<h1>Mes interventions</h1>
+
+@if (succes(); as message) {
+  <p class="bandeau succes" role="status">{{ message }}</p>
+}
+
+@switch (etat().statut) {
+  @case ('chargement') {
+    <mat-progress-bar mode="indeterminate" />
+  }
+  @case ('erreur') {
+    <p class="bandeau erreur" role="alert">
+      Impossible de charger vos interventions. Vérifiez votre connexion et réessayez.
+    </p>
+  }
+}
+
+@if (etat(); as e) {
+  @if (e.statut === 'succes') {
+    @if (e.page.contenu.length === 0) {
+      <p class="vide">Aucune intervention ne vous est assignée pour le moment.</p>
+    }
+
+    <ul class="cartes">
+      @for (intervention of e.page.contenu; track intervention.idIntervention) {
+        <li class="carte" [class.en-cours]="intervention.statut === 'EN_COURS'">
+          <header>
+            <span class="numero">{{ intervention.numero }}</span>
+            <span class="badges">
+              <app-priorite-badge [priorite]="intervention.priorite" />
+              <app-statut-intervention-badge [statut]="intervention.statut" />
+            </span>
+          </header>
+
+          <h2>{{ intervention.titre }}</h2>
+          <p class="equipement">
+            <strong>{{ intervention.equipementReference }}</strong> · {{ intervention.equipementNom }}
+          </p>
+          @if (intervention.datePlanifiee) {
+            <p class="date">Prévue le {{ intervention.datePlanifiee | date: 'dd/MM/yyyy à HH:mm' }}</p>
+          }
+
+          <!-- Démarrage : 2 clics -->
+          @if (intervention.statut === 'PLANIFIEE') {
+            @if (estSelectionnee(intervention, 'demarrer')) {
+              <div class="confirmation" role="group" aria-label="Confirmer le démarrage">
+                @if (selection()?.detail; as detail) {
+                  <p class="description">{{ detail.description }}</p>
+                  <button mat-flat-button class="principal" (click)="confirmerDemarrage()" [disabled]="envoiEnCours()">
+                    Confirmer le démarrage
+                  </button>
+                  <button mat-button class="secondaire" (click)="abandonner()">Retour</button>
+                } @else {
+                  <mat-progress-bar mode="indeterminate" />
+                }
+              </div>
+            } @else {
+              <button mat-flat-button class="principal" (click)="preparer(intervention, 'demarrer')"
+                      [disabled]="selection() !== null">
+                Démarrer
+              </button>
+            }
+          }
+
+          <!-- Clôture : 2 clics, compte rendu et temps passé prérempli -->
+          @if (intervention.statut === 'EN_COURS') {
+            @if (estSelectionnee(intervention, 'cloturer')) {
+              @if (selection()?.detail) {
+                <form class="cloture" [formGroup]="cloture" (ngSubmit)="validerCloture()" novalidate>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Compte rendu</mat-label>
+                    <textarea matInput formControlName="compteRendu" rows="4" maxlength="2000"></textarea>
+                    @if (messageChamp('compteRendu'); as message) {
+                      <mat-error>{{ message }}</mat-error>
+                    }
+                  </mat-form-field>
+
+                  <div class="duree">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Temps passé (min)</mat-label>
+                      <input matInput type="number" inputmode="numeric" min="1" formControlName="tempsPasseMin" />
+                      @if (messageChamp('tempsPasseMin'); as message) {
+                        <mat-error>{{ message }}</mat-error>
+                      }
+                    </mat-form-field>
+                    <div class="durees-rapides" role="group" aria-label="Durées rapides">
+                      @for (minutes of dureesRapides; track minutes) {
+                        <button mat-stroked-button type="button" (click)="choisirDuree(minutes)">{{ minutes }} min</button>
+                      }
+                    </div>
+                  </div>
+
+                  <div class="boutons">
+                    <button mat-flat-button class="principal" type="submit" [disabled]="envoiEnCours()">
+                      Valider la clôture
+                    </button>
+                    <button mat-button class="secondaire" type="button" (click)="abandonner()">Retour</button>
+                  </div>
+                </form>
+              } @else {
+                <mat-progress-bar mode="indeterminate" />
+              }
+            } @else {
+              <button mat-flat-button class="principal" (click)="preparer(intervention, 'cloturer')"
+                      [disabled]="selection() !== null">
+                Clôturer
+              </button>
+            }
+          }
+
+          @if (erreur(); as erreur) {
+            @if (erreur.idIntervention === intervention.idIntervention) {
+              <p class="bandeau erreur" role="alert">{{ erreur.message }}</p>
+            }
+          }
+
+          <a class="lien" [routerLink]="['/interventions', intervention.idIntervention]">Voir le détail</a>
+        </li>
+      }
+    </ul>
+
+    @if (erreur(); as erreur) {
+      @if (erreur.idIntervention === null) {
+        <p class="bandeau erreur" role="alert">{{ erreur.message }}</p>
+      }
+    }
+  }
+}

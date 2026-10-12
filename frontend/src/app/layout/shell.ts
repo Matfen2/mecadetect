@@ -1,9 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
+import { MatPaginatorIntl } from '@angular/material/paginator';
 import { MatToolbarModule } from '@angular/material/toolbar';
 
 import { SessionService } from '../core/auth/session.service';
+import { PaginatorFr } from '../shared/paginator-fr';
 
 interface LienNavigation {
   libelle: string;
@@ -22,6 +24,9 @@ const LIENS: LienNavigation[] = [
 @Component({
   selector: 'app-shell',
   imports: [RouterOutlet, RouterLink, RouterLinkActive, MatToolbarModule, MatButtonModule],
+  // Paginateur en français pour toutes les pages connectées. Fourni ici plutôt que dans app.config :
+  // le shell est chargé à la demande, le paginateur n'alourdit donc pas le bundle initial.
+  providers: [{ provide: MatPaginatorIntl, useClass: PaginatorFr }],
   template: `
     <mat-toolbar class="barre">
       <a routerLink="/" class="marque">MécaDétect</a>

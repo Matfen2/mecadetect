@@ -60,8 +60,9 @@ export const routes: Routes = [
         path: 'mes-interventions',
         title: 'Mes interventions · MécaDétect',
         canActivate: [roleGuard],
-        data: { roles: ['TECHNICIEN'], titre: 'Mes interventions' },
-        loadComponent: pageProvisoire,
+        data: { roles: ['TECHNICIEN'] },
+        loadComponent: () =>
+          import('./features/interventions/mes-interventions').then((m) => m.MesInterventions),
       },
       {
         path: 'interventions',

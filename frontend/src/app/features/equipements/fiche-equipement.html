@@ -60,8 +60,13 @@
     <p class="message erreur" role="alert">{{ message }}</p>
   }
 
+  @if (peutDeclarer() && !estArchive()) {
+    <a mat-stroked-button class="declarer" routerLink="/interventions/declarer"
+       [queryParams]="{ equipement: equipement.idEquipement }">Déclarer une panne sur cet équipement</a>
+  }
+
   <section class="historique">
     <h2>Historique des interventions</h2>
-    <p class="message">L'historique des interventions sera disponible prochainement.</p>
+    <app-historique-interventions-equipement [idEquipement]="equipement.idEquipement" />
   </section>
 }

@@ -82,6 +82,10 @@ export class DetailIntervention {
     });
   });
 
+  protected peut(action: ActionIntervention): boolean {
+    return this.actions().includes(action);
+  }
+
   // ------------------------------------------------------------------ état des actions
   protected readonly actionOuverte = signal<ActionAvecSaisie | null>(null);
   protected readonly envoiEnCours = signal(false);

@@ -10,6 +10,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Equipement, EquipementsService } from '../../core/api';
 import { SessionService } from '../../core/auth/session.service';
 import { StatutEquipementBadge } from '../../shared/statut-equipement-badge';
+import { HistoriqueInterventionsEquipement } from './historique-interventions-equipement';
 import { messageErreur } from '../../shared/probleme-api';
 
 type EtatFiche =
@@ -21,7 +22,14 @@ type EtatFiche =
 /** Fiche d'un équipement : consultation pour tous, modification et archivage pour l'admin. */
 @Component({
   selector: 'app-fiche-equipement',
-  imports: [DatePipe, RouterLink, MatButtonModule, MatProgressBarModule, StatutEquipementBadge],
+  imports: [
+    DatePipe,
+    RouterLink,
+    MatButtonModule,
+    MatProgressBarModule,
+    StatutEquipementBadge,
+    HistoriqueInterventionsEquipement,
+  ],
   templateUrl: './fiche-equipement.html',
   styleUrl: './fiche-equipement.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,6 +42,8 @@ export class FicheEquipement {
   readonly id = input.required<string>();
 
   protected readonly estAdmin = computed(() => this.session.role() === 'ADMIN');
+  /** Mêmes droits que l'API : le demandeur et l'admin déclarent une panne. */
+  protected readonly peutDeclarer = computed(() => ['DEMANDEUR', 'ADMIN'].includes(this.session.role() ?? ''));
 
   /** Incrémenté pour recharger la fiche, par exemple après un archivage. */
   private readonly version = signal(0);

@@ -31,21 +31,17 @@
     <section class="actions" aria-label="Actions">
       @if (actionOuverte() === null) {
         <div class="boutons">
-          @for (action of actions(); track action) {
-            @switch (action) {
-              @case ('planifier') {
-                <button mat-flat-button (click)="ouvrir('planifier')">Planifier</button>
-              }
-              @case ('demarrer') {
-                <button mat-flat-button (click)="demarrer()" [disabled]="envoiEnCours()">Démarrer l'intervention</button>
-              }
-              @case ('cloturer') {
-                <button mat-flat-button (click)="ouvrir('cloturer')">Clôturer</button>
-              }
-              @case ('annuler') {
-                <button mat-stroked-button (click)="ouvrir('annuler')">Annuler l'intervention</button>
-              }
-            }
+          @if (peut('planifier')) {
+            <button mat-flat-button (click)="ouvrir('planifier')">Planifier</button>
+          }
+          @if (peut('demarrer')) {
+            <button mat-flat-button (click)="demarrer()" [disabled]="envoiEnCours()">Démarrer l'intervention</button>
+          }
+          @if (peut('cloturer')) {
+            <button mat-flat-button (click)="ouvrir('cloturer')">Clôturer</button>
+          }
+          @if (peut('annuler')) {
+            <button mat-stroked-button (click)="ouvrir('annuler')">Annuler l'intervention</button>
           }
         </div>
       }

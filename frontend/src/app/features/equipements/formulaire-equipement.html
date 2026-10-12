@@ -1,0 +1,84 @@
+<a mat-button [routerLink]="lienRetour()">← Annuler</a>
+
+<h1>{{ modeModification() ? "Modifier l'équipement" : 'Nouvel équipement' }}</h1>
+
+@switch (etatChargement()) {
+  @case ('chargement') {
+    <mat-progress-bar mode="indeterminate" />
+  }
+  @case ('introuvable') {
+    <p class="message" role="alert">Cet équipement n'existe pas.</p>
+  }
+  @case ('erreur') {
+    <p class="message erreur" role="alert">
+      Impossible de charger l'équipement. Vérifiez votre connexion et réessayez.
+    </p>
+  }
+  @case ('pret') {
+    @if (estArchive()) {
+      <p class="message" role="status">Cet équipement est archivé : il ne peut plus être modifié.</p>
+    }
+
+    <form [formGroup]="formulaire" (ngSubmit)="enregistrer()" novalidate>
+      <mat-form-field appearance="outline">
+        <mat-label>Référence</mat-label>
+        <input matInput formControlName="reference" maxlength="30" autocomplete="off" />
+        <mat-hint>Par exemple PRS-004</mat-hint>
+        @if (erreur('reference'); as message) {
+          <mat-error>{{ message }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Nom</mat-label>
+        <input matInput formControlName="nom" maxlength="100" />
+        @if (erreur('nom'); as message) {
+          <mat-error>{{ message }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Date de mise en service</mat-label>
+        <input matInput type="date" formControlName="dateMiseService" />
+        @if (erreur('dateMiseService'); as message) {
+          <mat-error>{{ message }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Type</mat-label>
+        <mat-select formControlName="idType">
+          @for (type of types(); track type.idType) {
+            <mat-option [value]="type.idType">{{ type.libelle }}</mat-option>
+          }
+        </mat-select>
+        @if (erreur('idType'); as message) {
+          <mat-error>{{ message }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Zone</mat-label>
+        <mat-select formControlName="idZone">
+          @for (zone of zones(); track zone.idZone) {
+            <mat-option [value]="zone.idZone">{{ zone.code }} · {{ zone.libelle }}</mat-option>
+          }
+        </mat-select>
+        @if (erreur('idZone'); as message) {
+          <mat-error>{{ message }}</mat-error>
+        }
+      </mat-form-field>
+
+      @if (erreurGlobale(); as message) {
+        <p class="message erreur" role="alert">{{ message }}</p>
+      }
+
+      <div class="actions">
+        <button mat-flat-button type="submit" [disabled]="envoiEnCours() || estArchive()">
+          {{ modeModification() ? 'Enregistrer les modifications' : "Créer l'équipement" }}
+        </button>
+        <a mat-button [routerLink]="lienRetour()">Annuler</a>
+      </div>
+    </form>
+  }
+}

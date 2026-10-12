@@ -1,0 +1,225 @@
+<a mat-button routerLink="/interventions">← Retour à la liste</a>
+
+@switch (etat().statut) {
+  @case ('chargement') {
+    <mat-progress-bar mode="indeterminate" />
+  }
+  @case ('introuvable') {
+    <p class="message" role="alert">Cette intervention n'existe pas.</p>
+  }
+  @case ('erreur') {
+    <p class="message erreur" role="alert">
+      Impossible de charger l'intervention. Vérifiez votre connexion et réessayez.
+    </p>
+  }
+}
+
+@if (intervention(); as intervention) {
+  <header class="entete">
+    <div>
+      <p class="numero">{{ intervention.numero }}</p>
+      <h1>{{ intervention.titre }}</h1>
+    </div>
+    <div class="badges">
+      <app-priorite-badge [priorite]="intervention.priorite" />
+      <app-statut-intervention-badge [statut]="intervention.statut" />
+    </div>
+  </header>
+
+  <!-- ---------------------------------------------------------- actions -->
+  @if (actions().length > 0) {
+    <section class="actions" aria-label="Actions">
+      @if (actionOuverte() === null) {
+        <div class="boutons">
+          @if (peut('planifier')) {
+            <button mat-flat-button (click)="ouvrir('planifier')">Planifier</button>
+          }
+          @if (peut('demarrer')) {
+            <button mat-flat-button (click)="demarrer()" [disabled]="envoiEnCours()">Démarrer l'intervention</button>
+          }
+          @if (peut('cloturer')) {
+            <button mat-flat-button (click)="ouvrir('cloturer')">Clôturer</button>
+          }
+          @if (peut('annuler')) {
+            <button mat-stroked-button (click)="ouvrir('annuler')">Annuler l'intervention</button>
+          }
+        </div>
+      }
+
+      @switch (actionOuverte()) {
+        @case ('planifier') {
+          <form class="panneau" [formGroup]="planification" (ngSubmit)="planifier()" novalidate>
+            <h2>Planifier l'intervention</h2>
+            <mat-form-field appearance="outline">
+              <mat-label>Technicien</mat-label>
+              <mat-select formControlName="idTechnicien">
+                @for (technicien of techniciens() ?? []; track technicien.idUtilisateur) {
+                  <mat-option [value]="technicien.idUtilisateur">
+                    {{ technicien.prenom }} {{ technicien.nom }}
+                    · {{ technicien.interventionsOuvertes }} ouverte(s)
+                    @if (technicien.interventionEnCours) {
+                      · en cours : {{ technicien.interventionEnCours.numero }}
+                    }
+                  </mat-option>
+                }
+              </mat-select>
+              @if (techniciens()?.length === 0) {
+                <mat-hint>Aucun technicien n'est habilité sur {{ intervention.equipement.type.libelle }}.</mat-hint>
+              } @else {
+                <mat-hint>Seuls les techniciens habilités sur {{ intervention.equipement.type.libelle }} sont proposés.</mat-hint>
+              }
+              @if (erreurChamp(planification.controls.idTechnicien); as message) {
+                <mat-error>{{ message }}</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Date et heure prévues</mat-label>
+              <input matInput type="datetime-local" formControlName="datePlanifiee" />
+              @if (erreurChamp(planification.controls.datePlanifiee); as message) {
+                <mat-error>{{ message }}</mat-error>
+              }
+            </mat-form-field>
+
+            <div class="boutons">
+              <button mat-flat-button type="submit" [disabled]="envoiEnCours()">Planifier</button>
+              <button mat-button type="button" (click)="fermer()">Fermer</button>
+            </div>
+          </form>
+        }
+
+        @case ('cloturer') {
+          <form class="panneau" [formGroup]="cloture" (ngSubmit)="cloturer()" novalidate>
+            <h2>Clôturer l'intervention</h2>
+            <mat-form-field appearance="outline">
+              <mat-label>Compte rendu</mat-label>
+              <textarea matInput formControlName="compteRendu" rows="5" maxlength="2000"></textarea>
+              <mat-hint>Ce qui a été constaté et réparé, pièces remplacées</mat-hint>
+              @if (erreurChamp(cloture.controls.compteRendu); as message) {
+                <mat-error>{{ message }}</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="court">
+              <mat-label>Temps passé (minutes)</mat-label>
+              <input matInput type="number" inputmode="numeric" min="1" formControlName="tempsPasseMin" />
+              @if (erreurChamp(cloture.controls.tempsPasseMin); as message) {
+                <mat-error>{{ message }}</mat-error>
+              }
+            </mat-form-field>
+
+            <div class="boutons">
+              <button mat-flat-button type="submit" [disabled]="envoiEnCours()">Clôturer</button>
+              <button mat-button type="button" (click)="fermer()">Fermer</button>
+            </div>
+          </form>
+        }
+
+        @case ('annuler') {
+          <form class="panneau" [formGroup]="annulation" (ngSubmit)="annuler()" novalidate>
+            <h2>Annuler l'intervention</h2>
+            <mat-form-field appearance="outline">
+              <mat-label>Motif de l'annulation</mat-label>
+              <textarea matInput formControlName="motif" rows="3" maxlength="500"></textarea>
+              @if (erreurChamp(annulation.controls.motif); as message) {
+                <mat-error>{{ message }}</mat-error>
+              }
+            </mat-form-field>
+
+            <div class="boutons">
+              <button mat-flat-button type="submit" [disabled]="envoiEnCours()">Confirmer l'annulation</button>
+              <button mat-button type="button" (click)="fermer()">Fermer</button>
+            </div>
+          </form>
+        }
+      }
+
+      @if (erreurAction(); as message) {
+        <div class="message erreur" role="alert">
+          <p>{{ message }}</p>
+          @if (conflit()) {
+            <button mat-stroked-button (click)="recharger()">Recharger l'intervention</button>
+          }
+        </div>
+      }
+    </section>
+  }
+
+  <!-- ---------------------------------------------------------- informations -->
+  <dl class="details">
+    <div>
+      <dt>Équipement</dt>
+      <dd>
+        <a [routerLink]="['/equipements', intervention.equipement.idEquipement]">
+          {{ intervention.equipement.reference }} · {{ intervention.equipement.nom }}
+        </a>
+      </dd>
+    </div>
+    <div>
+      <dt>Demandée par</dt>
+      <dd>{{ nomComplet(intervention.demandeur) }}, le {{ intervention.dateDemande | date: 'dd/MM/yyyy HH:mm' }}</dd>
+    </div>
+    <div>
+      <dt>Technicien</dt>
+      <dd>{{ nomComplet(intervention.technicien) }}</dd>
+    </div>
+    <div>
+      <dt>Planifiée pour</dt>
+      <dd>{{ intervention.datePlanifiee ? (intervention.datePlanifiee | date: 'dd/MM/yyyy HH:mm') : '—' }}</dd>
+    </div>
+    @if (intervention.dateDebut) {
+      <div>
+        <dt>Démarrée le</dt>
+        <dd>{{ intervention.dateDebut | date: 'dd/MM/yyyy HH:mm' }}</dd>
+      </div>
+    }
+    @if (intervention.dateFin) {
+      <div>
+        <dt>Terminée le</dt>
+        <dd>{{ intervention.dateFin | date: 'dd/MM/yyyy HH:mm' }} · {{ duree(intervention.tempsPasseMin) }}</dd>
+      </div>
+    }
+  </dl>
+
+  <section class="bloc">
+    <h2>Description</h2>
+    <p class="texte">{{ intervention.description }}</p>
+  </section>
+
+  @if (intervention.compteRendu) {
+    <section class="bloc">
+      <h2>Compte rendu</h2>
+      <p class="texte">{{ intervention.compteRendu }}</p>
+    </section>
+  }
+
+  @if (intervention.motifAnnulation) {
+    <section class="bloc">
+      <h2>Motif d'annulation</h2>
+      <p class="texte">{{ intervention.motifAnnulation }}</p>
+    </section>
+  }
+
+  <!-- ---------------------------------------------------------- historique -->
+  <section class="bloc">
+    <h2>Historique</h2>
+    @if (intervention.historique.length === 0) {
+      <p class="message">Aucun changement de statut enregistré.</p>
+    } @else {
+      <ol class="historique">
+        @for (etape of intervention.historique; track $index) {
+          <li>
+            <time>{{ etape.dateChangement | date: 'dd/MM/yyyy HH:mm' }}</time>
+            <span>
+              @if (etape.ancienStatut) {
+                {{ libellesStatut[etape.ancienStatut] }} →
+              }
+              <strong>{{ libellesStatut[etape.nouveauStatut] }}</strong>
+            </span>
+            <span class="auteur">par {{ nomComplet(etape.auteur) }}</span>
+          </li>
+        }
+      </ol>
+    }
+  </section>
+}

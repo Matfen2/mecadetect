@@ -78,6 +78,12 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/interventions/declaration-panne').then((m) => m.DeclarationPanne),
       },
+      {
+        path: 'interventions/:id',
+        title: 'Intervention · MécaDétect',
+        loadComponent: () =>
+          import('./features/interventions/detail-intervention').then((m) => m.DetailIntervention),
+      },
       // La racine redirige vers la page d'accueil du rôle connecté
       { path: '', pathMatch: 'full', redirectTo: () => inject(SessionService).routeAccueil() },
     ],

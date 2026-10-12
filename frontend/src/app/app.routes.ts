@@ -66,8 +66,17 @@ export const routes: Routes = [
       {
         path: 'interventions',
         title: 'Interventions · MécaDétect',
-        data: { titre: 'Interventions' },
-        loadComponent: pageProvisoire,
+        loadComponent: () =>
+          import('./features/interventions/liste-interventions').then((m) => m.ListeInterventions),
+      },
+      {
+        // Mêmes droits que l'API : seuls le demandeur et l'admin déclarent une panne
+        path: 'interventions/declarer',
+        title: 'Déclarer une panne · MécaDétect',
+        canActivate: [roleGuard],
+        data: { roles: ['DEMANDEUR', 'ADMIN'] },
+        loadComponent: () =>
+          import('./features/interventions/declaration-panne').then((m) => m.DeclarationPanne),
       },
       // La racine redirige vers la page d'accueil du rôle connecté
       { path: '', pathMatch: 'full', redirectTo: () => inject(SessionService).routeAccueil() },

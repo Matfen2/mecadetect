@@ -77,7 +77,7 @@ SELECT i.id_intervention, i.numero, i.titre, i.priorite, i.statut, i.date_demand
   FROM intervention i
   JOIN equipement e ON e.id_equipement = i.id_equipement
   LEFT JOIN utilisateur t ON t.id_utilisateur = i.id_technicien
- ORDER BY i.date_demande DESC, i.id_intervention
+ ORDER BY i.date_demande DESC, i.id_intervention DESC
  OFFSET 0 ROWS FETCH FIRST 20 ROWS ONLY;
 SELECT plan_table_output FROM TABLE(DBMS_XPLAN.DISPLAY(NULL, 'Q2a', 'BASIC +ROWS +COST +PREDICATE'));
 EXPLAIN PLAN SET STATEMENT_ID = 'Q2aC' FOR
@@ -92,7 +92,7 @@ SELECT i.id_intervention, i.numero, i.titre, i.priorite, i.statut, i.date_demand
   JOIN equipement e ON e.id_equipement = i.id_equipement
   LEFT JOIN utilisateur t ON t.id_utilisateur = i.id_technicien
  WHERE i.statut = :statut
- ORDER BY i.date_demande DESC, i.id_intervention
+ ORDER BY i.date_demande DESC, i.id_intervention DESC
  OFFSET 0 ROWS FETCH FIRST 20 ROWS ONLY;
 SELECT plan_table_output FROM TABLE(DBMS_XPLAN.DISPLAY(NULL, 'Q2b', 'BASIC +ROWS +COST +PREDICATE'));
 EXPLAIN PLAN SET STATEMENT_ID = 'Q2bC' FOR
@@ -108,7 +108,7 @@ SELECT i.id_intervention, i.numero, i.titre, i.priorite, i.statut, i.date_demand
   JOIN equipement e ON e.id_equipement = i.id_equipement
   LEFT JOIN utilisateur t ON t.id_utilisateur = i.id_technicien
  WHERE i.id_equipement = :eq
- ORDER BY i.date_demande DESC, i.id_intervention
+ ORDER BY i.date_demande DESC, i.id_intervention DESC
  OFFSET 0 ROWS FETCH FIRST 20 ROWS ONLY;
 SELECT plan_table_output FROM TABLE(DBMS_XPLAN.DISPLAY(NULL, 'Q2c', 'BASIC +ROWS +COST +PREDICATE'));
 EXPLAIN PLAN SET STATEMENT_ID = 'Q2cC' FOR
@@ -124,7 +124,7 @@ SELECT i.id_intervention, i.numero, i.titre, i.priorite, i.statut, i.date_demand
   JOIN equipement e ON e.id_equipement = i.id_equipement
   LEFT JOIN utilisateur t ON t.id_utilisateur = i.id_technicien
  WHERE i.id_technicien = :tech
- ORDER BY i.date_demande DESC, i.id_intervention
+ ORDER BY i.date_demande DESC, i.id_intervention DESC
  OFFSET 0 ROWS FETCH FIRST 20 ROWS ONLY;
 SELECT plan_table_output FROM TABLE(DBMS_XPLAN.DISPLAY(NULL, 'Q2d', 'BASIC +ROWS +COST +PREDICATE'));
 EXPLAIN PLAN SET STATEMENT_ID = 'Q2dC' FOR
@@ -206,7 +206,7 @@ DECLARE
                             JOIN equipement e ON e.id_equipement = i.id_equipement
                             LEFT JOIN utilisateur t ON t.id_utilisateur = i.id_technicien
                            WHERE i.statut = p_statut
-                           ORDER BY i.date_demande DESC, i.id_intervention
+                           ORDER BY i.date_demande DESC, i.id_intervention DESC
                            OFFSET 0 ROWS FETCH FIRST 20 ROWS ONLY) LOOP
                     v_lignes := v_lignes + 1;
                 END LOOP;
@@ -217,7 +217,7 @@ DECLARE
                             JOIN equipement e ON e.id_equipement = i.id_equipement
                             LEFT JOIN utilisateur t ON t.id_utilisateur = i.id_technicien
                            WHERE i.id_technicien = p_tech
-                           ORDER BY i.date_demande DESC, i.id_intervention
+                           ORDER BY i.date_demande DESC, i.id_intervention DESC
                            OFFSET 0 ROWS FETCH FIRST 20 ROWS ONLY) LOOP
                     v_lignes := v_lignes + 1;
                 END LOOP;
@@ -228,7 +228,7 @@ DECLARE
                             JOIN equipement e ON e.id_equipement = i.id_equipement
                             LEFT JOIN utilisateur t ON t.id_utilisateur = i.id_technicien
                            WHERE i.id_equipement = p_eq
-                           ORDER BY i.date_demande DESC, i.id_intervention
+                           ORDER BY i.date_demande DESC, i.id_intervention DESC
                            OFFSET 0 ROWS FETCH FIRST 20 ROWS ONLY) LOOP
                     v_lignes := v_lignes + 1;
                 END LOOP;
@@ -238,7 +238,7 @@ DECLARE
                             FROM intervention i
                             JOIN equipement e ON e.id_equipement = i.id_equipement
                             LEFT JOIN utilisateur t ON t.id_utilisateur = i.id_technicien
-                           ORDER BY i.date_demande DESC, i.id_intervention
+                           ORDER BY i.date_demande DESC, i.id_intervention DESC
                            OFFSET 0 ROWS FETCH FIRST 20 ROWS ONLY) LOOP
                     v_lignes := v_lignes + 1;
                 END LOOP;

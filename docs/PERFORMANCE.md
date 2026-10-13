@@ -1,4 +1,4 @@
-# Performance des requêtes — MécaDétect
+# Performance des requêtes - MécaDétect
 
 Ce document consigne l'analyse des requêtes critiques sur un volume réaliste (tâches 4.4 et 4.7, cas d'usage UC-DB3 et UC-DB5) : ce qui était lent, pourquoi, ce qui a été changé, et le gain mesuré.
 
@@ -55,7 +55,7 @@ Temps moyen par exécution, en millisecondes. Pour les listes, le temps inclut l
 
 Q4 et Q5 étaient déjà instantanées « avant » par chance : la première ligne lue répondait à la question, et le parcours s'arrêtait là. Q4b mesure le pire cas, quand il faut tout examiner pour répondre « non » : 38 ms sans index.
 
-## Cause 1 — Des clés étrangères sans index
+## Cause 1 - Des clés étrangères sans index
 
 Sans index, chercher les 4 lignes d'historique d'une intervention oblige Oracle à lire les 1,9 million de lignes de la table.
 
@@ -69,7 +69,7 @@ Oracle n'indexe pas automatiquement les clés étrangères. Ici, aucune ne l'ét
 
 **Correction (V5)** : `historique_statut (id_intervention, date_changement)`, `intervention (id_technicien, statut)`, `intervention (id_equipement, …)`.
 
-## Cause 2 — Des filtres optionnels qui empêchent tout index
+## Cause 2 - Des filtres optionnels qui empêchent tout index
 
 La recherche du Sprint 3 était une seule requête JPQL pour toutes les combinaisons de filtres :
 
@@ -85,7 +85,7 @@ Oracle calcule un plan valable pour toutes les valeurs possibles des paramètres
 
 Effet mesuré sans nouvel index : de 476 à 146 ms pour le filtre technicien. Le vrai gain viendra des index, que cette réécriture rend enfin utilisables.
 
-## Cause 3 — Un tri que l'index ne pouvait pas fournir
+## Cause 3 - Un tri que l'index ne pouvait pas fournir
 
 Après la V5, les comptages utilisaient bien les index, mais les pages de la liste et de l'historique d'un équipement parcouraient encore toute la table : 151 et 69 ms.
 
@@ -130,6 +130,24 @@ Le test `InterventionRequetesSqlTest` compte les requêtes SQL envoyées pour af
 
 La projection récupère en une seule requête, avec jointures, exactement les colonnes affichées. Aucune entité n'est chargée, et aucun chargement différé n'est déclenché.
 
+## Archivage des interventions closes (UC-DB4, tâche 4.5)
+
+`PKG_MAINTENANCE.archiver_interventions` déplace vers `intervention_archive` et `historique_statut_archive` les interventions terminées avant une date limite, et les annulées dont la demande précède cette date. Le traitement se fait par lots de 10 000 : `BULK COLLECT` des identifiants, puis quatre `FORALL` (copie des interventions, copie de l'historique, suppression de l'historique, suppression des interventions), avec un commit par lot.
+
+Essai sur le jeu de 500 004 interventions, avec une date limite à 3 ans (script `archivage-essai.sql`, exécuté à blanc : `p_commit => FALSE` puis `ROLLBACK`) :
+
+| | Avant | Archivé | Restant en ligne |
+| --- | --- | --- | --- |
+| Interventions | 500 004 | 199 155 | 300 849 |
+| Lignes d'historique | 1 915 283 | 766 748 | 1 148 535 |
+
+- **Durée : 79,7 s** pour 965 903 lignes déplacées, soit environ 12 000 lignes par seconde, ou 0,4 ms par intervention avec son historique. Cela représente 20 lots d'environ 4 s.
+- **Chaque ligne coûte deux écritures** (une insertion dans l'archive et une suppression), plus la mise à jour des index. Côté `intervention`, ce sont 7 index : la clé primaire, l'unicité du numéro et les 5 index de V5/V6. C'est la contrepartie en écriture des index qui accélèrent les lectures.
+- **Le journal fonctionne comme prévu.** La ligne SUCCES (199 155 / 766 748) est restée dans `journal_archivage` malgré le `ROLLBACK` final, car elle est écrite en transaction autonome.
+- **Une piste d'optimisation, non mesurée.** Chaque lot relit la table depuis le début pour trouver les 10 000 interventions suivantes. Un curseur unique parcouru par `FETCH … LIMIT` éviterait ces relectures. Pour un traitement d'administration lancé ponctuellement, 80 s restent acceptables, et l'optimisation ne vaut d'être faite que si la mesure en production le justifie.
+
+Une intervention archivée n'est plus consultable depuis l'application : sa fiche répond 404. C'est pourquoi l'API refuse une date limite de moins d'un an : la dernière année reste toujours en ligne, pour la planification, l'historique des équipements et le reporting.
+
 ## Reproduire les mesures
 
 Depuis la racine du dépôt, la base générée étant en place (`EXEC pkg_generation.generer_interventions;`) :
@@ -138,6 +156,13 @@ Depuis la racine du dépôt, la base générée étant en place (`EXEC pkg_gener
 docker cp scripts\mesures-performance.sql mecadetect-oracle:/tmp/mesures-performance.sql
 docker exec -it mecadetect-oracle bash -c 'sqlplus -s $APP_USER/$APP_USER_PASSWORD@FREEPDB1 @/tmp/mesures-performance.sql nom-de-la-campagne'
 docker cp mecadetect-oracle:/tmp/mesures-nom-de-la-campagne.txt docs\
+```
+
+Essai d'archivage à blanc (les données sont conservées) :
+
+```powershell
+docker cp scripts\archivage-essai.sql mecadetect-oracle:/tmp/
+docker exec -it mecadetect-oracle bash -c 'sqlplus -s $APP_USER/$APP_USER_PASSWORD@FREEPDB1 @/tmp/archivage-essai.sql'
 ```
 
 ## Prochaine étape

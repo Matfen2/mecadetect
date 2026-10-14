@@ -6,8 +6,16 @@
   --texte-secondaire: var(--mat-sys-on-surface-variant, #44474e);
 }
 
+.entete {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
 .entete h1 { margin: 0; }
-.sous-titre { margin: 0.25rem 0 1.25rem; color: var(--texte-secondaire); }
+.sous-titre { margin: 0.25rem 0 0; color: var(--texte-secondaire); }
 
 .erreur { display: flex; align-items: center; gap: 1rem; color: var(--mat-sys-error, #ba1a1a); }
 

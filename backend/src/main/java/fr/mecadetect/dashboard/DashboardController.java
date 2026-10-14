@@ -11,19 +11,24 @@ import fr.mecadetect.api.dto.DashboardTopEquipementsInnerDto;
 import fr.mecadetect.api.dto.PrioriteDto;
 import fr.mecadetect.api.dto.RoleDto;
 import fr.mecadetect.api.dto.UtilisateurResumeDto;
-import fr.mecadetect.erreur.FonctionnaliteNonDisponibleException;
+import fr.mecadetect.export.ExportCsv;
+import fr.mecadetect.export.ExportInterventionsService;
 import fr.mecadetect.maintenance.ArchivageService;
 import fr.mecadetect.reporting.ChargeTechnicienPeriode;
 import org.springframework.core.io.Resource;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 
 /**
- * Tag Dashboard du contrat : tout est réservé à l'admin.
- * Tableau de bord (tâche 5.1) et archivage (Sprint 4) disponibles ; l'export CSV arrive à la tâche 5.3.
+ * Tag Dashboard du contrat, entièrement réservé à l'admin : tableau de bord (tâche 5.1),
+ * export CSV (tâche 5.3) et archivage (Sprint 4).
  */
 @RestController
 @PreAuthorize("hasRole('ADMIN')")
@@ -31,10 +36,13 @@ public class DashboardController implements DashboardApi {
 
     private final DashboardService dashboardService;
     private final ArchivageService archivageService;
+    private final ExportInterventionsService exportService;
 
-    public DashboardController(DashboardService dashboardService, ArchivageService archivageService) {
+    public DashboardController(DashboardService dashboardService, ArchivageService archivageService,
+                               ExportInterventionsService exportService) {
         this.dashboardService = dashboardService;
         this.archivageService = archivageService;
+        this.exportService = exportService;
     }
 
     @Override
@@ -50,7 +58,12 @@ public class DashboardController implements DashboardApi {
 
     @Override
     public ResponseEntity<Resource> exporterInterventions(LocalDate depuis, LocalDate jusqua) {
-        throw new FonctionnaliteNonDisponibleException("export CSV des interventions (tâche 5.3)");
+        ExportCsv export = exportService.exporter(depuis, jusqua);
+        return ResponseEntity.ok()
+                .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename(export.nomFichier()).build().toString())
+                .body(export.contenu());
     }
 
     private static DashboardDto versDto(TableauDeBord tableau) {

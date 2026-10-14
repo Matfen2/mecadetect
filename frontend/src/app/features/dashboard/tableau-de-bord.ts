@@ -5,6 +5,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Dashboard, DashboardService } from '../../core/api';
 import { LIBELLES_PRIORITE } from '../../shared/libelles-intervention';
 import { messageErreur } from '../../shared/probleme-api';
+import { ExportInterventions } from './export-interventions';
 import {
   duree,
   estMoisEnCours,
@@ -23,7 +24,8 @@ type Etat =
 
 /**
  * Tableau de bord du responsable de maintenance (tâche 5.2).
- * Un seul appel à l'API (GET /dashboard, tâche 5.1) alimente tous les blocs.
+ * Un seul appel à l'API (GET /dashboard, tâche 5.1) alimente tous les blocs ; l'export CSV (tâche 5.3)
+ * est proposé dans l'en-tête.
  *
  * Les graphiques sont de simples barres en HTML/CSS : une seule série par graphique, donc une seule
  * couleur ; la valeur exacte s'affiche au survol ou au focus, et chaque graphique a sa version tableau
@@ -31,7 +33,7 @@ type Etat =
  */
 @Component({
   selector: 'app-tableau-de-bord',
-  imports: [MatButtonModule, MatProgressBarModule],
+  imports: [MatButtonModule, MatProgressBarModule, ExportInterventions],
   templateUrl: './tableau-de-bord.html',
   styleUrl: './tableau-de-bord.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

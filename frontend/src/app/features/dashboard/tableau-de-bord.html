@@ -1,6 +1,9 @@
 <header class="entete">
-  <h1>Tableau de bord</h1>
-  <p class="sous-titre">Parc et interventions, sur les 12 derniers mois</p>
+  <div>
+    <h1>Tableau de bord</h1>
+    <p class="sous-titre">Parc et interventions, sur les 12 derniers mois</p>
+  </div>
+  <app-export-interventions />
 </header>
 
 @if (etat().statut === 'chargement') {

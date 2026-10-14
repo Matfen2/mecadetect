@@ -32,13 +32,12 @@ import java.time.LocalDateTime;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Tâche 4.6 : POST /api/v1/admin/archivage (ADMIN). L'export CSV répond 501 jusqu'à la tâche 5.3.
+ * Tâche 4.6 : POST /api/v1/admin/archivage (ADMIN).
  * Dans la transaction du test, l'archivage ne valide pas ses lots : tout est annulé à la fin.
  */
 @SpringBootTest
@@ -119,13 +118,5 @@ class ArchivageApiTest {
         archiver("{}", admin)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("DONNEES_INVALIDES"));
-    }
-
-    @Test
-    @DisplayName("L'export CSV n'est pas encore disponible : 501")
-    void exportNonDisponible() throws Exception {
-        mockMvc.perform(get("/api/v1/exports/interventions?depuis=2026-01-01&jusqua=2026-01-31").with(connecte(admin)))
-                .andExpect(status().isNotImplemented())
-                .andExpect(jsonPath("$.code").value("NON_DISPONIBLE"));
     }
 }

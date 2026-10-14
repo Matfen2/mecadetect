@@ -9,6 +9,7 @@ import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import org.hibernate.jpa.HibernateHints;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +28,12 @@ import java.util.List;
  * dans le SQL : chaque combinaison a sa propre requête, et peut utiliser l'index adapté.
  *
  * La projection reste une seule requête (pas de N+1) ; le comptage ne fait aucune jointure.
+ *
+ * Tâche 4.8 : Hibernate limite la page par « OFFSET :n ROWS FETCH FIRST :m ROWS ONLY » avec des
+ * valeurs liées. En calculant le plan, Oracle ignore alors qu'on ne veut que 20 lignes : il optimise
+ * pour toutes les renvoyer (parcours complet de la table et tri). L'indication FIRST_ROWS(n) lui
+ * rend cette information : il lit l'index déjà trié et s'arrête après la page (WINDOW NOSORT STOPKEY).
+ * Mesuré sur 500 000 interventions : 141,5 ms → moins de 0,5 ms (scripts/plan-limite-lignes.sql).
  */
 class InterventionRechercheRepositoryImpl implements InterventionRechercheRepository {
 
@@ -55,9 +62,18 @@ class InterventionRechercheRepositoryImpl implements InterventionRechercheReposi
         List<InterventionResume> contenu = entityManager.createQuery(requete)
                 .setFirstResult((int) pageable.getOffset())
                 .setMaxResults(pageable.getPageSize())
+                .setHint(HibernateHints.HINT_QUERY_DATABASE, indicationPremieresLignes(pageable))
                 .getResultList();
 
         return new PageImpl<>(contenu, pageable, compter(cb, filtres));
+    }
+
+    /**
+     * Indication Oracle pour la page demandée : seule la taille de page y figure, pour que le texte SQL
+     * (et donc le plan en cache) reste le même d'une page à l'autre.
+     */
+    static String indicationPremieresLignes(Pageable pageable) {
+        return "FIRST_ROWS(" + pageable.getPageSize() + ")";
     }
 
     /** Comptage sur la seule table INTERVENTION : les filtres portent sur ses propres colonnes. */

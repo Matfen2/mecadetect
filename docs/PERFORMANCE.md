@@ -1,6 +1,6 @@
 # Performance des requêtes - MécaDétect
 
-Ce document consigne l'analyse des requêtes critiques sur un volume réaliste (tâches 4.4 et 4.7, cas d'usage UC-DB3 et UC-DB5) : ce qui était lent, pourquoi, ce qui a été changé, et le gain mesuré.
+Ce document consigne l'analyse des requêtes critiques sur un volume réaliste (tâches 4.4, 4.7 et 4.8, cas d'usage UC-DB3 et UC-DB5) : ce qui était lent, pourquoi, ce qui a été changé, et le gain mesuré, d'abord requête par requête en SQL, puis sous charge à travers l'API.
 
 ## En bref
 
@@ -13,6 +13,8 @@ Ce document consigne l'analyse des requêtes critiques sur un volume réaliste (
 | Mes interventions (technicien) | 50 ms | 0,5 ms | ÷ 100 |
 
 Trois causes, trois corrections : des clés étrangères sans index, une requête de recherche écrite de façon à empêcher tout usage d'index, et un tri mélangeant deux sens. Le reporting, lui, n'a pas été indexé : la mesure montre qu'un index ne lui apporte rien.
+
+Ces chiffres mesurent les requêtes du script SQL. **Le test de charge Gatling a montré que l'API n'en profitait pas encore** : la nouvelle recherche n'était pas branchée, et la limite de page envoyée par Hibernate empêchait Oracle d'utiliser les index. Les deux défauts sont corrigés ; sous charge, le p95 de l'API passe de 403 ms à 21 ms (voir [Tests de charge](#tests-de-charge-gatling-tâche-48)).
 
 ## Méthode
 
@@ -142,11 +144,76 @@ Essai sur le jeu de 500 004 interventions, avec une date limite à 3 ans (script
 | Lignes d'historique | 1 915 283 | 766 748 | 1 148 535 |
 
 - **Durée : 79,7 s** pour 965 903 lignes déplacées, soit environ 12 000 lignes par seconde, ou 0,4 ms par intervention avec son historique. Cela représente 20 lots d'environ 4 s.
-- **Chaque ligne coûte deux écritures** (une insertion dans l'archive et une suppression), plus la mise à jour des index. Côté `intervention`, ce sont 7 index : la clé primaire, l'unicité du numéro et les 5 index de V5/V6. C'est la contrepartie en écriture des index qui accélèrent les lectures.
+- **Chaque ligne coûte deux écritures** (une insertion dans l'archive et une suppression), plus la mise à jour des index. Ce sont 6 index sur `intervention` (la clé primaire, l'unicité du numéro et 4 index de V5/V6) et 2 sur `historique_statut`. C'est la contrepartie en écriture des index qui accélèrent les lectures.
 - **Le journal fonctionne comme prévu.** La ligne SUCCES (199 155 / 766 748) est restée dans `journal_archivage` malgré le `ROLLBACK` final, car elle est écrite en transaction autonome.
 - **Une piste d'optimisation, non mesurée.** Chaque lot relit la table depuis le début pour trouver les 10 000 interventions suivantes. Un curseur unique parcouru par `FETCH … LIMIT` éviterait ces relectures. Pour un traitement d'administration lancé ponctuellement, 80 s restent acceptables, et l'optimisation ne vaut d'être faite que si la mesure en production le justifie.
 
 Une intervention archivée n'est plus consultable depuis l'application : sa fiche répond 404. C'est pourquoi l'API refuse une date limite de moins d'un an : la dernière année reste toujours en ligne, pour la planification, l'historique des équipements et le reporting.
+
+## Tests de charge Gatling (tâche 4.8)
+
+### Scénario
+
+Le projet `charge/` (Gatling 3.16, Java) simule une journée d'atelier à travers l'API complète (sécurité JWT, JPA, sérialisation JSON), sur les 500 004 interventions générées. 35 utilisateurs connectés en même temps, pendant 2 minutes, avec 1 à 3 s de réflexion entre deux écrans :
+
+- **5 responsables de maintenance** : première page de la liste, détail, liste « à planifier », charge des techniciens, filtre par technicien, filtre sur un mois, page au hasard ;
+- **20 techniciens** : « Mes interventions » puis le détail de l'une d'elles ;
+- **10 demandeurs** : liste des équipements, puis fiche et historique de l'un d'eux.
+
+Le scénario est en lecture seule : toutes les campagnes portent sur les mêmes données. Objectifs vérifiés automatiquement en fin de campagne : moins de 1 % d'erreurs, p95 global sous 300 ms, p95 de la première page de la liste sous 200 ms.
+
+### Résultats
+
+| Campagne | Requêtes | Débit | p50 | p95 | p99 | Max | p95 liste, page 1 | Objectifs |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Régression : ancienne requête JPQL | 2 336 | 17,1 req/s | 7 ms | 403 ms | 1 445 ms | 5 133 ms | 3 654 ms | ✗ |
+| Recherche Criteria seule | 2 379 | 17,6 req/s | 8 ms | 83 ms | 164 ms | 730 ms | 196 ms | ✓ (de justesse) |
+| **Criteria + FIRST_ROWS (final)** | **2 454** | **17,9 req/s** | **7 ms** | **21 ms** | **81 ms** | **312 ms** | **32 ms** | **✓** |
+| Final, sans les 5 index de performance | 2 026 | 14,9 req/s | 93 ms | 3 096 ms | 4 134 ms | 4 877 ms | 3 190 ms | ✗ |
+
+Aucune erreur dans aucune campagne. La dernière ligne mesure l'apport des index sous charge : sans eux, même les écrans légers ralentissent (médiane ×13), un dixième des réponses dépasse 1,2 s, et le débit baisse de 17 % parce que les utilisateurs attendent leurs pages.
+
+### Défaut n° 1 : la recherche dynamique n'était pas branchée
+
+La première campagne a montré des pages de liste à plus d'une seconde, alors que le script SQL mesurait 6,5 ms. Les requêtes réellement exécutées, lues dans `V$SQL` ([`scripts/sql-reel-application.sql`](../scripts/sql-reel-application.sql), résultat dans [`sql-reel-application.txt`](sql-reel-application.txt)), contenaient encore `(:1 is null or i1_0.statut = :2)` : l'API exécutait l'ancienne requête JPQL. `InterventionRepository` n'héritait pas du fragment `InterventionRechercheRepository` ; l'implémentation Criteria de l'étape 4 existait, mais n'était jamais appelée.
+
+| Requête de l'API (campagne avec régression) | p50 | p95 |
+| --- | --- | --- |
+| Liste, page suivante | 1 422 ms | 1 628 ms |
+| Liste, première page | 1 269 ms | 2 678 ms |
+| Filtre par technicien | 321 ms | 1 163 ms |
+| Historique d'un équipement | 213 ms | 297 ms |
+
+Aucun test ne l'avait vu : les deux requêtes renvoient les mêmes résultats, et en font le même nombre. Le test `RechercheDynamiqueBrancheeTest` vérifie désormais que le repository délègue bien la recherche au fragment.
+
+### Défaut n° 2 : une limite de page invisible pour Oracle
+
+Une fois la recherche branchée, `V$SQL` ([`sql-reel-application-apres.txt`](sql-reel-application-apres.txt)) montrait des requêtes sans aucun `is null`, mais qui lisaient encore toute la table (`TABLE ACCESS FULL`, environ 17 000 blocs) avant de trier et de garder 20 lignes. La cause est dans la fin du SQL généré par Hibernate : `offset :1 rows fetch first :2 rows only`. Le nombre de lignes voulu est une valeur liée : en calculant le plan, Oracle ignore qu'on n'en veut que 20 et optimise pour toutes les renvoyer. Le script de l'étape 4b, sans `OFFSET`, ne reproduisait pas ce cas.
+
+[`scripts/plan-limite-lignes.sql`](../scripts/plan-limite-lignes.sql) compare la requête d'Hibernate avec et sans l'indication `/*+ FIRST_ROWS(20) */` (20 exécutions, page 1) :
+
+| Requête | Telle qu'Hibernate l'envoie | Avec FIRST_ROWS(20) |
+| --- | --- | --- |
+| Liste sans filtre | 141,5 ms, `TABLE ACCESS FULL` + tri de 500 000 lignes | < 0,5 ms, `INDEX FULL SCAN DESCENDING` + `WINDOW NOSORT STOPKEY` |
+| Équipement le plus chargé (121 000 interventions) | 61,5 ms, `TABLE ACCESS FULL` + tri | < 0,5 ms, `INDEX RANGE SCAN DESCENDING` + `WINDOW NOSORT STOPKEY` |
+
+`InterventionRechercheRepositoryImpl` ajoute donc l'indication à la requête de page (option `HibernateHints.HINT_QUERY_DATABASE`), avec la taille de page seulement : le texte SQL, et le plan en cache, restent identiques d'une page à l'autre. Mesures dans `V$SQL` après correction, pendant la campagne finale :
+
+| Page | Sans l'indication | Avec l'indication |
+| --- | --- | --- |
+| Historique d'un équipement (10 lignes) | 47,3 ms, 17 012 blocs | 0,19 ms, 20 blocs |
+| Liste sans filtre | 155,6 ms, 17 020 blocs | 1,25 ms, 674 blocs |
+| Filtre par technicien | 59,6 ms, 17 012 blocs | 2,42 ms, 663 blocs |
+| Filtre sur un mois | 44,5 ms, 17 016 blocs | 2,36 ms, 73 blocs |
+
+Le comptage du total, lui, n'a jamais été en cause : 6,9 ms pour les 500 000 interventions, 1,1 ms pour un équipement.
+
+### Ce que la charge a appris
+
+- **Mesurer le SQL réellement envoyé, pas celui qu'on croit envoyer.** Les deux défauts étaient invisibles dans le script SQL et dans les tests fonctionnels. Ils sont apparus dans les percentiles Gatling, et `V$SQL` a donné la cause exacte en quelques minutes.
+- **Les objectifs automatiques font de la campagne un test.** La régression a fait échouer le build Gatling ; la version finale le passe avec une large marge (p95 à 21 ms pour un objectif de 300 ms).
+- **Limites de la mesure.** Le poste de développement héberge à la fois Oracle (Docker), l'API et Gatling ; les valeurs absolues dépendent de la machine, les écarts entre campagnes sont la donnée fiable. La campagne sans index a profité d'une JVM et d'un cache déjà chauds, ce qui ne peut que sous-estimer l'écart.
+- **L'indication FIRST_ROWS est propre à Oracle.** C'est assumé, la base cible étant Oracle. Elle ne dégrade rien quand aucun index ne fournit le tri demandé (tri par titre, par exemple) : Oracle trie alors comme avant.
 
 ## Reproduire les mesures
 
@@ -165,6 +232,27 @@ docker cp scripts\archivage-essai.sql mecadetect-oracle:/tmp/
 docker exec -it mecadetect-oracle bash -c 'sqlplus -s $APP_USER/$APP_USER_PASSWORD@FREEPDB1 @/tmp/archivage-essai.sql'
 ```
 
+Campagne de charge, l'API étant démarrée avec le profil `demo` (rapport HTML dans `charge/target/gatling/`) :
+
+```powershell
+cd charge; mvn clean gatling:test; cd ..
+```
+
+Requêtes réellement exécutées par l'API, juste après une campagne (compte SYSTEM, pour lire `V$SQL`) :
+
+```powershell
+Get-Content scripts\sql-reel-application.sql -Raw | docker exec -i mecadetect-oracle bash -c 'cat > /tmp/sql-reel.sql'
+docker exec -it mecadetect-oracle bash -c 'sqlplus -s system/$ORACLE_PASSWORD@FREEPDB1 @/tmp/sql-reel.sql'
+```
+
+Campagne sans les index de performance (toujours restaurer ensuite) :
+
+```powershell
+Get-Content scripts\index-performance-retirer.sql -Raw | docker exec -i mecadetect-oracle bash -c 'sqlplus -s $APP_USER/$APP_USER_PASSWORD@FREEPDB1'
+cd charge; mvn clean gatling:test; cd ..
+Get-Content scripts\index-performance-restaurer.sql -Raw | docker exec -i mecadetect-oracle bash -c 'sqlplus -s $APP_USER/$APP_USER_PASSWORD@FREEPDB1'
+```
+
 ## Prochaine étape
 
-Les scénarios de charge Gatling (tâche 4.8) mesureront les mêmes parcours à travers l'API complète, avec plusieurs utilisateurs simultanés. Les percentiles des temps de réponse compléteront ce document.
+Sprint 5 : le tableau de bord réutilisera les requêtes de reporting de l'étape 3. Il faudra ajouter son parcours au scénario Gatling avant la mise en production.

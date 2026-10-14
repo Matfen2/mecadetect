@@ -1,6 +1,7 @@
 package fr.mecadetect.reporting;
 
 import fr.mecadetect.intervention.Priorite;
+import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -10,7 +11,9 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Requêtes de reporting (UC-DB2, tâche 4.3), écrites en SQL Oracle natif :
@@ -120,8 +123,30 @@ public class ReportingRepository {
                 """,
                 periode(depuis, avant),
                 (rs, _) -> new ChargeTechnicienPeriode(rs.getLong("id_utilisateur"),
-                        rs.getString("prenom") + " " + rs.getString("nom"),
+                        rs.getString("prenom"), rs.getString("nom"),
                         rs.getLong("ouvertes"), rs.getLong("terminees"), rs.getLong("minutes")));
+    }
+
+    /**
+     * Interventions ouvertes (demandées, planifiées ou en cours) par priorité, à cet instant.
+     * Une priorité sans intervention ouverte est absente du résultat.
+     */
+    public Map<Priorite, Long> ouvertesParPriorite() {
+        Map<Priorite, Long> resultat = new EnumMap<>(Priorite.class);
+        jdbc.query("""
+                SELECT priorite, COUNT(*) AS nombre
+                  FROM intervention
+                 WHERE statut IN ('DEMANDEE', 'PLANIFIEE', 'EN_COURS')
+                 GROUP BY priorite
+                """,
+                (RowCallbackHandler) rs -> resultat.put(Priorite.valueOf(rs.getString("priorite")), rs.getLong("nombre")));
+        return resultat;
+    }
+
+    /** Équipements actuellement en panne (statut tenu à jour par RG-05). */
+    public long equipementsEnPanne() {
+        return jdbc.getJdbcTemplate().queryForObject(
+                "SELECT COUNT(*) FROM equipement WHERE statut = 'EN_PANNE'", Long.class);
     }
 
     private static MapSqlParameterSource periode(LocalDateTime depuis, LocalDateTime avant) {

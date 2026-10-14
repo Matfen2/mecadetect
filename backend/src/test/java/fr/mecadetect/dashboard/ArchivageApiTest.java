@@ -38,8 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Tâche 4.6 : POST /api/v1/admin/archivage (ADMIN), et les deux autres endpoints du tag Dashboard
- * qui répondent 501 jusqu'au Sprint 5.
+ * Tâche 4.6 : POST /api/v1/admin/archivage (ADMIN). L'export CSV répond 501 jusqu'à la tâche 5.3.
  * Dans la transaction du test, l'archivage ne valide pas ses lots : tout est annulé à la fin.
  */
 @SpringBootTest
@@ -120,14 +119,6 @@ class ArchivageApiTest {
         archiver("{}", admin)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("DONNEES_INVALIDES"));
-    }
-
-    @Test
-    @DisplayName("Le tableau de bord n'est pas encore disponible : 501")
-    void dashboardNonDisponible() throws Exception {
-        mockMvc.perform(get("/api/v1/dashboard").with(connecte(admin)))
-                .andExpect(status().isNotImplemented())
-                .andExpect(jsonPath("$.code").value("NON_DISPONIBLE"));
     }
 
     @Test

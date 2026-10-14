@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -35,7 +36,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * l'admin A lit l'intervention (version 0), l'admin B la lit aussi, la planifie et valide ;
  * quand A valide à son tour, Oracle ne trouve plus de ligne en version 0 : sa mise à jour échoue.
  *
- * Ce test n'est pas @Transactional (il faut de vrais commits) : il nettoie donc ses données.
+ * Ce test n'est pas @Transactional (il faut de vrais commits) : il nettoie donc ses données,
+ * historique compris (écrit par le trigger V3).
  */
 @SpringBootTest
 @Import(TestcontainersConfiguration.class)
@@ -49,6 +51,7 @@ class ConcurrenceInterventionTest {
     @Autowired private ZoneRepository zoneRepository;
     @Autowired private TypeEquipementRepository typeRepository;
     @Autowired private UtilisateurRepository utilisateurRepository;
+    @Autowired private JdbcTemplate jdbc;
 
     private Zone zone;
     private TypeEquipement type;
@@ -78,6 +81,8 @@ class ConcurrenceInterventionTest {
 
     @AfterEach
     void nettoyer() {
+        // Depuis le Sprint 4, le trigger écrit l'historique : il faut le supprimer avant l'intervention
+        jdbc.update("DELETE FROM historique_statut WHERE id_intervention = ?", intervention.getId());
         interventionRepository.deleteById(intervention.getId());
         equipementRepository.deleteById(equipement.getId());
         typeRepository.deleteById(type.getId());
@@ -116,5 +121,11 @@ class ConcurrenceInterventionTest {
         assertThat(enBase.getStatut()).isEqualTo(StatutIntervention.PLANIFIEE);
         assertThat(enBase.getVersion()).isEqualTo(1L);
         assertThat(enBase.getDatePlanifiee()).isEqualTo(LUNDI_8H.plusDays(1));
+
+        // La transaction perdante est annulée avec sa ligne d'historique : seule la planification de B reste
+        assertThat(jdbc.queryForList(
+                "SELECT nouveau_statut FROM historique_statut WHERE id_intervention = ? ORDER BY id_historique",
+                String.class, intervention.getId()))
+                .containsExactly("DEMANDEE", "PLANIFIEE");
     }
 }

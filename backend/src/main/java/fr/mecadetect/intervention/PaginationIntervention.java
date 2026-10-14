@@ -25,9 +25,16 @@ public final class PaginationIntervention {
     private PaginationIntervention() {
     }
 
-    /** Pagination triée selon le paramètre sort (dateDemande décroissante par défaut). */
+    /**
+     * Pagination triée selon le paramètre sort (dateDemande décroissante par défaut).
+     * L'identifiant départage les ex aequo, dans le même sens que le tri demandé : un index
+     * (date_demande, id_intervention) lu à l'envers fournit alors les lignes déjà triées,
+     * et Oracle s'arrête après la page demandée au lieu de trier toute la table (tâche 4.4).
+     */
     public static Pageable versPageable(Integer page, Integer taille, String tri) {
-        return PageRequest.of(numero(page), nombre(taille), versSort(tri).and(Sort.by("id")));
+        Sort sort = versSort(tri);
+        Sort.Direction sens = sort.iterator().next().getDirection();
+        return PageRequest.of(numero(page), nombre(taille), sort.and(Sort.by(sens, "id")));
     }
 
     /** Pagination sans tri : l'ordre est fixé par la requête elle-même. */

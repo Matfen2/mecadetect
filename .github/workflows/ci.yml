@@ -54,6 +54,14 @@ jobs:
       - name: Installer les dépendances
         run: npm ci
 
+      # Le générateur télécharge son jar à chaque exécution : on le garde en cache
+      # (après npm ci, qui vide node_modules)
+      - name: Cache du jar openapi-generator
+        uses: actions/cache@v4
+        with:
+          path: frontend/node_modules/@openapitools/openapi-generator-cli/versions
+          key: openapi-generator-cli-${{ hashFiles('frontend/openapitools.json') }}
+
       - name: Générer le client API depuis le contrat
         run: npm run generate:api
 

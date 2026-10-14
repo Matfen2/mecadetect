@@ -7,12 +7,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-public interface InterventionRepository extends JpaRepository<Intervention, Long> {
+/**
+ * La recherche paginée avec filtres optionnels est dans le fragment InterventionRechercheRepository :
+ * elle est construite dynamiquement pour que chaque combinaison de filtres puisse utiliser un index.
+ */
+public interface InterventionRepository extends JpaRepository<Intervention, Long>, InterventionRechercheRepository {
 
     /** Valeur suivante de la séquence Oracle (migration V2). */
     @Query(value = "SELECT seq_numero_intervention.NEXTVAL FROM dual", nativeQuery = true)
@@ -27,44 +30,6 @@ public interface InterventionRepository extends JpaRepository<Intervention, Long
     @EntityGraph(attributePaths = {"equipement", "equipement.type", "equipement.zone", "demandeur", "technicien"})
     @Query("select i from Intervention i where i.id = :id")
     Optional<Intervention> trouverDetail(@Param("id") Long id);
-
-    /**
-     * Recherche paginée, projetée en DTO (UC-DB5). Un paramètre null désactive son filtre.
-     * Le tri vient du Pageable ; la requête de comptage évite la projection, inutile pour compter.
-     */
-    @Query(value = """
-            select new fr.mecadetect.intervention.InterventionResume(
-                i.id, i.numero, i.titre, i.priorite, i.statut, i.dateDemande, i.datePlanifiee,
-                e.reference, e.nom, t.id, t.prenom, t.nom)
-            from Intervention i
-            join i.equipement e
-            left join i.technicien t
-            where (:statut is null or i.statut = :statut)
-              and (:priorite is null or i.priorite = :priorite)
-              and (:idTechnicien is null or t.id = :idTechnicien)
-              and (:idEquipement is null or e.id = :idEquipement)
-              and (:depuis is null or i.dateDemande >= :depuis)
-              and (:avant is null or i.dateDemande < :avant)
-            """,
-            countQuery = """
-            select count(i)
-            from Intervention i
-            join i.equipement e
-            left join i.technicien t
-            where (:statut is null or i.statut = :statut)
-              and (:priorite is null or i.priorite = :priorite)
-              and (:idTechnicien is null or t.id = :idTechnicien)
-              and (:idEquipement is null or e.id = :idEquipement)
-              and (:depuis is null or i.dateDemande >= :depuis)
-              and (:avant is null or i.dateDemande < :avant)
-            """)
-    Page<InterventionResume> rechercher(@Param("statut") StatutIntervention statut,
-                                        @Param("priorite") Priorite priorite,
-                                        @Param("idTechnicien") Long idTechnicien,
-                                        @Param("idEquipement") Long idEquipement,
-                                        @Param("depuis") LocalDateTime depuis,
-                                        @Param("avant") LocalDateTime avant,
-                                        Pageable pageable);
 
     /** Interventions à traiter par un technicien : celle EN_COURS d'abord, puis par date planifiée. */
     @Query(value = """

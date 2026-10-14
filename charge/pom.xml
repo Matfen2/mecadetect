@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    MécaDétect - tests de charge Gatling (tâche 4.8)
+
+    Projet Maven séparé du backend : il ne s'exécute ni avec mvn verify ni dans la CI.
+    Il vise une API déjà démarrée (profil demo) sur la base de 500 000 interventions.
+
+    Lancement, depuis ce dossier :  mvn gatling:test
+    Rapport HTML :                  target/gatling/consultationsimulation-<horodatage>/index.html
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>fr.mecadetect</groupId>
+    <artifactId>charge</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>MécaDétect - tests de charge</name>
+
+    <properties>
+        <maven.compiler.release>25</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <gatling.version>3.16.0</gatling.version>
+        <gatling-maven-plugin.version>4.21.12</gatling-maven-plugin.version>
+        <maven-compiler-plugin.version>3.14.0</maven-compiler-plugin.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.gatling.highcharts</groupId>
+            <artifactId>gatling-charts-highcharts</artifactId>
+            <version>${gatling.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler-plugin.version}</version>
+            </plugin>
+            <plugin>
+                <groupId>io.gatling</groupId>
+                <artifactId>gatling-maven-plugin</artifactId>
+                <version>${gatling-maven-plugin.version}</version>
+                <configuration>
+                    <simulationClass>fr.mecadetect.charge.ConsultationSimulation</simulationClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

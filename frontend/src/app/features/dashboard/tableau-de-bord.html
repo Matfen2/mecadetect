@@ -1,0 +1,118 @@
+<header class="entete">
+  <h1>Tableau de bord</h1>
+  <p class="sous-titre">Parc et interventions, sur les 12 derniers mois</p>
+</header>
+
+@if (etat().statut === 'chargement') {
+  <mat-progress-bar mode="indeterminate" aria-label="Chargement du tableau de bord" />
+}
+
+@if (erreur(); as message) {
+  <div class="erreur" role="alert">
+    <p>{{ message }}</p>
+    <button mat-stroked-button type="button" (click)="charger()">Réessayer</button>
+  </div>
+}
+
+@if (vue(); as v) {
+  <section class="chiffres" aria-label="Chiffres clés">
+    <div class="chiffre" data-indicateur="ouvertes">
+      <span class="valeur">{{ nombre(v.totalOuvertes) }}</span>
+      <span class="intitule">interventions ouvertes</span>
+    </div>
+    <div class="chiffre" data-indicateur="pannes">
+      <span class="valeur">{{ nombre(v.equipementsEnPanne) }}</span>
+      <span class="intitule">équipements en panne</span>
+    </div>
+    <div class="chiffre" data-indicateur="resolution">
+      <span class="valeur">{{ duree(v.tempsMoyen) }}</span>
+      <span class="intitule">de la demande à la fin, en moyenne</span>
+    </div>
+  </section>
+
+  <div class="grille">
+    <section class="bloc" aria-labelledby="titre-priorites">
+      <h2 id="titre-priorites">Interventions ouvertes par priorité</h2>
+      <ul class="barres">
+        @for (p of v.priorites; track p.code) {
+          <li class="ligne" [attr.data-priorite]="p.code">
+            <span class="libelle">{{ p.libelle }}</span>
+            <span class="piste"><span class="barre" [style.width.%]="p.largeur"></span></span>
+            <span class="nombre">{{ nombre(p.nombre) }}</span>
+          </li>
+        }
+      </ul>
+    </section>
+
+    <section class="bloc" aria-labelledby="titre-top">
+      <h2 id="titre-top">Équipements les plus en panne</h2>
+      <ol class="barres top">
+        @for (e of v.top; track e.reference) {
+          <li class="ligne">
+            <span class="rang">{{ e.rang }}</span>
+            <span class="libelle" [title]="e.nom"><strong>{{ e.reference }}</strong> {{ e.nom }}</span>
+            <span class="piste"><span class="barre" [style.width.%]="e.largeur"></span></span>
+            <span class="nombre">{{ nombre(e.nombrePannes) }}</span>
+          </li>
+        } @empty {
+          <li class="vide">Aucune intervention sur la période.</li>
+        }
+      </ol>
+    </section>
+
+    <section class="bloc large" aria-labelledby="titre-mois">
+      <h2 id="titre-mois">Demandes d'intervention par mois</h2>
+      <div class="histogramme" aria-hidden="true">
+        @for (m of v.mois; track m.mois) {
+          <div class="colonne" [class.en-cours]="m.enCours" tabindex="0">
+            <span class="info">
+              {{ m.libelle }} : {{ nombre(m.nombre) }} demandes
+              @if (m.enCours) { (mois en cours) } @else { ({{ variation(m.variation) }}) }
+            </span>
+            <span class="baton" [style.height.%]="m.hauteur"></span>
+            <span class="axe">{{ m.libelleCourt }}</span>
+          </div>
+        }
+      </div>
+      <p class="legende">Le dernier mois est en cours : il n'est pas encore complet.</p>
+      <table class="visuellement-cache">
+        <caption>Demandes d'intervention par mois</caption>
+        <thead><tr><th scope="col">Mois</th><th scope="col">Demandes</th><th scope="col">Écart</th></tr></thead>
+        <tbody>
+          @for (m of v.mois; track m.mois) {
+            <tr><td>{{ m.libelle }}</td><td>{{ m.nombre }}</td><td>{{ variation(m.variation) }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </section>
+
+    <section class="bloc large" aria-labelledby="titre-charge">
+      <h2 id="titre-charge">Charge des techniciens ce mois-ci</h2>
+      <table class="charge">
+        <thead>
+          <tr>
+            <th scope="col">Technicien</th>
+            <th scope="col" class="num">Interventions terminées</th>
+            <th scope="col" class="num">Temps passé</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of v.techniciens; track c.technicien.idUtilisateur) {
+            <tr>
+              <td>{{ c.technicien.prenom }} {{ c.technicien.nom }}</td>
+              <td class="num">
+                <span class="cellule-barre">
+                  <span class="piste courte"><span class="barre" [style.width.%]="c.largeur"></span></span>
+                  <span class="valeur-barre">{{ nombre(c.interventionsMois) }}</span>
+                </span>
+              </td>
+              <td class="num">{{ heures(c.tempsPasseMinMois) }}</td>
+            </tr>
+          } @empty {
+            <tr><td colspan="3" class="vide">Aucun technicien actif.</td></tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  </div>
+}

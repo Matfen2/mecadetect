@@ -1,0 +1,124 @@
+/* Les valeurs de repli ne servent que si le thème Material ne définit pas le jeton. */
+:host {
+  display: block;
+  --barre: var(--mat-sys-primary, #005cbb);
+  --piste: var(--mat-sys-surface-container-high, #e7e8ee);
+  --texte-secondaire: var(--mat-sys-on-surface-variant, #44474e);
+}
+
+.entete h1 { margin: 0; }
+.sous-titre { margin: 0.25rem 0 1.25rem; color: var(--texte-secondaire); }
+
+.erreur { display: flex; align-items: center; gap: 1rem; color: var(--mat-sys-error, #ba1a1a); }
+
+/* Chiffres clés */
+.chiffres {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.chiffre {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  background: var(--mat-sys-surface-container-low, #f3f3fa);
+}
+.valeur { font-size: 2.25rem; font-weight: 600; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.intitule { color: var(--texte-secondaire); }
+
+/* Blocs */
+.grille { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.large { grid-column: 1 / -1; }
+@media (max-width: 900px) { .grille { grid-template-columns: 1fr; } }
+
+.bloc {
+  padding: 1rem 1.25rem 1.25rem;
+  border-radius: 12px;
+  border: 1px solid var(--mat-sys-outline-variant, #c4c6d0);
+}
+.bloc h2 { font-size: 1.05rem; font-weight: 600; margin: 0 0 0.75rem; }
+
+/* Barres horizontales */
+.barres { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.45rem; }
+.ligne { display: grid; grid-template-columns: 8rem 1fr 4.5rem; align-items: center; gap: 0.75rem; }
+.top .ligne { grid-template-columns: 1.5rem minmax(0, 1.3fr) minmax(4rem, 1fr) 4.5rem; }
+.libelle { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rang { color: var(--texte-secondaire); text-align: right; font-variant-numeric: tabular-nums; }
+.nombre { text-align: right; font-variant-numeric: tabular-nums; }
+.piste { display: block; height: 0.6rem; background: var(--piste); border-radius: 4px; overflow: hidden; }
+.barre { display: block; height: 100%; background: var(--barre); border-radius: 0 4px 4px 0; }
+.vide { color: var(--texte-secondaire); }
+
+/* Histogramme mensuel */
+.histogramme {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 0.4rem;
+  height: 12rem;
+  align-items: end;
+  border-bottom: 1px solid var(--mat-sys-outline-variant, #c4c6d0);
+}
+.colonne {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  outline: none;
+}
+.baton { display: block; width: 100%; background: var(--barre); border-radius: 4px 4px 0 0; min-height: 2px; }
+.en-cours .baton {
+  background: repeating-linear-gradient(45deg, var(--barre) 0 4px, transparent 4px 8px);
+  border: 1px solid var(--barre);
+  border-bottom: none;
+}
+.axe {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  padding-top: 0.3rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--texte-secondaire);
+}
+.info {
+  visibility: hidden;
+  position: absolute;
+  bottom: calc(100% + 0.25rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  white-space: nowrap;
+  font-size: 0.85rem;
+  background: var(--mat-sys-inverse-surface, #2e3036);
+  color: var(--mat-sys-inverse-on-surface, #f0f0f7);
+  pointer-events: none;
+}
+.colonne:hover .info,
+.colonne:focus-visible .info { visibility: visible; }
+.colonne:hover .baton,
+.colonne:focus-visible .baton { filter: brightness(1.15); }
+.legende { margin: 2rem 0 0; font-size: 0.85rem; color: var(--texte-secondaire); }
+
+/* Charge des techniciens */
+.charge { width: 100%; border-collapse: collapse; }
+.charge th, .charge td { padding: 0.45rem 0.5rem; border-bottom: 1px solid var(--mat-sys-outline-variant, #c4c6d0); text-align: left; }
+.charge th { font-weight: 600; color: var(--texte-secondaire); }
+.charge .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cellule-barre { display: inline-flex; align-items: center; justify-content: flex-end; gap: 0.5rem; }
+.piste.courte { width: 6rem; }
+.valeur-barre { min-width: 3ch; }
+
+.visuellement-cache {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

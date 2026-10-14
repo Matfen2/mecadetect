@@ -4,7 +4,6 @@ import { Routes } from '@angular/router';
 import { authGuard, roleGuard, visiteurGuard } from './core/auth/auth.guards';
 import { SessionService } from './core/auth/session.service';
 
-const pageProvisoire = () => import('./features/accueil/accueil').then((m) => m.Accueil);
 
 export const routes: Routes = [
   {
@@ -53,8 +52,8 @@ export const routes: Routes = [
         path: 'dashboard',
         title: 'Tableau de bord · MécaDétect',
         canActivate: [roleGuard],
-        data: { roles: ['ADMIN'], titre: 'Tableau de bord' },
-        loadComponent: pageProvisoire,
+        data: { roles: ['ADMIN'] },
+        loadComponent: () => import('./features/dashboard/tableau-de-bord').then((m) => m.TableauDeBord),
       },
       {
         path: 'mes-interventions',

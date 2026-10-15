@@ -1,0 +1,138 @@
+# Déploiement de production de MécaDétect.
+#
+#   Internet ──https──> caddy ──┬── /api, documentation ──> api ──> oracle
+#                               └── le reste ─────────────> front
+#
+# Seul Caddy publie des ports. L'API, le front et Oracle sont sur un réseau
+# interne, sans accès à Internet ni depuis Internet.
+#
+# Lancement :
+#   docker compose -f compose.prod.yaml --env-file .env.prod up -d --wait
+# Les variables obligatoires manquantes arrêtent Docker Compose avant tout démarrage.
+
+name: mecadetect-prod
+
+# Journaux bornés : 3 fichiers de 10 Mo par conteneur, pour ne jamais remplir le disque
+x-journaux: &journaux
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "${PORT_HTTP:-80}:80"
+      - "${PORT_HTTPS:-443}:443"
+      - "${PORT_HTTPS:-443}:443/udp" # HTTP/3
+    environment:
+      DOMAINE: ${DOMAINE:?DOMAINE manquant dans le fichier d'environnement}
+    volumes:
+      - ./deploiement/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-donnees:/data # certificats : à conserver, Let's Encrypt limite les émissions
+      - caddy-config:/config
+    networks: [exterieur, interne]
+    depends_on:
+      api:
+        condition: service_healthy
+      front:
+        condition: service_healthy
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE] # écouter sur 80 et 443
+    security_opt: ["no-new-privileges:true"]
+    healthcheck:
+      # API d'administration de Caddy, accessible seulement depuis le conteneur
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:2019/config/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    logging: *journaux
+
+  front:
+    image: ghcr.io/matfen2/mecadetect-front:${VERSION:-latest}
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    restart: unless-stopped
+    networks: [interne]
+    read_only: true
+    tmpfs: [/tmp] # fichiers temporaires et pid de Nginx
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/sante"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    logging: *journaux
+
+  api:
+    image: ghcr.io/matfen2/mecadetect-api:${VERSION:-latest}
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:oracle:thin:@oracle:1521/FREEPDB1
+      DB_USER: ${ORACLE_APP_USER:?ORACLE_APP_USER manquant dans le fichier d'environnement}
+      DB_PASSWORD: ${ORACLE_APP_PASSWORD:?ORACLE_APP_PASSWORD manquant dans le fichier d'environnement}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET manquant dans le fichier d'environnement}
+    networks: [interne]
+    depends_on:
+      oracle:
+        condition: service_healthy
+    read_only: true
+    tmpfs: [/tmp] # répertoires de travail de Tomcat et de la JVM
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 1g # la JVM prend 75 % de cette limite pour le tas
+    healthcheck:
+      # L'image n'a ni curl ni wget : requête HTTP écrite à la main avec bash
+      test:
+        - CMD
+        - bash
+        - -c
+        - >-
+          exec 3<>/dev/tcp/127.0.0.1/8080
+          && printf 'GET /actuator/health HTTP/1.0\r\n\r\n' >&3
+          && grep -q '"status":"UP"' <&3
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+    logging: *journaux
+
+  oracle:
+    image: gvenzl/oracle-free:23-slim
+    restart: unless-stopped
+    environment:
+      ORACLE_PASSWORD: ${ORACLE_PASSWORD:?ORACLE_PASSWORD manquant dans le fichier d'environnement}
+      APP_USER: ${ORACLE_APP_USER:?ORACLE_APP_USER manquant dans le fichier d'environnement}
+      APP_USER_PASSWORD: ${ORACLE_APP_PASSWORD:?ORACLE_APP_PASSWORD manquant dans le fichier d'environnement}
+    volumes:
+      - oracle-donnees:/opt/oracle/oradata
+    networks: [interne]
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 120s # premier démarrage : création de la base
+    logging: *journaux
+
+networks:
+  exterieur: {}
+  interne:
+    internal: true # aucune route vers Internet
+
+volumes:
+  oracle-donnees: {}
+  caddy-donnees: {}
+  caddy-config: {}

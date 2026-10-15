@@ -32,7 +32,7 @@ $PortFront = 18080
 $TailleMaxApiMo = 450
 $TailleMaxFrontMo = 80
 $Source = 'https://github.com/Matfen2/mecadetect'
-$VerificationsAttendues = 29
+$VerificationsAttendues = 30
 
 # curl.exe sous Windows (curl y est un alias d'Invoke-WebRequest), curl ailleurs
 $curl = 'curl.exe'
@@ -259,7 +259,7 @@ $frontConstruit = Construire 'frontend/Dockerfile' $ImageFront ''
 Titre 'Front : vérifications'
 Verifier 'Front : image construite' $frontConstruit
 if (-not $frontConstruit) {
-    NonFaites 'Front : image non construite' 16
+    NonFaites 'Front : image non construite' 17
 } else {
     VerifierArm64 'frontend/Dockerfile' $ImageFront 'Front'
 
@@ -278,6 +278,11 @@ if (-not $frontConstruit) {
     $accueil = Http "$base/"
     Verifier 'Front : / renvoie l''application Angular' ($accueil.Statut -eq 200 -and $accueil.Corps -match '<app-root') "(statut : $($accueil.Statut))"
     Verifier 'Front : index.html toujours revalidé (no-cache)' ((Entete $accueil 'Cache-Control') -match 'no-cache') "(Cache-Control : '$(Entete $accueil 'Cache-Control')')"
+
+    # Un attribut onload="…" dans index.html est bloqué par la CSP (script-src 'self') :
+    # c'est ce que produit l'inlining du CSS critique d'Angular
+    $gestionnaires = [regex]::Matches($accueil.Corps, '\son[a-z]+\s*=') | ForEach-Object { $_.Value.Trim() }
+    Verifier 'Front : aucun script en ligne dans index.html (compatible CSP)' (@($gestionnaires).Count -eq 0) "(trouvé : $($gestionnaires -join ', '))"
 
     $profond = Http "$base/interventions/42"
     Verifier 'Front : lien direct vers une route Angular' ($profond.Statut -eq 200 -and $profond.Corps -match '<app-root') "(statut : $($profond.Statut))"

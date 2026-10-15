@@ -1,0 +1,47 @@
+# Proxy d'entrée de MécaDétect.
+# Caddy obtient et renouvelle seul le certificat HTTPS (Let's Encrypt) pour le
+# domaine, et redirige http vers https. Avec DOMAINE=localhost, il utilise sa
+# propre autorité locale : pratique pour vérifier le déploiement sur le poste.
+
+{$DOMAINE} {
+	encode zstd gzip
+
+	# En-têtes de sécurité, posés une fois pour toutes les réponses
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+		# Angular injecte les styles de ses composants dans des balises <style> :
+		# 'unsafe-inline' est nécessaire pour les styles, jamais pour les scripts.
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+		# Ni Caddy ni Nginx n'annoncent leur nom
+		-Server
+		-Via
+	}
+
+	# Sondes de santé : réservées aux healthchecks internes, jamais publiques
+	handle /actuator/* {
+		respond 404
+	}
+
+	handle /api/* {
+		reverse_proxy api:8080
+	}
+
+	# Documentation de l'API (Swagger UI et contrat), volontairement publique
+	@documentation path /swagger-ui.html /swagger-ui/* /v3/api-docs /v3/api-docs/* /openapi.yaml
+	handle @documentation {
+		reverse_proxy api:8080
+	}
+
+	# Tout le reste : l'application Angular
+	handle {
+		reverse_proxy front:8080
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}

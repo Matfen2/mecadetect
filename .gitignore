@@ -16,7 +16,10 @@ frontend/src/app/core/api/
 
 # Secrets et environnement
 .env
+.env.*
 *.env.local
+!.env.example
+!.env.prod.example
 
 # Système
 .DS_Store

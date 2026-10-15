@@ -79,7 +79,8 @@ services:
       dockerfile: backend/Dockerfile
     restart: unless-stopped
     environment:
-      SPRING_PROFILES_ACTIVE: prod
+      # prod seul par défaut ; prod,demo sur le site public (comptes et données de démonstration)
+      SPRING_PROFILES_ACTIVE: ${PROFILS:-prod}
       DB_URL: jdbc:oracle:thin:@oracle:1521/FREEPDB1
       DB_USER: ${ORACLE_APP_USER:?ORACLE_APP_USER manquant dans le fichier d'environnement}
       DB_PASSWORD: ${ORACLE_APP_PASSWORD:?ORACLE_APP_PASSWORD manquant dans le fichier d'environnement}

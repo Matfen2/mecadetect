@@ -8,7 +8,7 @@
 
 set -u
 
-VERIFICATIONS_ATTENDUES=17
+VERIFICATIONS_ATTENDUES=18
 UTILISATEUR=ubuntu
 DOSSIER=/opt/mecadetect
 
@@ -104,6 +104,12 @@ dossier_deploiement() {
     [[ $(stat -c '%U:%G %a' "$DOSSIER") == "$UTILISATEUR:$UTILISATEUR 750" ]]
 }
 
+# Script présent, exécutable, et planifié chaque nuit à 03:00 pour ubuntu
+reinitialisation_planifiee() {
+    [[ -x $DOSSIER/reinitialiser-demo.sh ]] \
+        && crontab -u "$UTILISATEUR" -l 2>/dev/null | grep -qE '^0 3 \* \* \* .*reinitialiser-demo\.sh'
+}
+
 # Libres, ou déjà pris par un conteneur (Caddy une fois déployé)
 ports_web_disponibles() {
     ! ss -Hltn '( sport = :80 or sport = :443 )' | grep -q . \
@@ -142,6 +148,7 @@ verifier 'un conteneur arm64 démarre (hello-world)' conteneur_arm
 titre 'Déploiement'
 verifier "dossier $DOSSIER à $UTILISATEUR, fermé aux autres (750)" dossier_deploiement
 verifier 'ports 80 et 443 disponibles pour Caddy' ports_web_disponibles
+verifier 'remise à zéro de la démonstration planifiée chaque nuit à 03:00' reinitialisation_planifiee
 
 total=$((reussites + echecs))
 echo

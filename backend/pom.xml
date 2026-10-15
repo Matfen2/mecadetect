@@ -13,7 +13,7 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<name>mecadetect</name>
 	<description>MécaDétect - API de suivi de maintenance industrielle</description>
-		<properties>
+	<properties>
 		<java.version>25</java.version>
 		<!-- Correctifs de sécurité en attendant Spring Boot 4.1.2 (analyse Trivy du 15/10/2026).
 		     À retirer quand Spring Boot embarque ces versions ou des plus récentes. -->
@@ -130,6 +130,33 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<!-- Couverture des tests (rapport lu par SonarCloud) -->
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.15</version>
+				<configuration>
+					<excludes>
+						<!-- Interfaces et DTO générés depuis le contrat OpenAPI -->
+						<exclude>fr/mecadetect/api/**</exclude>
+					</excludes>
+				</configuration>
+				<executions>
+					<execution>
+						<id>agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>rapport</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 			<!-- Génération des interfaces Spring et des DTO depuis le contrat OpenAPI -->
 			<plugin>

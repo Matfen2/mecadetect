@@ -5,6 +5,7 @@ backend/target/
 # Angular / Node
 frontend/node_modules/
 frontend/dist/
+frontend/coverage/
 frontend/.angular/
 frontend/src/app/core/api/
 

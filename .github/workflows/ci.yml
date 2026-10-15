@@ -5,11 +5,20 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  workflow_dispatch:
 
-# Annule l'exécution précédente si un nouveau push arrive sur la même branche
+# Une nouvelle poussée annule l'exécution en cours sur la même branche,
+# sauf sur main : un déploiement commencé va toujours à son terme
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+# Droits minimaux par défaut ; chaque job élargit seulement ce dont il a besoin
+permissions:
+  contents: read
+
+env:
+  IMAGES: ghcr.io/matfen2/mecadetect
 
 jobs:
   backend:
@@ -44,10 +53,11 @@ jobs:
       - name: Récupérer le code
         uses: actions/checkout@v5
 
-      - name: Installer Node LTS
+      # Même version que l'image de production (node:24)
+      - name: Installer Node 24 LTS
         uses: actions/setup-node@v5
         with:
-          node-version: lts/*
+          node-version: '24'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
@@ -70,3 +80,153 @@ jobs:
 
       - name: Build de production
         run: npm run build
+
+  # ---------------------------------------------------------------- Livraison
+  # Après un merge sur main, ou à la demande (bouton « Run workflow »),
+  # et seulement si les tests sont verts
+  images:
+    name: Image ${{ matrix.composant }} (arm64, GHCR)
+    needs: [backend, frontend]
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+      || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - composant: api
+            dockerfile: backend/Dockerfile
+          - composant: front
+            dockerfile: frontend/Dockerfile
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v5
+
+      # Émulation arm64 : seules les étapes finales des images en ont besoin,
+      # Maven et npm tournent en natif ($BUILDPLATFORM dans les Dockerfiles)
+      - name: Émulation arm64
+        uses: docker/setup-qemu-action@v3
+
+      - name: Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Construire l'image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/arm64
+          load: true
+          tags: ${{ env.IMAGES }}-${{ matrix.composant }}:${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.composant }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.composant }}
+
+      # Bloque la publication si l'image contient une faille critique ou haute
+      # qui a un correctif. Version 0.35.0 : publication immuable, postérieure
+      # à la compromission des étiquettes de trivy-action (CVE-2026-33634).
+      - name: Analyse de vulnérabilités (Trivy)
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          image-ref: ${{ env.IMAGES }}-${{ matrix.composant }}:${{ github.sha }}
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: Connexion à GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Étiquette du commit (immuable, sert aux retours arrière) et latest
+      - name: Publier
+        run: |
+          image="$IMAGES-${{ matrix.composant }}"
+          docker push "$image:$GITHUB_SHA"
+          docker tag "$image:$GITHUB_SHA" "$image:latest"
+          docker push "$image:latest"
+
+  deploiement:
+    name: Déploiement (Oracle Cloud)
+    needs: images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    environment:
+      name: production
+      url: https://${{ vars.DOMAINE }}
+    concurrency:
+      group: deploiement-production
+      cancel-in-progress: false
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v5
+
+      # Clé dédiée au déploiement, et empreinte du serveur épinglée :
+      # pas de StrictHostKeyChecking=no, qui accepterait n'importe quel serveur
+      - name: Préparer SSH
+        env:
+          CLE: ${{ secrets.SSH_CLE_DEPLOIEMENT }}
+          HOTE_CONNU: ${{ secrets.SSH_HOTE_CONNU }}
+          HOTE: ${{ vars.SSH_HOTE }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$CLE" > ~/.ssh/deploiement
+          chmod 600 ~/.ssh/deploiement
+          printf '%s\n' "$HOTE_CONNU" > ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<CONF
+          Host production
+              HostName $HOTE
+              User ubuntu
+              IdentityFile ~/.ssh/deploiement
+              IdentitiesOnly yes
+              BatchMode yes
+          CONF
+
+      - name: Copier la configuration
+        run: |
+          scp compose.prod.yaml deploiement/reinitialiser-demo.sh production:/opt/mecadetect/
+          scp deploiement/Caddyfile production:/opt/mecadetect/deploiement/
+
+      # Le jeton GitHub, valable le temps du job, passe par l'entrée standard :
+      # il n'apparaît ni dans les arguments ni dans les journaux
+      - name: Connexion de la VM à GHCR
+        env:
+          JETON: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '%s' "$JETON" | ssh production \
+              "docker login ghcr.io -u '${{ github.actor }}' --password-stdin"
+
+      - name: Déployer la version ${{ github.sha }}
+        run: |
+          ssh production bash -s -- "$GITHUB_SHA" <<'SCRIPT'
+          set -euo pipefail
+          trap 'docker logout ghcr.io >/dev/null' EXIT
+          cd /opt/mecadetect
+          compose() { docker compose -f compose.prod.yaml --env-file .env.prod "$@"; }
+
+          # Version déployée = commit : un retour arrière remet simplement l'ancienne valeur
+          if grep -q '^VERSION=' .env.prod; then
+              sed -i "s/^VERSION=.*/VERSION=$1/" .env.prod
+          else
+              echo "VERSION=$1" >> .env.prod
+          fi
+          chmod +x reinitialiser-demo.sh
+
+          compose pull --quiet api front
+          compose up -d --no-build --wait --wait-timeout 600
+          # Le Caddyfile est monté depuis l'hôte : Caddy le relit sans couper le service
+          compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile
+          # Images inutilisées de plus de 7 jours : on garde de quoi revenir en arrière
+          docker image prune -af --filter "until=168h"
+          compose ps
+          SCRIPT
+
+      # Les 15 vérifications de production, depuis Internet
+      - name: Vérifier le site en production
+        run: pwsh scripts/verifier-production.ps1 -Domaine "${{ vars.DOMAINE }}"

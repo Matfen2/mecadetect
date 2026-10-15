@@ -40,8 +40,20 @@ jobs:
 
       # Génère les interfaces depuis api/openapi.yaml, compile,
       # puis lance les tests (Testcontainers démarre Oracle via Docker)
+      # Génère aussi le rapport de couverture JaCoCo (target/site/jacoco)
       - name: Build et tests
         run: mvn -B verify
+
+      # Classes compilées et couverture, reprises par le job SonarCloud
+      - name: Conserver les résultats pour l'analyse
+        uses: actions/upload-artifact@v5
+        with:
+          name: analyse-backend
+          path: |
+            backend/target/classes
+            backend/target/test-classes
+            backend/target/site/jacoco/jacoco.xml
+          retention-days: 1
 
   frontend:
     name: Front-end (Angular)
@@ -75,11 +87,49 @@ jobs:
       - name: Générer le client API depuis le contrat
         run: npm run generate:api
 
-      - name: Tests
-        run: npx ng test --watch=false
+      - name: Tests et couverture
+        run: npx ng test --watch=false --coverage --coverage-reporters=lcov --coverage-reporters=text-summary
+
+      - name: Conserver la couverture pour l'analyse
+        uses: actions/upload-artifact@v5
+        with:
+          name: couverture-frontend
+          path: frontend/coverage
+          retention-days: 1
 
       - name: Build de production
         run: npm run build
+
+  # ---------------------------------------------------------------- Qualité
+  # Indépendant de la livraison : une alerte de qualité se traite,
+  # elle ne bloque pas un correctif urgent
+  qualite:
+    name: Qualité (SonarCloud)
+    needs: [backend, frontend]
+    runs-on: ubuntu-24.04
+    steps:
+      # Historique complet : SonarCloud distingue le code nouveau de l'ancien
+      - name: Récupérer le code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Résultats du back-end
+        uses: actions/download-artifact@v6
+        with:
+          name: analyse-backend
+          path: backend/target
+
+      - name: Couverture du front-end
+        uses: actions/download-artifact@v6
+        with:
+          name: couverture-frontend
+          path: frontend/coverage
+
+      - name: Analyse SonarCloud
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   # ---------------------------------------------------------------- Livraison
   # Après un merge sur main, ou à la demande (bouton « Run workflow »),

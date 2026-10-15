@@ -1,4 +1,4 @@
-name: CI
+﻿name: CI
 
 on:
   push:
@@ -7,13 +7,13 @@ on:
     branches: [main, develop]
   workflow_dispatch:
 
-# Une nouvelle poussée annule l'exécution en cours sur la même branche,
-# sauf sur main : un déploiement commencé va toujours à son terme
+# Une nouvelle poussÃ©e annule l'exÃ©cution en cours sur la mÃªme branche,
+# sauf sur main : un dÃ©ploiement commencÃ© va toujours Ã  son terme
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
-# Droits minimaux par défaut ; chaque job élargit seulement ce dont il a besoin
+# Droits minimaux par dÃ©faut ; chaque job Ã©largit seulement ce dont il a besoin
 permissions:
   contents: read
 
@@ -28,7 +28,7 @@ jobs:
       run:
         working-directory: backend
     steps:
-      - name: Récupérer le code
+      - name: RÃ©cupÃ©rer le code
         uses: actions/checkout@v5
 
       - name: Installer Java 25
@@ -38,15 +38,15 @@ jobs:
           java-version: '25'
           cache: maven
 
-      # Génère les interfaces depuis api/openapi.yaml, compile,
-      # puis lance les tests (Testcontainers démarre Oracle via Docker)
-      # Génère aussi le rapport de couverture JaCoCo (target/site/jacoco)
+      # GÃ©nÃ¨re les interfaces depuis api/openapi.yaml, compile,
+      # puis lance les tests (Testcontainers dÃ©marre Oracle via Docker)
+      # GÃ©nÃ¨re aussi le rapport de couverture JaCoCo (target/site/jacoco)
       - name: Build et tests
         run: mvn -B verify
 
-      # Classes compilées et couverture, reprises par le job SonarCloud
-      - name: Conserver les résultats pour l'analyse
-        uses: actions/upload-artifact@v5
+      # Classes compilÃ©es et couverture, reprises par le job SonarCloud
+      - name: Conserver les rÃ©sultats pour l'analyse
+        uses: actions/upload-artifact@v6
         with:
           name: analyse-backend
           path: |
@@ -62,10 +62,10 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - name: Récupérer le code
+      - name: RÃ©cupÃ©rer le code
         uses: actions/checkout@v5
 
-      # Même version que l'image de production (node:24)
+      # MÃªme version que l'image de production (node:24)
       - name: Installer Node 24 LTS
         uses: actions/setup-node@v5
         with:
@@ -73,25 +73,25 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Installer les dépendances
+      - name: Installer les dÃ©pendances
         run: npm ci
 
-      # Le générateur télécharge son jar à chaque exécution : on le garde en cache
-      # (après npm ci, qui vide node_modules)
+      # Le gÃ©nÃ©rateur tÃ©lÃ©charge son jar Ã  chaque exÃ©cution : on le garde en cache
+      # (aprÃ¨s npm ci, qui vide node_modules)
       - name: Cache du jar openapi-generator
         uses: actions/cache@v5
         with:
           path: frontend/node_modules/@openapitools/openapi-generator-cli/versions
           key: openapi-generator-cli-${{ hashFiles('frontend/openapitools.json') }}
 
-      - name: Générer le client API depuis le contrat
+      - name: GÃ©nÃ©rer le client API depuis le contrat
         run: npm run generate:api
 
       - name: Tests et couverture
         run: npx ng test --watch=false --coverage --coverage-reporters=lcov --coverage-reporters=text-summary
 
       - name: Conserver la couverture pour l'analyse
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: couverture-frontend
           path: frontend/coverage
@@ -100,21 +100,21 @@ jobs:
       - name: Build de production
         run: npm run build
 
-  # ---------------------------------------------------------------- Qualité
-  # Indépendant de la livraison : une alerte de qualité se traite,
+  # ---------------------------------------------------------------- QualitÃ©
+  # IndÃ©pendant de la livraison : une alerte de qualitÃ© se traite,
   # elle ne bloque pas un correctif urgent
   qualite:
-    name: Qualité (SonarCloud)
+    name: QualitÃ© (SonarCloud)
     needs: [backend, frontend]
     runs-on: ubuntu-24.04
     steps:
       # Historique complet : SonarCloud distingue le code nouveau de l'ancien
-      - name: Récupérer le code
+      - name: RÃ©cupÃ©rer le code
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
-      - name: Résultats du back-end
+      - name: RÃ©sultats du back-end
         uses: actions/download-artifact@v6
         with:
           name: analyse-backend
@@ -132,7 +132,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   # ---------------------------------------------------------------- Livraison
-  # Après un merge sur main, ou à la demande (bouton « Run workflow »),
+  # AprÃ¨s un merge sur main, ou Ã  la demande (bouton Â« Run workflow Â»),
   # et seulement si les tests sont verts
   images:
     name: Image ${{ matrix.composant }} (arm64, GHCR)
@@ -145,7 +145,7 @@ jobs:
       contents: read
       packages: write
     strategy:
-      # Une image en échec n'annule pas l'autre : on voit les deux résultats
+      # Une image en Ã©chec n'annule pas l'autre : on voit les deux rÃ©sultats
       fail-fast: false
       matrix:
         include:
@@ -154,12 +154,12 @@ jobs:
           - composant: front
             dockerfile: frontend/Dockerfile
     steps:
-      - name: Récupérer le code
+      - name: RÃ©cupÃ©rer le code
         uses: actions/checkout@v5
 
-      # Émulation arm64 : seules les étapes finales des images en ont besoin,
+      # Ã‰mulation arm64 : seules les Ã©tapes finales des images en ont besoin,
       # Maven et npm tournent en natif ($BUILDPLATFORM dans les Dockerfiles)
-      - name: Émulation arm64
+      - name: Ã‰mulation arm64
         uses: docker/setup-qemu-action@v3
 
       - name: Buildx
@@ -177,9 +177,9 @@ jobs:
           cache-to: type=gha,mode=max,scope=${{ matrix.composant }}
 
       # Bloque la publication si l'image contient une faille critique ou haute
-      # qui a un correctif. Version 0.35.0 : publication immuable, postérieure
-      # à la compromission des étiquettes de trivy-action (CVE-2026-33634).
-      - name: Analyse de vulnérabilités (Trivy)
+      # qui a un correctif. Version 0.35.0 : publication immuable, postÃ©rieure
+      # Ã  la compromission des Ã©tiquettes de trivy-action (CVE-2026-33634).
+      - name: Analyse de vulnÃ©rabilitÃ©s (Trivy)
         uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: ${{ env.IMAGES }}-${{ matrix.composant }}:${{ github.sha }}
@@ -187,14 +187,14 @@ jobs:
           ignore-unfixed: true
           exit-code: '1'
 
-      - name: Connexion à GHCR
+      - name: Connexion Ã  GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Étiquette du commit (immuable, sert aux retours arrière) et latest
+      # Ã‰tiquette du commit (immuable, sert aux retours arriÃ¨re) et latest
       - name: Publier
         run: |
           image="$IMAGES-${{ matrix.composant }}"
@@ -203,7 +203,7 @@ jobs:
           docker push "$image:latest"
 
   deploiement:
-    name: Déploiement (Oracle Cloud)
+    name: DÃ©ploiement (Oracle Cloud)
     needs: images
     runs-on: ubuntu-24.04
     permissions:
@@ -216,12 +216,12 @@ jobs:
       group: deploiement-production
       cancel-in-progress: false
     steps:
-      - name: Récupérer le code
+      - name: RÃ©cupÃ©rer le code
         uses: actions/checkout@v5
 
-      # Clé dédiée au déploiement, et empreinte du serveur épinglée :
+      # ClÃ© dÃ©diÃ©e au dÃ©ploiement, et empreinte du serveur Ã©pinglÃ©e :
       # pas de StrictHostKeyChecking=no, qui accepterait n'importe quel serveur
-      - name: Préparer SSH
+      - name: PrÃ©parer SSH
         env:
           CLE: ${{ secrets.SSH_CLE_DEPLOIEMENT }}
           HOTE_CONNU: ${{ secrets.SSH_HOTE_CONNU }}
@@ -245,16 +245,16 @@ jobs:
           scp compose.prod.yaml deploiement/reinitialiser-demo.sh production:/opt/mecadetect/
           scp deploiement/Caddyfile production:/opt/mecadetect/deploiement/
 
-      # Le jeton GitHub, valable le temps du job, passe par l'entrée standard :
-      # il n'apparaît ni dans les arguments ni dans les journaux
-      - name: Connexion de la VM à GHCR
+      # Le jeton GitHub, valable le temps du job, passe par l'entrÃ©e standard :
+      # il n'apparaÃ®t ni dans les arguments ni dans les journaux
+      - name: Connexion de la VM Ã  GHCR
         env:
           JETON: ${{ secrets.GITHUB_TOKEN }}
         run: |
           printf '%s' "$JETON" | ssh production \
               "docker login ghcr.io -u '${{ github.actor }}' --password-stdin"
 
-      - name: Déployer la version ${{ github.sha }}
+      - name: DÃ©ployer la version ${{ github.sha }}
         run: |
           ssh production bash -s -- "$GITHUB_SHA" <<'SCRIPT'
           set -euo pipefail
@@ -262,7 +262,7 @@ jobs:
           cd /opt/mecadetect
           compose() { docker compose -f compose.prod.yaml --env-file .env.prod "$@"; }
 
-          # Version déployée = commit : un retour arrière remet simplement l'ancienne valeur
+          # Version dÃ©ployÃ©e = commit : un retour arriÃ¨re remet simplement l'ancienne valeur
           if grep -q '^VERSION=' .env.prod; then
               sed -i "s/^VERSION=.*/VERSION=$1/" .env.prod
           else
@@ -272,13 +272,13 @@ jobs:
 
           compose pull --quiet api front
           compose up -d --no-build --wait --wait-timeout 600
-          # Le Caddyfile est monté depuis l'hôte : Caddy le relit sans couper le service
+          # Le Caddyfile est montÃ© depuis l'hÃ´te : Caddy le relit sans couper le service
           compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile
-          # Images inutilisées de plus de 7 jours : on garde de quoi revenir en arrière
+          # Images inutilisÃ©es de plus de 7 jours : on garde de quoi revenir en arriÃ¨re
           docker image prune -af --filter "until=168h"
           compose ps
           SCRIPT
 
-      # Les 15 vérifications de production, depuis Internet
-      - name: Vérifier le site en production
+      # Les 15 vÃ©rifications de production, depuis Internet
+      - name: VÃ©rifier le site en production
         run: pwsh scripts/verifier-production.ps1 -Domaine "${{ vars.DOMAINE }}"

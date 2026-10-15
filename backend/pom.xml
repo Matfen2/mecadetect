@@ -13,8 +13,13 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<name>mecadetect</name>
 	<description>MécaDétect - API de suivi de maintenance industrielle</description>
-	<properties>
+		<properties>
 		<java.version>25</java.version>
+		<!-- Correctifs de sécurité en attendant Spring Boot 4.1.2 (analyse Trivy du 15/10/2026).
+		     À retirer quand Spring Boot embarque ces versions ou des plus récentes. -->
+		<tomcat.version>11.0.25</tomcat.version>
+		<jackson-bom.version>3.1.7</jackson-bom.version>
+		<jackson-2-bom.version>2.21.7</jackson-2-bom.version>
 	</properties>
 	<dependencies>
 		<dependency>

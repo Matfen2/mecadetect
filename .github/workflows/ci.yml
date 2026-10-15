@@ -95,6 +95,8 @@ jobs:
       contents: read
       packages: write
     strategy:
+      # Une image en échec n'annule pas l'autre : on voit les deux résultats
+      fail-fast: false
       matrix:
         include:
           - composant: api

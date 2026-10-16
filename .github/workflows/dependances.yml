@@ -21,9 +21,11 @@ on:
       - .github/workflows/dependances.yml
   workflow_dispatch:
 
+# Pas d'annulation : la première mise à jour de la base NVD dure des heures,
+# l'interrompre ferait tout recommencer
 concurrency:
   group: dependances-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -32,7 +34,7 @@ jobs:
   backend:
     name: Back-end (OWASP Dependency-Check)
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 350 # maximum GitHub : 360
     permissions:
       contents: read
       security-events: write # résultats publiés dans l'onglet Security
@@ -50,15 +52,31 @@ jobs:
           java-version: '25'
           cache: maven
 
-      # Base NVD locale (plusieurs centaines de Mo) : le premier téléchargement
-      # prend de longues minutes, les suivants ne récupèrent que les nouveautés.
-      # Clé unique par exécution pour enregistrer la base à jour à chaque fois.
-      - name: Cache de la base NVD
-        uses: actions/cache@v5
+      # Base NVD locale (plus de 400 000 vulnérabilités, plusieurs centaines de Mo).
+      # Le premier téléchargement prend environ 3 heures (débit limité par la NVD) ;
+      # les suivants ne récupèrent que les nouveautés, en une ou deux minutes.
+      - name: Restaurer la base NVD
+        uses: actions/cache/restore@v5
         with:
           path: ~/.m2/repository/org/owasp/dependency-check-data
-          key: nvd-${{ github.run_id }}
+          key: nvd-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: nvd-
+
+      # Étape séparée, avec sa propre limite de temps : si elle échoue ou dépasse,
+      # la base est quand même enregistrée à l'étape suivante
+      - name: Mettre à jour la base NVD
+        timeout-minutes: 300
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: mvn -B dependency-check:update-only
+
+      # Toujours enregistrée, y compris après un échec : rien n'est retéléchargé deux fois
+      - name: Enregistrer la base NVD
+        if: always()
+        uses: actions/cache/save@v5
+        with:
+          path: ~/.m2/repository/org/owasp/dependency-check-data
+          key: nvd-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Analyse des dépendances
         env:

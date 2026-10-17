@@ -8,9 +8,12 @@
 
 set -u
 
-VERIFICATIONS_ATTENDUES=18
+VERIFICATIONS_ATTENDUES=27
 UTILISATEUR=ubuntu
 DOSSIER=/opt/mecadetect
+SAUVEGARDES=$DOSSIER/sauvegardes
+OCI=/home/$UTILISATEUR/.local/bin/oci
+BUCKET=mecadetect-sauvegardes
 
 reussites=0
 echecs=0
@@ -110,6 +113,66 @@ reinitialisation_planifiee() {
         && crontab -u "$UTILISATEUR" -l 2>/dev/null | grep -qE '^0 3 \* \* \* .*reinitialiser-demo\.sh'
 }
 
+# ------------------------------------------------------------------ Sauvegardes (tâche 5.8)
+# oci exécuté comme le fera cron : par ubuntu, authentifié par principal d'instance
+oci_ubuntu() {
+    sudo -u "$UTILISATEUR" -H env OCI_CLI_AUTH=instance_principal \
+        OCI_CLI_SUPPRESS_FILE_PERMISSIONS_WARNING=True "$OCI" "$@"
+}
+
+namespace_attendu() { sed -n 's/^SAUVEGARDE_NAMESPACE=//p' "$DOSSIER/.env.prod"; }
+
+oci_installe() { [[ -x $OCI ]] && sudo -u "$UTILISATEUR" -H "$OCI" --version; }
+
+# La VM obtient son identité d'Oracle Cloud, sans clé, et vise le bon namespace
+principal_instance() {
+    local attendu
+    attendu=$(namespace_attendu)
+    [[ -n $attendu && $(oci_ubuntu os ns get --query data --raw-output) == "$attendu" ]]
+}
+
+bucket_accessible() {
+    oci_ubuntu os object list --namespace "$(namespace_attendu)" --bucket-name "$BUCKET" --limit 1
+}
+
+dossier_sauvegardes() {
+    [[ $(stat -c '%U:%G %a' "$SAUVEGARDES") == "$UTILISATEUR:$UTILISATEUR 700" ]]
+}
+
+sauvegarde_planifiee() {
+    [[ -x $DOSSIER/sauvegarder.sh ]] \
+        && crontab -u "$UTILISATEUR" -l 2>/dev/null | grep -qE '^30 2 \* \* \* .*sauvegarder\.sh'
+}
+
+test_restauration_planifie() {
+    [[ -x $DOSSIER/restaurer.sh ]] \
+        && crontab -u "$UTILISATEUR" -l 2>/dev/null | grep -qE '^45 2 \* \* 0 .*restaurer\.sh --test'
+}
+
+derniere_sauvegarde() {
+    find "$SAUVEGARDES" -maxdepth 1 -name 'mecadetect-*.dmp.gz' -printf '%f\n' 2>/dev/null | sort | tail -n 1
+}
+
+# Moins de 26 heures : la sauvegarde de la nuit dernière a bien eu lieu
+sauvegarde_recente() {
+    local fichier
+    fichier=$(derniere_sauvegarde)
+    [[ -n $fichier ]] && [[ -n $(find "$SAUVEGARDES/$fichier" -mmin -1560) ]] \
+        && (cd "$SAUVEGARDES" && sha256sum --quiet -c "$fichier.sha256")
+}
+
+sauvegarde_externalisee() {
+    local fichier
+    fichier=$(derniere_sauvegarde)
+    [[ -n $fichier ]] && oci_ubuntu os object head --namespace "$(namespace_attendu)" \
+        --bucket-name "$BUCKET" --name "$fichier"
+}
+
+# Une sauvegarde jamais restaurée ne prouve rien : test réussi depuis moins de 8 jours
+test_restauration_recent() {
+    [[ -n $(find "$SAUVEGARDES/.dernier-test-restauration" -mtime -8 2>/dev/null) ]]
+}
+
 # Libres, ou déjà pris par un conteneur (Caddy une fois déployé)
 ports_web_disponibles() {
     ! ss -Hltn '( sport = :80 or sport = :443 )' | grep -q . \
@@ -149,6 +212,17 @@ titre 'Déploiement'
 verifier "dossier $DOSSIER à $UTILISATEUR, fermé aux autres (750)" dossier_deploiement
 verifier 'ports 80 et 443 disponibles pour Caddy' ports_web_disponibles
 verifier 'remise à zéro de la démonstration planifiée chaque nuit à 03:00' reinitialisation_planifiee
+
+titre 'Sauvegardes'
+verifier 'outil oci installé pour ubuntu' oci_installe
+verifier "la VM s'authentifie par principal d'instance (namespace de .env.prod)" principal_instance
+verifier "bucket $BUCKET accessible" bucket_accessible
+verifier "dossier $SAUVEGARDES à $UTILISATEUR, privé (700)" dossier_sauvegardes
+verifier 'sauvegarde planifiée chaque nuit à 02:30' sauvegarde_planifiee
+verifier 'test de restauration planifié chaque dimanche à 02:45' test_restauration_planifie
+verifier 'sauvegarde de moins de 26 heures, empreinte SHA-256 valide' sauvegarde_recente
+verifier 'cette sauvegarde est aussi dans le bucket' sauvegarde_externalisee
+verifier 'test de restauration réussi depuis moins de 8 jours' test_restauration_recent
 
 total=$((reussites + echecs))
 echo

@@ -245,7 +245,8 @@ jobs:
 
       - name: Copier la configuration
         run: |
-          scp compose.prod.yaml deploiement/reinitialiser-demo.sh production:/opt/mecadetect/
+          scp compose.prod.yaml deploiement/reinitialiser-demo.sh \
+              deploiement/sauvegarder.sh deploiement/restaurer.sh production:/opt/mecadetect/
           scp deploiement/Caddyfile production:/opt/mecadetect/deploiement/
 
       # Le jeton GitHub, valable le temps du job, passe par l'entrée standard :
@@ -271,7 +272,7 @@ jobs:
           else
               echo "VERSION=$1" >> .env.prod
           fi
-          chmod +x reinitialiser-demo.sh
+          chmod +x reinitialiser-demo.sh sauvegarder.sh restaurer.sh
 
           compose pull --quiet api front
           compose up -d --no-build --wait --wait-timeout 600

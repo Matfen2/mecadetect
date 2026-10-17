@@ -27,6 +27,10 @@ if [[ ",${PROFILS:-prod}," != *,demo,* ]]; then
     exit 1
 fi
 
+# Une seule opération à la fois sur la base : sauvegarde, restauration, réinitialisation
+exec 9>"$DOSSIER/.verrou-base"
+flock -w 1800 9 || { journal "Base occupée depuis 30 minutes : réinitialisation abandonnée."; exit 1; }
+
 # sqlplus dans le conteneur Oracle ; la connexion est lue sur l'entrée standard,
 # le mot de passe n'apparaît donc pas dans la liste des processus
 sqlplus_application() {

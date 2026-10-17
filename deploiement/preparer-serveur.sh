@@ -122,6 +122,28 @@ usermod -aG docker "$UTILISATEUR"
 etape 'Dossier de déploiement'
 install -d -o "$UTILISATEUR" -g "$UTILISATEUR" -m 750 "$DOSSIER"
 
+# ------------------------------------------------------------------ Sauvegardes
+etape 'Outil oci (copie des sauvegardes vers Object Storage)'
+# Installé pour ubuntu seul, dans un environnement isolé (pipx) ;
+# authentification par principal d'instance, donc aucune configuration ni clé
+apt-get install -y -q pipx
+if [[ ! -x /home/$UTILISATEUR/.local/bin/oci ]]; then
+    sudo -u "$UTILISATEUR" -H pipx install oci-cli
+fi
+
+etape 'Dossier des sauvegardes'
+install -d -o "$UTILISATEUR" -g "$UTILISATEUR" -m 700 "$DOSSIER/sauvegardes"
+
+etape 'Tâches planifiées'
+# Les lignes de MécaDétect sont remplacées, les autres tâches d'ubuntu conservées
+taches="30 2 * * * $DOSSIER/sauvegarder.sh >> $DOSSIER/sauvegarde.log 2>&1
+45 2 * * 0 $DOSSIER/restaurer.sh --test >> $DOSSIER/sauvegarde.log 2>&1
+0 3 * * * $DOSSIER/reinitialiser-demo.sh >> $DOSSIER/reinitialisation.log 2>&1"
+{
+    crontab -u "$UTILISATEUR" -l 2>/dev/null | grep -vE '(sauvegarder|restaurer|reinitialiser-demo)\.sh' || true
+    echo "$taches"
+} | crontab -u "$UTILISATEUR" -
+
 etape 'Terminé'
 echo "Déconnecte-toi puis reconnecte-toi (groupe docker), puis lance :"
 echo "  sudo bash verifier-serveur.sh"

@@ -62,3 +62,42 @@ table {
     color: var(--mat-sys-error);
   }
 }
+
+// ------------------------------------------------------------------ Téléphone (moins de 600 px)
+// Les colonnes essentielles tiennent dans l'écran : titre, équipement (référence),
+// priorité, statut. Le numéro, la date et le technicien restent dans le détail,
+// à un toucher de la ligne.
+@media (max-width: 599.98px) {
+  .entete {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .filtres {
+    mat-form-field {
+      width: 100%;
+    }
+
+    // Les deux dates côte à côte
+    .date {
+      width: calc(50% - 0.375rem);
+    }
+  }
+
+  .mat-column-numero,
+  .mat-column-dateDemande,
+  .mat-column-technicien,
+  .nom-equipement {
+    display: none;
+  }
+
+  .reference {
+    margin-right: 0;
+    white-space: nowrap;
+  }
+
+  .mat-mdc-header-cell,
+  .mat-mdc-cell {
+    padding: 0 0.375rem;
+  }
+}

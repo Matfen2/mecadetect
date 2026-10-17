@@ -51,3 +51,34 @@ table {
     color: var(--mat-sys-error);
   }
 }
+
+// ------------------------------------------------------------------ Téléphone (moins de 600 px)
+// Colonnes essentielles : référence, nom, zone, statut. Le type et la date de mise
+// en service restent sur la fiche, à un toucher de la ligne.
+@media (max-width: 599.98px) {
+  .entete {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .filtres {
+    mat-form-field,
+    .recherche {
+      width: 100%;
+    }
+  }
+
+  .mat-column-type,
+  .mat-column-dateMiseService {
+    display: none;
+  }
+
+  .mat-column-reference {
+    white-space: nowrap;
+  }
+
+  .mat-mdc-header-cell,
+  .mat-mdc-cell {
+    padding: 0 0.375rem;
+  }
+}

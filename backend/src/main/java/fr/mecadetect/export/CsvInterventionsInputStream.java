@@ -51,7 +51,7 @@ final class CsvInterventionsInputStream extends InputStream {
             "Terminée le", "Temps passé (min)", "Compte rendu", "Motif d'annulation");
 
     /** Marque d'ordre des octets : sans elle, Excel lit le fichier en Windows-1252 et casse les accents. */
-    private static final String BOM = "﻿";
+    private static final String BOM = "\uFEFF";
 
     private static final Map<String, String> PRIORITES =
             Map.of("BASSE", "Basse", "NORMALE", "Normale", "HAUTE", "Haute", "CRITIQUE", "Critique");
@@ -65,7 +65,7 @@ final class CsvInterventionsInputStream extends InputStream {
     private final ZoneId fuseau;
 
     private Connection connexion;
-    private PreparedStatement requete;
+    private PreparedStatement instruction;
     private ResultSet lignes;
     private byte[] tampon;
     private int position;
@@ -138,11 +138,11 @@ final class CsvInterventionsInputStream extends InputStream {
     private void ouvrir() throws SQLException {
         // Connexion de la transaction en cours s'il y en a une (tests), sinon une connexion du pool
         connexion = DataSourceUtils.getConnection(dataSource);
-        requete = connexion.prepareStatement(REQUETE);
-        requete.setFetchSize(500);
-        requete.setTimestamp(1, Timestamp.valueOf(depuisUtc));
-        requete.setTimestamp(2, Timestamp.valueOf(avantUtc));
-        lignes = requete.executeQuery();
+        instruction = connexion.prepareStatement(REQUETE);
+        instruction.setFetchSize(500);
+        instruction.setTimestamp(1, Timestamp.valueOf(depuisUtc));
+        instruction.setTimestamp(2, Timestamp.valueOf(avantUtc));
+        lignes = instruction.executeQuery();
     }
 
     private void fermer() {
@@ -151,7 +151,7 @@ final class CsvInterventionsInputStream extends InputStream {
         }
         ferme = true;
         JdbcUtils.closeResultSet(lignes);
-        JdbcUtils.closeStatement(requete);
+        JdbcUtils.closeStatement(instruction);
         if (connexion != null) {
             DataSourceUtils.releaseConnection(connexion, dataSource);
         }

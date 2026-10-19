@@ -16,7 +16,7 @@
   }
   @case ('pret') {
     @if (estArchive()) {
-      <p class="message" role="status">Cet équipement est archivé : il ne peut plus être modifié.</p>
+      <p class="message">Cet équipement est archivé : il ne peut plus être modifié.</p>
     }
 
     <form [formGroup]="formulaire" (ngSubmit)="enregistrer()" novalidate>

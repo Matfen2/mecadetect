@@ -37,36 +37,45 @@ public class DonneesDemoReferentielInitialiseur implements ApplicationRunner {
             new ZoneDemo("L1", "Logistique - Quai d'expédition"),
             new ZoneDemo("U1", "Utilités - Local technique"));
 
+    // Types d'équipement : chaque libellé est écrit une seule fois
+    private static final String PRESSE = "Presse hydraulique";
+    private static final String TOUR_CN = "Tour CN";
+    private static final String CENTRE_USINAGE = "Centre d'usinage";
+    private static final String ROBOT_SOUDURE = "Robot de soudure";
+    private static final String CONVOYEUR = "Convoyeur";
+    private static final String COMPRESSEUR = "Compresseur d'air";
+    private static final String CHARIOT = "Chariot élévateur";
+
     static final List<String> TYPES = List.of(
-            "Presse hydraulique",
-            "Tour CN",
-            "Centre d'usinage",
-            "Robot de soudure",
-            "Convoyeur",
-            "Compresseur d'air",
-            "Chariot élévateur");
+            PRESSE,
+            TOUR_CN,
+            CENTRE_USINAGE,
+            ROBOT_SOUDURE,
+            CONVOYEUR,
+            COMPRESSEUR,
+            CHARIOT);
 
     static final List<EquipementDemo> EQUIPEMENTS = List.of(
-            new EquipementDemo("PRS-001", "Presse 250 tonnes", "Presse hydraulique", "A1", LocalDate.of(2016, 3, 14), false),
-            new EquipementDemo("PRS-002", "Presse 400 tonnes", "Presse hydraulique", "A1", LocalDate.of(2019, 9, 2), false),
-            new EquipementDemo("PRS-003", "Presse de découpe 100 tonnes", "Presse hydraulique", "A1", LocalDate.of(2021, 1, 18), false),
-            new EquipementDemo("PRS-004", "Presse 150 tonnes (réformée)", "Presse hydraulique", "A1", LocalDate.of(2004, 6, 7), true),
-            new EquipementDemo("TCN-001", "Tour CN bi-broche", "Tour CN", "B1", LocalDate.of(2018, 4, 23), false),
-            new EquipementDemo("TCN-002", "Tour CN 3 axes", "Tour CN", "B1", LocalDate.of(2020, 11, 9), false),
-            new EquipementDemo("TCN-003", "Tour conventionnel (réformé)", "Tour CN", "B1", LocalDate.of(1998, 2, 16), true),
-            new EquipementDemo("CUS-001", "Centre d'usinage 5 axes", "Centre d'usinage", "B1", LocalDate.of(2022, 5, 30), false),
-            new EquipementDemo("CUS-002", "Centre d'usinage vertical", "Centre d'usinage", "B1", LocalDate.of(2017, 10, 11), false),
-            new EquipementDemo("ROB-001", "Robot de soudure ligne 1", "Robot de soudure", "C1", LocalDate.of(2019, 3, 4), false),
-            new EquipementDemo("ROB-002", "Robot de soudure ligne 2", "Robot de soudure", "C1", LocalDate.of(2019, 3, 4), false),
-            new EquipementDemo("ROB-003", "Robot de soudure ligne 3", "Robot de soudure", "C1", LocalDate.of(2023, 7, 17), false),
-            new EquipementDemo("CNV-001", "Convoyeur d'assemblage principal", "Convoyeur", "C1", LocalDate.of(2015, 8, 24), false),
-            new EquipementDemo("CNV-002", "Convoyeur d'expédition", "Convoyeur", "L1", LocalDate.of(2020, 2, 3), false),
-            new EquipementDemo("CNV-003", "Convoyeur de tri", "Convoyeur", "L1", LocalDate.of(2024, 4, 15), false),
-            new EquipementDemo("CMP-001", "Compresseur à vis 75 kW", "Compresseur d'air", "U1", LocalDate.of(2018, 12, 10), false),
-            new EquipementDemo("CMP-002", "Compresseur de secours", "Compresseur d'air", "U1", LocalDate.of(2012, 5, 21), false),
-            new EquipementDemo("CHE-001", "Chariot élévateur électrique 2,5 t", "Chariot élévateur", "L1", LocalDate.of(2021, 6, 28), false),
-            new EquipementDemo("CHE-002", "Chariot élévateur électrique 1,6 t", "Chariot élévateur", "L1", LocalDate.of(2023, 9, 5), false),
-            new EquipementDemo("CHE-003", "Chariot thermique (réformé)", "Chariot élévateur", "L1", LocalDate.of(2007, 11, 30), true));
+            new EquipementDemo("PRS-001", "Presse 250 tonnes", PRESSE, "A1", LocalDate.of(2016, 3, 14), false),
+            new EquipementDemo("PRS-002", "Presse 400 tonnes", PRESSE, "A1", LocalDate.of(2019, 9, 2), false),
+            new EquipementDemo("PRS-003", "Presse de découpe 100 tonnes", PRESSE, "A1", LocalDate.of(2021, 1, 18), false),
+            new EquipementDemo("PRS-004", "Presse 150 tonnes (réformée)", PRESSE, "A1", LocalDate.of(2004, 6, 7), true),
+            new EquipementDemo("TCN-001", "Tour CN bi-broche", TOUR_CN, "B1", LocalDate.of(2018, 4, 23), false),
+            new EquipementDemo("TCN-002", "Tour CN 3 axes", TOUR_CN, "B1", LocalDate.of(2020, 11, 9), false),
+            new EquipementDemo("TCN-003", "Tour conventionnel (réformé)", TOUR_CN, "B1", LocalDate.of(1998, 2, 16), true),
+            new EquipementDemo("CUS-001", "Centre d'usinage 5 axes", CENTRE_USINAGE, "B1", LocalDate.of(2022, 5, 30), false),
+            new EquipementDemo("CUS-002", "Centre d'usinage vertical", CENTRE_USINAGE, "B1", LocalDate.of(2017, 10, 11), false),
+            new EquipementDemo("ROB-001", "Robot de soudure ligne 1", ROBOT_SOUDURE, "C1", LocalDate.of(2019, 3, 4), false),
+            new EquipementDemo("ROB-002", "Robot de soudure ligne 2", ROBOT_SOUDURE, "C1", LocalDate.of(2019, 3, 4), false),
+            new EquipementDemo("ROB-003", "Robot de soudure ligne 3", ROBOT_SOUDURE, "C1", LocalDate.of(2023, 7, 17), false),
+            new EquipementDemo("CNV-001", "Convoyeur d'assemblage principal", CONVOYEUR, "C1", LocalDate.of(2015, 8, 24), false),
+            new EquipementDemo("CNV-002", "Convoyeur d'expédition", CONVOYEUR, "L1", LocalDate.of(2020, 2, 3), false),
+            new EquipementDemo("CNV-003", "Convoyeur de tri", CONVOYEUR, "L1", LocalDate.of(2024, 4, 15), false),
+            new EquipementDemo("CMP-001", "Compresseur à vis 75 kW", COMPRESSEUR, "U1", LocalDate.of(2018, 12, 10), false),
+            new EquipementDemo("CMP-002", "Compresseur de secours", COMPRESSEUR, "U1", LocalDate.of(2012, 5, 21), false),
+            new EquipementDemo("CHE-001", "Chariot élévateur électrique 2,5 t", CHARIOT, "L1", LocalDate.of(2021, 6, 28), false),
+            new EquipementDemo("CHE-002", "Chariot élévateur électrique 1,6 t", CHARIOT, "L1", LocalDate.of(2023, 9, 5), false),
+            new EquipementDemo("CHE-003", "Chariot thermique (réformé)", CHARIOT, "L1", LocalDate.of(2007, 11, 30), true));
 
     private final ZoneRepository zoneRepository;
     private final TypeEquipementRepository typeRepository;

@@ -37,6 +37,9 @@ import java.util.List;
  */
 class InterventionRechercheRepositoryImpl implements InterventionRechercheRepository {
 
+    /** Champ projeté et filtré par période. */
+    private static final String DATE_DEMANDE = "dateDemande";
+
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -53,7 +56,7 @@ class InterventionRechercheRepositoryImpl implements InterventionRechercheReposi
         var t = i.<Intervention, Utilisateur>join("technicien", JoinType.LEFT);
         requete.select(cb.construct(InterventionResume.class,
                         i.get("id"), i.get("numero"), i.get("titre"), i.get("priorite"), i.get("statut"),
-                        i.get("dateDemande"), i.get("datePlanifiee"),
+                        i.get(DATE_DEMANDE), i.get("datePlanifiee"),
                         e.get("reference"), e.get("nom"),
                         t.get("id"), t.get("prenom"), t.get("nom")))
                 .where(filtres.predicats(cb, i))
@@ -112,10 +115,10 @@ class InterventionRechercheRepositoryImpl implements InterventionRechercheReposi
                 predicats.add(cb.equal(i.get("equipement").get("id"), idEquipement));
             }
             if (depuis != null) {
-                predicats.add(cb.greaterThanOrEqualTo(i.get("dateDemande"), depuis));
+                predicats.add(cb.greaterThanOrEqualTo(i.get(DATE_DEMANDE), depuis));
             }
             if (avant != null) {
-                predicats.add(cb.lessThan(i.get("dateDemande"), avant));
+                predicats.add(cb.lessThan(i.get(DATE_DEMANDE), avant));
             }
             return predicats.toArray(Predicate[]::new);
         }

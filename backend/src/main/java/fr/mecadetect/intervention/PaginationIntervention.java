@@ -16,9 +16,12 @@ public final class PaginationIntervention {
     static final int TAILLE_PAR_DEFAUT = 20;
     static final int TAILLE_MAX = 100;
 
+    /** Tri par défaut : la date de demande, la plus récente d'abord. */
+    private static final String DATE_DEMANDE = "dateDemande";
+
     private static final Map<String, String> CHAMPS_TRIABLES = Map.of(
             "numero", "numero",
-            "dateDemande", "dateDemande",
+            DATE_DEMANDE, DATE_DEMANDE,
             "datePlanifiee", "datePlanifiee",
             "statut", "statut");
 
@@ -61,7 +64,7 @@ public final class PaginationIntervention {
 
     static Sort versSort(String tri) {
         if (tri == null || tri.isBlank()) {
-            return Sort.by(Sort.Direction.DESC, "dateDemande");
+            return Sort.by(Sort.Direction.DESC, DATE_DEMANDE);
         }
         String[] morceaux = tri.split(",");
         String chemin = CHAMPS_TRIABLES.get(morceaux[0].trim());

@@ -25,6 +25,9 @@ import java.util.Map;
 @Repository
 public class ReportingRepository {
 
+    /** Alias SQL des comptages, lu dans plusieurs requêtes. */
+    private static final String NOMBRE = "nombre";
+
     private final NamedParameterJdbcTemplate jdbc;
 
     public ReportingRepository(NamedParameterJdbcTemplate jdbc) {
@@ -81,7 +84,7 @@ public class ReportingRepository {
                 periode(depuis, avant),
                 (rs, _) -> new EvolutionMensuelle(
                         YearMonth.from(rs.getTimestamp("debut").toLocalDateTime()),
-                        rs.getLong("nombre"),
+                        rs.getLong(NOMBRE),
                         longOuNull(rs, "variation")));
     }
 
@@ -98,7 +101,7 @@ public class ReportingRepository {
                 """,
                 periode(depuis, avant),
                 (rs, _) -> new TempsResolution(Priorite.valueOf(rs.getString("priorite")),
-                        rs.getLong("nombre"), rs.getDouble("heures")));
+                        rs.getLong(NOMBRE), rs.getDouble("heures")));
     }
 
     /**
@@ -139,7 +142,7 @@ public class ReportingRepository {
                  WHERE statut IN ('DEMANDEE', 'PLANIFIEE', 'EN_COURS')
                  GROUP BY priorite
                 """,
-                (RowCallbackHandler) rs -> resultat.put(Priorite.valueOf(rs.getString("priorite")), rs.getLong("nombre")));
+                (RowCallbackHandler) rs -> resultat.put(Priorite.valueOf(rs.getString("priorite")), rs.getLong(NOMBRE)));
         return resultat;
     }
 

@@ -21,17 +21,20 @@
   <!-- Bande Andon : un voyant par chiffre clé, allumé selon l'urgence -->
   <section class="chiffres andon" aria-label="Chiffres clés">
     <div class="chiffre" data-indicateur="ouvertes" [attr.data-signal]="v.signaux.ouvertes">
-      <span class="lampe" role="img" [attr.aria-label]="'Voyant : ' + libelleSignal(v.signaux.ouvertes)"></span>
+      <span class="lampe" aria-hidden="true"></span>
+      <span class="visuellement-cache">Voyant : {{ libelleSignal(v.signaux.ouvertes) }}.</span>
       <span class="valeur">{{ nombre(v.totalOuvertes) }}</span>
       <span class="intitule">interventions ouvertes</span>
     </div>
     <div class="chiffre" data-indicateur="pannes" [attr.data-signal]="v.signaux.pannes">
-      <span class="lampe" role="img" [attr.aria-label]="'Voyant : ' + libelleSignal(v.signaux.pannes)"></span>
+      <span class="lampe" aria-hidden="true"></span>
+      <span class="visuellement-cache">Voyant : {{ libelleSignal(v.signaux.pannes) }}.</span>
       <span class="valeur">{{ nombre(v.equipementsEnPanne) }}</span>
       <span class="intitule">équipements en panne</span>
     </div>
     <div class="chiffre" data-indicateur="resolution" [attr.data-signal]="v.signaux.resolution">
-      <span class="lampe" role="img" [attr.aria-label]="'Voyant : ' + libelleSignal(v.signaux.resolution)"></span>
+      <span class="lampe" aria-hidden="true"></span>
+      <span class="visuellement-cache">Voyant : {{ libelleSignal(v.signaux.resolution) }}.</span>
       <span class="valeur">{{ duree(v.tempsMoyen) }}</span>
       <span class="intitule">de la demande à la fin, en moyenne</span>
     </div>
@@ -71,7 +74,7 @@
       <h2 id="titre-mois">Demandes d'intervention par mois</h2>
       <div class="histogramme" aria-hidden="true">
         @for (m of v.mois; track m.mois) {
-          <div class="colonne" [class.en-cours]="m.enCours" [style.--i]="$index" tabindex="0">
+          <div class="colonne" [class.en-cours]="m.enCours" [style.--i]="$index">
             <span class="info">
               {{ m.libelle }} : {{ nombre(m.nombre) }} demandes
               @if (m.enCours) { (mois en cours) } @else { ({{ variation(m.variation) }}) }

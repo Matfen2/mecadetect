@@ -46,9 +46,12 @@ public class ArchivageService {
 
         long debut = System.nanoTime();
         ResultatArchivage resultat = repository.archiver(dateLimite, TAILLE_LOT);
-        LOG.info("Archivage avant le {} : {} interventions et {} lignes d'historique en {} ms",
-                dateLimite.format(FORMAT), resultat.interventions(), resultat.historiques(),
-                (System.nanoTime() - debut) / 1_000_000);
+        long dureeMs = (System.nanoTime() - debut) / 1_000_000;
+        // Arguments calculés (date formatée) seulement si le message sera vraiment écrit
+        if (LOG.isInfoEnabled()) {
+            LOG.info("Archivage avant le {} : {} interventions et {} lignes d'historique en {} ms",
+                    dateLimite.format(FORMAT), resultat.interventions(), resultat.historiques(), dureeMs);
+        }
         return resultat.interventions();
     }
 }

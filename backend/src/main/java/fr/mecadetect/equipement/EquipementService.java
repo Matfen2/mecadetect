@@ -46,12 +46,13 @@ public class EquipementService {
 
     @Transactional(readOnly = true)
     public Equipement obtenir(Long idEquipement) {
-        return equipementRepository.trouverAvecTypeEtZone(idEquipement)
-                .orElseThrow(() -> introuvable(idEquipement));
+        return charger(idEquipement);
     }
 
     public Equipement modifier(Long idEquipement, EquipementCommande commande) {
-        var equipement = obtenir(idEquipement);
+        // Pas d'appel à obtenir() : depuis la classe elle-même, son @Transactional(readOnly = true)
+        // serait ignoré (pas de proxy Spring) et laisserait croire à une lecture seule
+        var equipement = charger(idEquipement);
 
         boolean referenceModifiee = !equipement.getReference().equalsIgnoreCase(commande.reference());
         if (referenceModifiee) {
@@ -68,6 +69,12 @@ public class EquipementService {
         var equipement = equipementRepository.findById(idEquipement)
                 .orElseThrow(() -> introuvable(idEquipement));
         equipement.archiver();
+    }
+
+    /** Équipement avec son type et sa zone, chargés par jointure. */
+    private Equipement charger(Long idEquipement) {
+        return equipementRepository.trouverAvecTypeEtZone(idEquipement)
+                .orElseThrow(() -> introuvable(idEquipement));
     }
 
     private void verifierReferenceDisponible(String reference) {

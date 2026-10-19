@@ -33,7 +33,7 @@ Application de suivi de maintenance industrielle : déclaration des pannes, plan
 | Base de données | Oracle Database Free 23, Flyway, PL/SQL, Data Pump |
 | Front-end | Angular 21 (standalone, signals), Angular Material, RxJS |
 | Contrat d'API | OpenAPI 3 en contract-first, avec génération des interfaces Spring et du client Angular |
-| Tests | JUnit 5, AssertJ, Mockito, Testcontainers (Oracle), Vitest, Gatling (charge) |
+| Tests | JUnit 5, AssertJ, Mockito, Testcontainers (Oracle), Vitest, Robot Framework (bout en bout), Gatling (charge) |
 | Qualité et sécurité | SonarQube Cloud, JaCoCo, Trivy, OWASP Dependency-Check, npm audit |
 | Déploiement | Docker (images multi-étapes arm64), Docker Compose, Caddy (HTTPS), GitHub Actions, GHCR, Oracle Cloud (VM Ampere, Object Storage) |
 
@@ -56,11 +56,13 @@ Application de suivi de maintenance industrielle : déclaration des pannes, plan
 ### Produit
 
 - **Tableau de bord** du responsable : interventions ouvertes par priorité, équipements en panne, temps moyen de réparation, charge des techniciens, et **export CSV** des interventions d'une période.
-- **Interface « Tableau Andon »** : comme sur un tableau lumineux d'atelier, la couleur ne sert qu'à signaler (rouge = action requise, ambre = à surveiller, vert = normal), avec le même code partout ; affichage en fiches sur téléphone, transitions et animations discrètes, coupées si l'utilisateur demande moins de mouvement.
+- **Interface « Tableau Andon »**, inspirée des tableaux de signalisation d'atelier : un voyant par indicateur (vert, ambre, rouge), animations sobres désactivées quand le système demande moins de mouvement.
+- **Interface pensée pour le terrain** : la page « Mes interventions » du technicien fonctionne sur tablette et sur téléphone, et le démarrage comme la clôture se font en 2 clics. Sur petit écran, la navigation se replie dans un menu et les tableaux n'affichent que les colonnes utiles.
 
 ### Production
 
-- **Pipeline complet à chaque merge sur `main`** : tests back et front, analyse SonarCloud, construction des images arm64, **scan Trivy** (une faille critique ou haute corrigeable bloque la publication), publication sur GHCR, déploiement par SSH (empreinte du serveur épinglée, clé dédiée), puis 15 vérifications automatiques du site en production.
+- **Pipeline complet à chaque merge sur `main`** : tests back et front, analyse SonarCloud, **tests de bout en bout** sur la pile Docker Compose complète, construction des images arm64, **scan Trivy** (une faille critique ou haute corrigeable bloque la publication), publication sur GHCR, déploiement par SSH (empreinte du serveur épinglée, clé dédiée), puis 15 vérifications automatiques du site en production.
+- **Parcours testés dans un vrai navigateur** : Robot Framework (bibliothèque Browser, Playwright) joue le parcours de démonstration à travers les trois rôles, de la déclaration à la clôture, sur une base neuve démarrée avec `compose.prod.yaml`. Les tests tournent sur chaque pull request vers `main`, et une version qui casse un parcours n'est pas déployée.
 - **Conteneurs durcis** : utilisateurs non root, système de fichiers en lecture seule, aucune capacité Linux superflue, réseau interne sans accès à Internet pour l'API et la base. Seul Caddy est exposé, avec HTTPS automatique (Let's Encrypt), HTTP/3 et en-têtes de sécurité (CSP stricte, HSTS…).
 - **Sauvegardes testées** : export Data Pump chaque nuit, compressé et signé (SHA-256), copié dans Oracle Object Storage. La VM s'y authentifie par **principal d'instance**, sans aucune clé stockée, et ne peut ni écraser ni supprimer une sauvegarde. Un **test de restauration** automatique recharge chaque semaine la dernière sauvegarde dans un schéma temporaire et compare, table par table, le nombre de lignes avec l'export.
 - **Dépendances surveillées** : OWASP Dependency-Check (base NVD) et `npm audit` chaque semaine et à chaque changement de dépendances, résultats publiés dans l'onglet *Security* de GitHub.
@@ -83,10 +85,12 @@ flowchart LR
 flowchart LR
     P[Push / merge sur main] --> T[Tests back + front]
     T --> Q[SonarCloud]
+    T --> E[Bout en bout<br/>Robot Framework]
     T --> I[Images arm64]
     I --> V{Trivy}
     V -- OK --> G[GHCR]
     G --> D[Déploiement SSH]
+    E -- OK --> D
     D --> W[15 vérifications<br/>en production]
 ```
 
@@ -109,6 +113,7 @@ La [documentation technique complète](docs/MecaDetect_Documentation_technique.p
 - Java 25
 - Node.js 24 (LTS)
 - Docker Desktop
+- Python 3.13 (tests de bout en bout, facultatif)
 
 ### 1. La base de données
 
@@ -172,6 +177,10 @@ mvn verify
 # Front-end : 100 tests
 cd frontend
 npx ng test --watch=false
+
+# Bout en bout : 7 parcours dans Chromium (API et front démarrés)
+# Installation et options : e2e/README.md
+robot --outputdir e2e/resultats e2e/tests
 ```
 
 ## Avancement
@@ -184,7 +193,7 @@ npx ng test --watch=false
 | 3 | Interventions et cycle de vie (TDD) : déclaration, planification, réalisation, annulation, écrans par rôle | ✅ Terminé |
 | 4 | Oracle avancé : trigger d'historique, génération de 500 000 interventions, reporting analytique, index et plans d'exécution, archivage PL/SQL, tests de charge Gatling | ✅ Terminé |
 | 5 | Tableau de bord et export CSV, images Docker durcies, HTTPS, déploiement continu sur Oracle Cloud, SonarCloud, analyse des vulnérabilités, sauvegardes testées, affichage mobile | ✅ Terminé |
-| 6 | Tests end-to-end avec Robot Framework (optionnel) | ⏳ À venir |
+| 6 | Tests de bout en bout avec Robot Framework : connexion par rôle, parcours complet d'une intervention, exécution dans la CI avant chaque déploiement | ✅ Terminé |
 
 ## Auteur
 

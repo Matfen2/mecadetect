@@ -138,8 +138,13 @@ jobs:
           java-version: '25'
           cache: maven
 
+      # Lancé depuis backend/ : un chemin relatif passé en -D est résolu depuis le dossier courant,
+      # pas depuis le pom (la première version déposait les JAR dans target/ à la racine)
       - name: Bibliothèques du back-end
-        run: mvn -B -q -f backend/pom.xml dependency:copy-dependencies -DincludeScope=test -DoutputDirectory=target/dependances
+        working-directory: backend
+        run: |
+          mvn -B -q dependency:copy-dependencies -DincludeScope=test -DoutputDirectory=target/dependances
+          echo "$(ls target/dependances/*.jar | wc -l) bibliothèques copiées dans backend/target/dependances"
 
       - name: Analyse SonarCloud
         uses: SonarSource/sonarqube-scan-action@v6

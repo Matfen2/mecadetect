@@ -8,7 +8,6 @@ import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import java.sql.Date;
 import java.sql.Types;
 import java.time.LocalDate;
 import java.util.Map;
@@ -18,7 +17,7 @@ import java.util.Map;
  *
  * Les paramètres sont déclarés explicitement, dans l'ordre de la procédure : pas de lecture
  * des métadonnées du dictionnaire Oracle à chaque démarrage, et le type BOOLEAN de p_commit
- * est lié tel quel (BOOLEAN natif depuis Oracle 23ai).
+ * est lié tel quel (BOOLEAN natif depuis Oracle 23ai), comme la date limite en LocalDate.
  *
  * Commit par lot seulement hors transaction Spring : en production, le service n'est pas
  * transactionnel et chaque lot archivé est acquis. Si l'appelant a ouvert une transaction
@@ -51,7 +50,7 @@ public class ArchivageRepository {
     public ResultatArchivage archiver(LocalDate dateLimite, int tailleLot) {
         boolean commitParLot = !TransactionSynchronizationManager.isActualTransactionActive();
         Map<String, Object> sortie = archiverInterventions.execute(new MapSqlParameterSource()
-                .addValue(DATE_LIMITE, Date.valueOf(dateLimite))
+                .addValue(DATE_LIMITE, dateLimite)   // LocalDate lié tel quel : le pilote Oracle gère java.time
                 .addValue(TAILLE_LOT, tailleLot)
                 .addValue(COMMIT, commitParLot));
         return new ResultatArchivage(nombre(sortie, INTERVENTIONS), nombre(sortie, HISTORIQUES));

@@ -80,17 +80,22 @@ public class EquipementService {
     private TypeEquipement chargerType(Long idType) {
         return typeRepository.findById(idType)
                 .orElseThrow(() -> new DonneesInvalidesException("TYPE_INCONNU",
-                        "Le type d'équipement " + idType + " n'existe pas."));
+                        inexistant("Le type d'équipement", idType)));
     }
 
     private Zone chargerZone(Long idZone) {
         return zoneRepository.findById(idZone)
                 .orElseThrow(() -> new DonneesInvalidesException("ZONE_INCONNUE",
-                        "La zone " + idZone + " n'existe pas."));
+                        inexistant("La zone", idZone)));
     }
 
     private static RessourceIntrouvableException introuvable(Long idEquipement) {
         return new RessourceIntrouvableException("EQUIPEMENT_INTROUVABLE",
-                "L'équipement " + idEquipement + " n'existe pas.");
+                inexistant("L'équipement", idEquipement));
+    }
+
+    /** Message commun aux éléments introuvables : « La zone 12 n'existe pas. » */
+    private static String inexistant(String element, Long id) {
+        return element + " " + id + " n'existe pas.";
     }
 }

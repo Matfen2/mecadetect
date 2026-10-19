@@ -78,8 +78,7 @@ public class InterventionService {
     @Transactional(readOnly = true)
     public Page<InterventionResume> historiqueEquipement(Long idEquipement, Pageable pageable) {
         if (!equipementRepository.existsById(idEquipement)) {
-            throw new RessourceIntrouvableException("EQUIPEMENT_INTROUVABLE",
-                    "L'équipement " + idEquipement + " n'existe pas.");
+            throw equipementIntrouvable(idEquipement);
         }
         return interventionRepository.rechercher(null, null, null, idEquipement, null, null, pageable);
     }
@@ -109,7 +108,7 @@ public class InterventionService {
 
         var technicien = utilisateurRepository.findById(commande.idTechnicien())
                 .orElseThrow(() -> new DonneesInvalidesException("TECHNICIEN_INCONNU",
-                        "Le technicien " + commande.idTechnicien() + " n'existe pas."));
+                        inexistant("Le technicien", commande.idTechnicien())));
         var idType = intervention.getEquipement().getType().getId();
         if (technicien.getRole() == Role.TECHNICIEN
                 && !habilitationRepository.existsById(new HabilitationId(idType, technicien.getId()))) {
@@ -191,7 +190,7 @@ public class InterventionService {
     private Intervention chargerIntervention(Long idIntervention) {
         return interventionRepository.trouverDetail(idIntervention)
                 .orElseThrow(() -> new RessourceIntrouvableException("INTERVENTION_INTROUVABLE",
-                        "L'intervention " + idIntervention + " n'existe pas."));
+                        inexistant("L'intervention", idIntervention)));
     }
 
     private DetailIntervention detail(Intervention intervention) {
@@ -201,8 +200,16 @@ public class InterventionService {
 
     private Equipement chargerEquipement(Long idEquipement) {
         return equipementRepository.trouverAvecTypeEtZone(idEquipement)
-                .orElseThrow(() -> new RessourceIntrouvableException("EQUIPEMENT_INTROUVABLE",
-                        "L'équipement " + idEquipement + " n'existe pas."));
+                .orElseThrow(() -> equipementIntrouvable(idEquipement));
+    }
+
+    private static RessourceIntrouvableException equipementIntrouvable(Long idEquipement) {
+        return new RessourceIntrouvableException("EQUIPEMENT_INTROUVABLE", inexistant("L'équipement", idEquipement));
+    }
+
+    /** Message commun aux éléments introuvables : « L'intervention 42 n'existe pas. » */
+    private static String inexistant(String element, Long id) {
+        return element + " " + id + " n'existe pas.";
     }
 
     private Utilisateur chargerUtilisateur(Long idUtilisateur) {

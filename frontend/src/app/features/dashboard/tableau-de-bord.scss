@@ -118,17 +118,17 @@
   animation: allumage 480ms var(--delai) var(--sortie) both;
 }
 [data-signal='normal'] .lampe { --couleur: #34a866; }
-[data-signal='attention'] .lampe { --couleur: var(--md-signal-ambre-vif, #f2a516); }
-[data-signal='alerte'] .lampe { --couleur: #ef4444; }
 [data-signal='neutre'] .lampe { --couleur: #7fa7d9; }
 
 /* Un voyant qui signale quelque chose rayonne ; un voyant normal reste mat */
 [data-signal='attention'] .lampe {
+  --couleur: var(--md-signal-ambre-vif, #f2a516);
   box-shadow:
     0 0 0 3px color-mix(in srgb, var(--couleur) 25%, transparent),
     0 0 14px 2px color-mix(in srgb, var(--couleur) 70%, transparent);
 }
 [data-signal='alerte'] .lampe {
+  --couleur: #ef4444;
   animation:
     allumage 480ms var(--delai) var(--sortie) both,
     respiration 2.6s calc(var(--delai) + 480ms) ease-in-out infinite;

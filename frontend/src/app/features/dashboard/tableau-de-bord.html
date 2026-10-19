@@ -21,17 +21,20 @@
   <!-- Bande Andon : un voyant par chiffre clé, allumé selon l'urgence -->
   <section class="chiffres andon" aria-label="Chiffres clés">
     <div class="chiffre" data-indicateur="ouvertes" [attr.data-signal]="v.signaux.ouvertes">
-      <span class="lampe" role="img" [attr.aria-label]="'Voyant : ' + libelleSignal(v.signaux.ouvertes)"></span>
+      <span class="lampe" aria-hidden="true"></span>
+      <span class="visuellement-cache">Voyant : {{ libelleSignal(v.signaux.ouvertes) }}.</span>
       <span class="valeur">{{ nombre(v.totalOuvertes) }}</span>
       <span class="intitule">interventions ouvertes</span>
     </div>
     <div class="chiffre" data-indicateur="pannes" [attr.data-signal]="v.signaux.pannes">
-      <span class="lampe" role="img" [attr.aria-label]="'Voyant : ' + libelleSignal(v.signaux.pannes)"></span>
+      <span class="lampe" aria-hidden="true"></span>
+      <span class="visuellement-cache">Voyant : {{ libelleSignal(v.signaux.pannes) }}.</span>
       <span class="valeur">{{ nombre(v.equipementsEnPanne) }}</span>
       <span class="intitule">équipements en panne</span>
     </div>
     <div class="chiffre" data-indicateur="resolution" [attr.data-signal]="v.signaux.resolution">
-      <span class="lampe" role="img" [attr.aria-label]="'Voyant : ' + libelleSignal(v.signaux.resolution)"></span>
+      <span class="lampe" aria-hidden="true"></span>
+      <span class="visuellement-cache">Voyant : {{ libelleSignal(v.signaux.resolution) }}.</span>
       <span class="valeur">{{ duree(v.tempsMoyen) }}</span>
       <span class="intitule">de la demande à la fin, en moyenne</span>
     </div>

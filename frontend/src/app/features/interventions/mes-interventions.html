@@ -1,8 +1,11 @@
 <h1>Mes interventions</h1>
 
-@if (succes(); as message) {
-  <p class="bandeau succes" role="status">{{ message }}</p>
-}
+<!-- Zone toujours présente : les lecteurs d'écran annoncent le message quand il y apparaît -->
+<output class="annonce">
+  @if (succes(); as message) {
+    <p class="bandeau succes">{{ message }}</p>
+  }
+</output>
 
 @switch (etat().statut) {
   @case ('chargement') {
@@ -43,7 +46,7 @@
           <!-- Démarrage : 2 clics -->
           @if (intervention.statut === 'PLANIFIEE') {
             @if (estSelectionnee(intervention, 'demarrer')) {
-              <div class="confirmation" role="group" aria-label="Confirmer le démarrage">
+              <fieldset class="confirmation" aria-label="Confirmer le démarrage">
                 @if (selection()?.detail; as detail) {
                   <p class="description">{{ detail.description }}</p>
                   <button mat-flat-button class="principal" (click)="confirmerDemarrage()" [disabled]="envoiEnCours()">
@@ -53,7 +56,7 @@
                 } @else {
                   <mat-progress-bar mode="indeterminate" />
                 }
-              </div>
+              </fieldset>
             } @else {
               <button mat-flat-button class="principal" (click)="preparer(intervention, 'demarrer')"
                       [disabled]="selection() !== null">
@@ -83,11 +86,11 @@
                         <mat-error>{{ message }}</mat-error>
                       }
                     </mat-form-field>
-                    <div class="durees-rapides" role="group" aria-label="Durées rapides">
+                    <fieldset class="durees-rapides" aria-label="Durées rapides">
                       @for (minutes of dureesRapides; track minutes) {
                         <button mat-stroked-button type="button" (click)="choisirDuree(minutes)">{{ minutes }} min</button>
                       }
-                    </div>
+                    </fieldset>
                   </div>
 
                   <div class="boutons">

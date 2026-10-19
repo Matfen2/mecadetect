@@ -88,6 +88,15 @@ h1 {
   margin-top: 0.5rem;
 }
 
+// Remise à zéro des <fieldset>, sans spécificité grâce à :where() :
+// les règles de .confirmation et .durees-rapides s'appliquent par-dessus
+:where(fieldset.confirmation, fieldset.durees-rapides) {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
 .confirmation,
 .cloture {
   display: flex;
@@ -137,6 +146,11 @@ h1 {
   padding: 2rem;
   text-align: center;
   color: var(--mat-sys-on-surface-variant);
+}
+
+// Zone d'annonce du message de succès, toujours présente pour les lecteurs d'écran
+.annonce {
+  display: block;
 }
 
 .bandeau {

@@ -17,9 +17,12 @@ public final class PaginationEquipement {
     static final int TAILLE_PAR_DEFAUT = 20;
     static final int TAILLE_MAX = 100;
 
+    /** Tri par défaut : la référence. */
+    private static final String REFERENCE = "reference";
+
     /** Nom public du champ de tri vers le chemin JPA correspondant. */
     private static final Map<String, String> CHAMPS_TRIABLES = Map.of(
-            "reference", "reference",
+            REFERENCE, REFERENCE,
             "nom", "nom",
             "dateMiseService", "dateMiseService",
             "statut", "statut",
@@ -43,7 +46,7 @@ public final class PaginationEquipement {
 
     static Sort versSort(String tri) {
         if (tri == null || tri.isBlank()) {
-            return Sort.by("reference");
+            return Sort.by(REFERENCE);
         }
 
         String[] morceaux = tri.split(",");

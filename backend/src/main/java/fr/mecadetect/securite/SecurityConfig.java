@@ -45,8 +45,11 @@ public class SecurityConfig {
     };
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http) {
         http
+                // CSRF inutile : aucun cookie d'authentification, le JWT voyage dans l'en-tête Authorization,
+                // que le navigateur n'ajoute jamais de lui-même à une requête venue d'un autre site.
+                // À réactiver si le jeton passe un jour dans un cookie.
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth

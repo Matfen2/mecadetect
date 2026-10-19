@@ -9,6 +9,13 @@ frontend/coverage/
 frontend/.angular/
 frontend/src/app/core/api/
 
+# Tests de charge (Gatling)
+charge/target/
+
+# Tests de bout en bout (Robot Framework) : environnement Python et rapports
+e2e/.venv/
+e2e/resultats/
+
 # IDE
 .idea/
 *.iml

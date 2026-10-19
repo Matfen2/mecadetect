@@ -71,7 +71,7 @@
       <h2 id="titre-mois">Demandes d'intervention par mois</h2>
       <div class="histogramme" aria-hidden="true">
         @for (m of v.mois; track m.mois) {
-          <div class="colonne" [class.en-cours]="m.enCours" [style.--i]="$index" tabindex="0">
+          <div class="colonne" [class.en-cours]="m.enCours" [style.--i]="$index">
             <span class="info">
               {{ m.libelle }} : {{ nombre(m.nombre) }} demandes
               @if (m.enCours) { (mois en cours) } @else { ({{ variation(m.variation) }}) }

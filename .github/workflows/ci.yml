@@ -129,6 +129,18 @@ jobs:
           name: couverture-frontend
           path: frontend/coverage
 
+      # Bibliothèques du back-end (Spring, Hibernate…) : sans elles, l'analyse Java
+      # ne connaît pas les types externes et certaines règles restent muettes
+      - name: Installer Java 25
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Bibliothèques du back-end
+        run: mvn -B -q -f backend/pom.xml dependency:copy-dependencies -DincludeScope=test -DoutputDirectory=target/dependances
+
       - name: Analyse SonarCloud
         uses: SonarSource/sonarqube-scan-action@v6
         env:

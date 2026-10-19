@@ -225,9 +225,7 @@
   border: 1px solid var(--barre);
   border-bottom: none;
 }
-.colonne:hover .baton,
-.colonne:focus-visible .baton { background-color: var(--md-signal-bleu, #1565c0); }
-.colonne:focus-visible .baton { outline: 2px solid var(--md-signal-bleu, #1565c0); outline-offset: 2px; }
+.colonne:hover .baton { background-color: var(--md-signal-bleu, #1565c0); }
 
 .axe {
   position: absolute;
@@ -240,7 +238,9 @@
   color: var(--texte-secondaire);
 }
 
-/* Bulle d'information : apparaît en glissant au survol ou au focus clavier */
+/* Bulle d'information : apparaît en glissant au survol.
+   L'histogramme est décoratif (aria-hidden) : au clavier et au lecteur d'écran,
+   les mêmes chiffres sont dans le tableau caché qui le suit. */
 .info {
   position: absolute;
   bottom: calc(100% + 0.4rem);
@@ -257,15 +257,12 @@
   transform: translate(-50%, 4px);
   transition: opacity 150ms ease, transform 150ms var(--sortie);
 }
-.colonne:hover .info,
-.colonne:focus-visible .info { opacity: 1; transform: translate(-50%, 0); }
+.colonne:hover .info { opacity: 1; transform: translate(-50%, 0); }
 /* Aux extrémités, la bulle s'aligne sur le bord pour ne pas sortir du panneau */
 .colonne:first-child .info { left: 0; transform: translate(0, 4px); }
-.colonne:first-child:hover .info,
-.colonne:first-child:focus-visible .info { transform: translate(0, 0); }
+.colonne:first-child:hover .info { transform: translate(0, 0); }
 .colonne:last-child .info { left: auto; right: 0; transform: translate(0, 4px); }
-.colonne:last-child:hover .info,
-.colonne:last-child:focus-visible .info { transform: translate(0, 0); }
+.colonne:last-child:hover .info { transform: translate(0, 0); }
 
 .legende { margin: 2rem 0 0; font-size: 0.85rem; color: var(--texte-secondaire); }
 
@@ -302,13 +299,13 @@
 
 /* ================================================================== Téléphone (moins de 600 px) */
 @media (max-width: 599.98px) {
+  /* En-tête centré : titre, sous-titre puis formulaire d'export */
   .entete { flex-direction: column; align-items: stretch; }
   .entete h1 { font-size: 1.9rem; }
   .entete h1,
   .sous-titre { text-align: center; }
   /* Le formulaire d'export prend toute la largeur, sous le titre */
   app-export-interventions { display: block; width: 100%; }
-  }
 
   /* Bande Andon : un voyant par ligne, chiffre et libellé côte à côte */
   .andon { grid-template-columns: minmax(0, 1fr); }
@@ -368,3 +365,4 @@
   .charge td.num:not(:last-child) { grid-area: terminees; }
   .cellule-barre { flex: 1; justify-content: flex-start; }
   .piste.courte { flex: 1; width: auto; }
+}

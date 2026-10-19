@@ -1,11 +1,22 @@
+// Liste des interventions, thème « Tableau Andon ».
+// Trois mises en page selon la largeur :
+//   ordinateur (≥ 1024 px) : tableau complet ;
+//   tablette (600 à 1023 px) : tableau allégé (sans technicien ni nom d'équipement) ;
+//   téléphone (< 600 px) : chaque intervention devient une fiche, lisible sans défilement horizontal.
+
+$tablette: 1023.98px;
+$telephone: 599.98px;
+
 .entete {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.75rem 1rem;
   margin-bottom: 1rem;
 
   h1 {
     margin: 0;
+    font-size: 2.25rem;
   }
 }
 
@@ -24,8 +35,11 @@
   }
 }
 
+// Le tableau est un panneau de travail posé sur le fond acier
 .tableau {
   overflow-x: auto;
+  background: var(--md-surface, #f8f9fa);
+  border-radius: 6px;
 }
 
 table {
@@ -41,6 +55,12 @@ table {
 .reference {
   font-weight: 500;
   margin-right: 0.25rem;
+  white-space: nowrap;
+}
+
+// Une date ou une référence coupée en deux se lit mal
+.mat-column-dateDemande {
+  white-space: nowrap;
 }
 
 .ligne {
@@ -53,6 +73,14 @@ table {
   }
 }
 
+// Liseré de priorité à gauche de la ligne : seules les urgences sont colorées
+.ligne[data-priorite='CRITIQUE'] td:first-child {
+  box-shadow: inset 4px 0 0 var(--md-signal-rouge, #c62828);
+}
+.ligne[data-priorite='HAUTE'] td:first-child {
+  box-shadow: inset 4px 0 0 var(--md-signal-ambre-vif, #f2a516);
+}
+
 .message {
   padding: 1.5rem;
   text-align: center;
@@ -63,41 +91,194 @@ table {
   }
 }
 
-// ------------------------------------------------------------------ Téléphone (moins de 600 px)
-// Les colonnes essentielles tiennent dans l'écran : titre, équipement (référence),
-// priorité, statut. Le numéro, la date et le technicien restent dans le détail,
-// à un toucher de la ligne.
-@media (max-width: 599.98px) {
-  .entete {
-    flex-wrap: wrap;
-    gap: 0.5rem;
+// ------------------------------------------------------------------ Animations
+// Les lignes arrivent en cascade à chaque page (chargement, tri, filtre, pagination)
+@keyframes ligne-entree {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ligne {
+  animation: ligne-entree 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  transition: background-color 150ms ease;
+}
+
+@for $i from 1 through 20 {
+  .ligne:nth-child(#{$i}) {
+    animation-delay: #{($i - 1) * 22}ms;
   }
+}
 
-  .filtres {
-    mat-form-field {
-      width: 100%;
-    }
-
-    // Les deux dates côte à côte
-    .date {
-      width: calc(50% - 0.375rem);
-    }
-  }
-
-  .mat-column-numero,
-  .mat-column-dateDemande,
+// ------------------------------------------------------------------ Tablette
+@media (max-width: $tablette) {
   .mat-column-technicien,
   .nom-equipement {
     display: none;
   }
 
-  .reference {
-    margin-right: 0;
+  .mat-mdc-header-cell,
+  .mat-mdc-cell {
+    padding: 0 0.5rem;
+  }
+}
+
+// ------------------------------------------------------------------ Téléphone
+@media (max-width: $telephone) {
+  .entete {
+    flex-wrap: wrap;
+
+    h1 {
+      font-size: 1.9rem;
+    }
+  }
+
+  // Filtres sur deux colonnes : statut et priorité, le technicien (responsable seulement)
+  // sur toute la largeur, les deux dates côte à côte, puis la réinitialisation
+  .filtres {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    column-gap: 0.5rem;
+    row-gap: 0;
+
+    mat-form-field,
+    .date {
+      width: 100%;
+      min-width: 0;
+    }
+
+    mat-form-field:nth-child(3):not(.date) {
+      grid-column: 1 / -1;
+    }
+
+    > button {
+      justify-self: start;
+      align-self: center;
+      margin-bottom: 1.25rem;
+    }
+  }
+
+  .tableau {
+    overflow-x: visible;
+    background: transparent;
+  }
+
+  // Le tableau devient un simple conteneur de fiches. !important : la feuille de Material
+  // impose display: table, qui élargirait la page à la largeur minimale de la fiche la plus longue.
+  .mat-mdc-table {
+    display: block !important;
+    width: 100%;
+    background: transparent;
+  }
+
+  // <thead> et <tbody> sont créés par le tableau Material, hors du gabarit du composant :
+  // l'encapsulation des styles ne les atteint pas, d'où ::ng-deep, limité à ce composant par :host
+  :host ::ng-deep .mat-mdc-table > thead,
+  :host ::ng-deep .mat-mdc-table > tbody {
+    display: block;
+  }
+
+  // Les en-têtes ne servent plus : chaque fiche est lisible seule
+  .mat-mdc-header-row {
+    display: none;
+  }
+
+  // Une intervention = une fiche :
+  //   titre ............ priorité
+  //   équipement ....... statut
+  //   numéro ........... date de la demande
+  tr.ligne {
+    display: grid;
+    box-sizing: border-box;
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'titre priorite'
+      'equipement statut'
+      'numero date';
+    align-items: center;
+    gap: 0.35rem 0.75rem;
+    height: auto;
+    margin-bottom: 0.5rem;
+    padding: 0.8rem 0.9rem 0.8rem 1.1rem;
+    background: var(--md-surface, #f8f9fa);
+    border-radius: 6px;
+  }
+
+  .mat-mdc-cell {
+    display: block;
+    min-width: 0;
+    padding: 0;
+    border-bottom: none;
+  }
+
+  // Sur la fiche, le liseré borde toute la carte
+  .ligne[data-priorite='CRITIQUE'] td:first-child,
+  .ligne[data-priorite='HAUTE'] td:first-child {
+    box-shadow: none;
+  }
+  .ligne[data-priorite='CRITIQUE'] {
+    box-shadow: inset 4px 0 0 var(--md-signal-rouge, #c62828);
+  }
+  .ligne[data-priorite='HAUTE'] {
+    box-shadow: inset 4px 0 0 var(--md-signal-ambre-vif, #f2a516);
+  }
+
+  .mat-column-titre {
+    grid-area: titre;
+    font-family: var(--md-titre);
+    font-size: 1.15rem;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  .mat-column-priorite {
+    grid-area: priorite;
+    justify-self: end;
+  }
+
+  .mat-column-equipement {
+    grid-area: equipement;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  .mat-mdc-header-cell,
-  .mat-mdc-cell {
-    padding: 0 0.375rem;
+  // Sur la fiche, la place permet de nouveau le nom de l'équipement
+  .nom-equipement {
+    display: inline;
+    color: var(--md-encre-douce, #5b6673);
+  }
+
+  .mat-column-statut {
+    grid-area: statut;
+    justify-self: end;
+  }
+
+  .mat-column-numero,
+  .mat-column-dateDemande {
+    font-size: 0.8rem;
+    color: var(--md-encre-douce, #5b6673);
+  }
+
+  .mat-column-numero {
+    grid-area: numero;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mat-column-dateDemande {
+    grid-area: date;
+    justify-self: end;
+    white-space: nowrap;
+  }
+
+  .mat-column-technicien {
+    display: none;
+  }
+
+  // Le paginateur reste sur le panneau, sous les fiches
+  .mat-mdc-paginator {
+    border-radius: 6px;
   }
 }

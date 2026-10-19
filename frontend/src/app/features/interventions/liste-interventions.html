@@ -113,7 +113,7 @@
 
             <tr mat-header-row *matHeaderRowDef="colonnes"></tr>
             <tr mat-row *matRowDef="let intervention; columns: colonnes"
-                class="ligne" tabindex="0"
+                class="ligne" tabindex="0" [attr.data-priorite]="intervention.priorite"
                 (click)="ouvrir(intervention.idIntervention)"
                 (keydown.enter)="ouvrir(intervention.idIntervention)"></tr>
           </table>

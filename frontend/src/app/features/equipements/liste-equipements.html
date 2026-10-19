@@ -94,7 +94,7 @@
 
             <tr mat-header-row *matHeaderRowDef="colonnes"></tr>
             <tr mat-row *matRowDef="let equipement; columns: colonnes"
-                class="ligne" tabindex="0"
+                class="ligne" tabindex="0" [attr.data-statut]="equipement.statut"
                 (click)="ouvrir(equipement.idEquipement)"
                 (keydown.enter)="ouvrir(equipement.idEquipement)"></tr>
           </table>

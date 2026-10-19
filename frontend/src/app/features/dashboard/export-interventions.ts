@@ -53,6 +53,18 @@ export function joursInclus(depuis: string, jusqua: string): number {
     .export { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
     mat-form-field { width: 11rem; }
     .erreur { margin: 0.25rem 0 0; color: var(--mat-sys-error, #ba1a1a); font-size: 0.9rem; }
+
+    /* Téléphone : les deux dates côte à côte sur toute la largeur, le bouton centré dessous */
+    @media (max-width: 599.98px) {
+      .export {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        row-gap: 0.75rem;
+      }
+      mat-form-field { width: 100%; min-width: 0; }
+      button { grid-column: 1 / -1; justify-self: center; min-width: 60%; }
+      .erreur { text-align: center; }
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

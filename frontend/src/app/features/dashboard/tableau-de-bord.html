@@ -18,27 +18,31 @@
 }
 
 @if (vue(); as v) {
-  <section class="chiffres" aria-label="Chiffres clés">
-    <div class="chiffre" data-indicateur="ouvertes">
+  <!-- Bande Andon : un voyant par chiffre clé, allumé selon l'urgence -->
+  <section class="chiffres andon" aria-label="Chiffres clés">
+    <div class="chiffre" data-indicateur="ouvertes" [attr.data-signal]="v.signaux.ouvertes">
+      <span class="lampe" role="img" [attr.aria-label]="'Voyant : ' + libelleSignal(v.signaux.ouvertes)"></span>
       <span class="valeur">{{ nombre(v.totalOuvertes) }}</span>
       <span class="intitule">interventions ouvertes</span>
     </div>
-    <div class="chiffre" data-indicateur="pannes">
+    <div class="chiffre" data-indicateur="pannes" [attr.data-signal]="v.signaux.pannes">
+      <span class="lampe" role="img" [attr.aria-label]="'Voyant : ' + libelleSignal(v.signaux.pannes)"></span>
       <span class="valeur">{{ nombre(v.equipementsEnPanne) }}</span>
       <span class="intitule">équipements en panne</span>
     </div>
-    <div class="chiffre" data-indicateur="resolution">
+    <div class="chiffre" data-indicateur="resolution" [attr.data-signal]="v.signaux.resolution">
+      <span class="lampe" role="img" [attr.aria-label]="'Voyant : ' + libelleSignal(v.signaux.resolution)"></span>
       <span class="valeur">{{ duree(v.tempsMoyen) }}</span>
       <span class="intitule">de la demande à la fin, en moyenne</span>
     </div>
   </section>
 
   <div class="grille">
-    <section class="bloc" aria-labelledby="titre-priorites">
+    <section class="bloc" style="--i: 0" aria-labelledby="titre-priorites">
       <h2 id="titre-priorites">Interventions ouvertes par priorité</h2>
       <ul class="barres">
         @for (p of v.priorites; track p.code) {
-          <li class="ligne" [attr.data-priorite]="p.code">
+          <li class="ligne" [attr.data-priorite]="p.code" [style.--i]="$index">
             <span class="libelle">{{ p.libelle }}</span>
             <span class="piste"><span class="barre" [style.width.%]="p.largeur"></span></span>
             <span class="nombre">{{ nombre(p.nombre) }}</span>
@@ -47,11 +51,11 @@
       </ul>
     </section>
 
-    <section class="bloc" aria-labelledby="titre-top">
+    <section class="bloc" style="--i: 1" aria-labelledby="titre-top">
       <h2 id="titre-top">Équipements les plus en panne</h2>
       <ol class="barres top">
         @for (e of v.top; track e.reference) {
-          <li class="ligne">
+          <li class="ligne" [style.--i]="$index">
             <span class="rang">{{ e.rang }}</span>
             <span class="libelle" [title]="e.nom"><strong>{{ e.reference }}</strong> {{ e.nom }}</span>
             <span class="piste"><span class="barre" [style.width.%]="e.largeur"></span></span>
@@ -63,11 +67,11 @@
       </ol>
     </section>
 
-    <section class="bloc large" aria-labelledby="titre-mois">
+    <section class="bloc large" style="--i: 2" aria-labelledby="titre-mois">
       <h2 id="titre-mois">Demandes d'intervention par mois</h2>
       <div class="histogramme" aria-hidden="true">
         @for (m of v.mois; track m.mois) {
-          <div class="colonne" [class.en-cours]="m.enCours" tabindex="0">
+          <div class="colonne" [class.en-cours]="m.enCours" [style.--i]="$index" tabindex="0">
             <span class="info">
               {{ m.libelle }} : {{ nombre(m.nombre) }} demandes
               @if (m.enCours) { (mois en cours) } @else { ({{ variation(m.variation) }}) }
@@ -89,7 +93,7 @@
       </table>
     </section>
 
-    <section class="bloc large" aria-labelledby="titre-charge">
+    <section class="bloc large" style="--i: 3" aria-labelledby="titre-charge">
       <h2 id="titre-charge">Charge des techniciens ce mois-ci</h2>
       <table class="charge">
         <thead>
@@ -101,15 +105,15 @@
         </thead>
         <tbody>
           @for (c of v.techniciens; track c.technicien.idUtilisateur) {
-            <tr>
-              <td>{{ c.technicien.prenom }} {{ c.technicien.nom }}</td>
-              <td class="num">
+            <tr [style.--i]="$index">
+              <td class="nom">{{ c.technicien.prenom }} {{ c.technicien.nom }}</td>
+              <td class="num" data-libelle="Terminées">
                 <span class="cellule-barre">
                   <span class="piste courte"><span class="barre" [style.width.%]="c.largeur"></span></span>
                   <span class="valeur-barre">{{ nombre(c.interventionsMois) }}</span>
                 </span>
               </td>
-              <td class="num">{{ heures(c.tempsPasseMinMois) }}</td>
+              <td class="num" data-libelle="Temps passé">{{ heures(c.tempsPasseMinMois) }}</td>
             </tr>
           } @empty {
             <tr><td colspan="3" class="vide">Aucun technicien actif.</td></tr>

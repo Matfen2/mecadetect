@@ -16,6 +16,7 @@ import {
   proportion,
   variation,
 } from './indicateurs';
+import { libelleSignal, signalOuvertes, signalPannes } from './signaux';
 
 type Etat =
   | { statut: 'chargement' }
@@ -26,6 +27,9 @@ type Etat =
  * Tableau de bord du responsable de maintenance (tâche 5.2).
  * Un seul appel à l'API (GET /dashboard, tâche 5.1) alimente tous les blocs ; l'export CSV (tâche 5.3)
  * est proposé dans l'en-tête.
+ *
+ * En tête, une bande de voyants façon tableau Andon d'atelier : rouge si une action s'impose
+ * (intervention critique ouverte, équipement en panne), ambre à surveiller, vert sinon.
  *
  * Les graphiques sont de simples barres en HTML/CSS : une seule série par graphique, donc une seule
  * couleur ; la valeur exacte s'affiche au survol ou au focus, et chaque graphique a sa version tableau
@@ -58,6 +62,7 @@ export class TableauDeBord {
   protected readonly duree = duree;
   protected readonly heures = heures;
   protected readonly variation = variation;
+  protected readonly libelleSignal = libelleSignal;
 
   constructor() {
     this.charger();
@@ -81,6 +86,12 @@ export class TableauDeBord {
       totalOuvertes: tableau.ouvertesParPriorite.reduce((total, p) => total + p.nombre, 0),
       equipementsEnPanne: tableau.equipementsEnPanne,
       tempsMoyen: tableau.tempsMoyenResolutionHeures,
+      // Voyants de la bande Andon : la couleur suit l'urgence, jamais la décoration
+      signaux: {
+        ouvertes: signalOuvertes(tableau.ouvertesParPriorite),
+        pannes: signalPannes(tableau.equipementsEnPanne),
+        resolution: 'neutre' as const,
+      },
       priorites: tableau.ouvertesParPriorite.map((p) => ({
         code: p.priorite as string,
         libelle: LIBELLES_PRIORITE[p.priorite] ?? p.priorite,

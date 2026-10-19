@@ -2,30 +2,27 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 
 import { LIBELLES_STATUT_INTERVENTION } from './libelles-intervention';
 
-/** Statut d'une intervention : libellé lisible et couleur selon l'étape du cycle de vie. */
+/** Couleur du voyant selon l'étape du cycle de vie (voir le code des signaux dans styles.scss). */
+const SIGNAUX: Record<string, string> = {
+  DEMANDEE: 'gris',
+  PLANIFIEE: 'bleu',
+  EN_COURS: 'ambre',
+  TERMINEE: 'vert',
+  ANNULEE: 'gris',
+};
+
+/** Statut d'une intervention comme un voyant : libellé lisible et couleur selon l'étape. */
 @Component({
   selector: 'app-statut-intervention-badge',
   template: `<span [class]="classe()">{{ libelle() }}</span>`,
-  styles: `
-    .badge {
-      display: inline-block;
-      padding: 0.15rem 0.6rem;
-      border-radius: 999px;
-      font-size: 0.8rem;
-      font-weight: 500;
-      white-space: nowrap;
-    }
-    .demandee { background: #e8eefc; color: #1f4aa8; }
-    .planifiee { background: #efe6fb; color: #5b2a9e; }
-    .en-cours { background: #fff2d6; color: #8a5a00; }
-    .terminee { background: #e3f4e8; color: #1b6b34; }
-    .annulee { background: #ececec; color: #555; }
-  `,
+  styleUrl: './voyant.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StatutInterventionBadge {
   readonly statut = input.required<string>();
 
   protected readonly libelle = computed(() => LIBELLES_STATUT_INTERVENTION[this.statut()] ?? this.statut());
-  protected readonly classe = computed(() => 'badge ' + this.statut().toLowerCase().replace('_', '-'));
+  protected readonly classe = computed(
+    () => `badge ${this.statut().toLowerCase().replace('_', '-')} ${SIGNAUX[this.statut()] ?? 'gris'}`,
+  );
 }

@@ -151,6 +151,105 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
+  # ---------------------------------------------------------------- Bout en bout
+  # Tâche 6.3 : la pile de production (Oracle, API, front, Caddy) démarre sur le runner,
+  # avec une base neuve et les comptes de démonstration, puis Robot Framework joue les
+  # parcours dans Chromium. Sur les pull requests vers main (le merge est bloqué si un
+  # parcours casse) et sur main (le déploiement attend ce job).
+  e2e:
+    name: Tests de bout en bout (Docker Compose)
+    needs: [backend, frontend]
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+      || (github.event_name == 'pull_request' && github.base_ref == 'main')
+      || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      COMPOSE: docker compose -f compose.prod.yaml --env-file .env.e2e
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v5
+
+      - name: Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Mêmes Dockerfiles que la production, mais pour le processeur du runner (amd64) :
+      # pas d'émulation. Étiquette e2e, celle qu'attend compose.prod.yaml avec VERSION=e2e.
+      - name: Image de l'API
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile
+          load: true
+          tags: ${{ env.IMAGES }}-api:e2e
+          cache-from: type=gha,scope=api-amd64
+          cache-to: type=gha,mode=max,scope=api-amd64
+
+      - name: Image du front
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: frontend/Dockerfile
+          load: true
+          tags: ${{ env.IMAGES }}-front:e2e
+          cache-from: type=gha,scope=front-amd64
+          cache-to: type=gha,mode=max,scope=front-amd64
+
+      # Secrets jetables, tirés au hasard à chaque exécution : rien à stocker dans GitHub.
+      # Profil demo : comptes, référentiel et habilitations créés au démarrage, sans
+      # intervention en cours (RG-04 ne bloque donc pas le parcours du technicien).
+      - name: Environnement de test
+        run: |
+          umask 077
+          cat > .env.e2e <<ENV
+          DOMAINE=localhost
+          VERSION=e2e
+          PROFILS=prod,demo
+          ORACLE_PASSWORD=Ora$(openssl rand -hex 12)
+          ORACLE_APP_USER=mecadetect
+          ORACLE_APP_PASSWORD=App$(openssl rand -hex 12)
+          JWT_SECRET=$(openssl rand -base64 32)
+          ENV
+
+      # --wait : rend la main quand tous les conteneurs sont sains (Oracle créé, API démarrée)
+      - name: Démarrer MécaDétect
+        run: $COMPOSE up -d --no-build --wait --wait-timeout 600
+
+      - name: Installer Python 3.13
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: e2e/requirements.txt
+
+      - name: Installer Robot Framework et Chromium
+        run: |
+          pip install -r e2e/requirements.txt
+          rfbrowser init --with-deps chromium
+
+      # Caddy sert https://localhost avec sa propre autorité de certification :
+      # le navigateur l'accepte grâce à ignoreHTTPSErrors (mecadetect.resource)
+      - name: Parcours de bout en bout
+        run: robot --outputdir e2e/resultats -v URL:https://localhost e2e/tests
+
+      # Rapport, journal et captures d'écran des échecs, consultables depuis le run
+      - name: Conserver le rapport Robot Framework
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: rapport-e2e
+          path: e2e/resultats
+          retention-days: 14
+
+      - name: Journaux des conteneurs en cas d'échec
+        if: failure()
+        run: $COMPOSE logs --no-color --tail 300 api front caddy
+
+      - name: Arrêter MécaDétect
+        if: always()
+        run: $COMPOSE down -v
+
   # ---------------------------------------------------------------- Livraison
   # Après un merge sur main, ou à la demande (bouton « Run workflow »),
   # et seulement si les tests sont verts
@@ -224,7 +323,9 @@ jobs:
 
   deploiement:
     name: Déploiement (Oracle Cloud)
-    needs: images
+    # Une version ne part en production que si ses images sont saines (Trivy)
+    # et si les parcours de bout en bout passent
+    needs: [images, e2e]
     runs-on: ubuntu-24.04
     permissions:
       contents: read

@@ -1,0 +1,6 @@
+# Tests de bout en bout de MécaDétect (Sprint 6)
+# Robot Framework et sa bibliothèque Browser, qui pilote Chromium par Playwright.
+# Versions figées : la CI et chaque poste installent exactement les mêmes.
+# Après installation : rfbrowser init chromium (télécharge le navigateur).
+robotframework==7.5
+robotframework-browser==20.6.0

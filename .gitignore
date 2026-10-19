@@ -5,6 +5,7 @@ backend/target/
 # Angular / Node
 frontend/node_modules/
 frontend/dist/
+frontend/coverage/
 frontend/.angular/
 frontend/src/app/core/api/
 
@@ -16,7 +17,10 @@ frontend/src/app/core/api/
 
 # Secrets et environnement
 .env
+.env.*
 *.env.local
+!.env.example
+!.env.prod.example
 
 # Système
 .DS_Store

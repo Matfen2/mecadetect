@@ -1,0 +1,7 @@
+# Contexte de construction de backend/Dockerfile (la racine du dépôt).
+# Liste blanche : tout est exclu, sauf ce dont la construction a besoin.
+# Ni .env, ni .git, ni target/, ni node_modules n'entrent dans le contexte.
+*
+!api/openapi.yaml
+!backend/pom.xml
+!backend/src/main

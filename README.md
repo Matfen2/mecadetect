@@ -1,34 +1,94 @@
 # MécaDétect
 
-![CI](https://github.com/Matfen2/mecadetect/actions/workflows/ci.yml/badge.svg)
+[![CI](https://github.com/Matfen2/mecadetect/actions/workflows/ci.yml/badge.svg)](https://github.com/Matfen2/mecadetect/actions/workflows/ci.yml)
+[![Dépendances](https://github.com/Matfen2/mecadetect/actions/workflows/dependances.yml/badge.svg)](https://github.com/Matfen2/mecadetect/actions/workflows/dependances.yml)
+[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=Matfen2_mecadetect&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Matfen2_mecadetect)
+[![Couverture](https://sonarcloud.io/api/project_badges/measure?project=Matfen2_mecadetect&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Matfen2_mecadetect)
 
 Application de suivi de maintenance industrielle : déclaration des pannes, planification des interventions et pilotage du parc d'équipements.
 
-> 🚧 Projet en cours de développement : Sprint 4 terminé (Oracle avancé et performance), Sprint 5 en préparation (tableau de bord, export, déploiement).
+**▶ Démo en ligne : [mecadetect.duckdns.org](https://mecadetect.duckdns.org)** (comptes ci-dessous). La base de démonstration contient 200 000 interventions sur 3 ans et est remise à neuf chaque nuit.
+
+| Rôle | Email | Mot de passe |
+| --- | --- | --- |
+| Responsable maintenance | admin@mecadetect.fr | Demo2026! |
+| Technicien | technicien@mecadetect.fr | Demo2026! |
+| Demandeur | demandeur@mecadetect.fr | Demo2026! |
+
+## Aperçu
+
+| Tableau de bord | Liste des interventions |
+| --- | --- |
+| ![Tableau de bord](docs/captures/tableau-de-bord.png) | ![Interventions](docs/captures/interventions.png) |
+
+| Détail d'une intervention | Sur téléphone |
+| --- | --- |
+| ![Détail d'une intervention](docs/captures/detail-intervention.png) | ![Vue mobile](docs/captures/mobile.png) |
 
 ## Stack technique
 
 | Couche | Technologies |
 | --- | --- |
 | Back-end | Java 25 (LTS), Spring Boot 4, Spring Data JPA / Hibernate, Spring Security (JWT) |
-| Base de données | Oracle Database Free, Flyway, PL/SQL |
+| Base de données | Oracle Database Free 23, Flyway, PL/SQL, Data Pump |
 | Front-end | Angular 21 (standalone, signals), Angular Material, RxJS |
 | Contrat d'API | OpenAPI 3 en contract-first, avec génération des interfaces Spring et du client Angular |
 | Tests | JUnit 5, AssertJ, Mockito, Testcontainers (Oracle), Vitest, Gatling (charge) |
-| DevOps | Docker Compose, GitHub Actions |
+| Qualité et sécurité | SonarQube Cloud, JaCoCo, Trivy, OWASP Dependency-Check, npm audit |
+| Déploiement | Docker (images multi-étapes arm64), Docker Compose, Caddy (HTTPS), GitHub Actions, GHCR, Oracle Cloud (VM Ampere, Object Storage) |
 
 ## Points clés
+
+### Conception et code
 
 - **Contract-first** : le fichier [`api/openapi.yaml`](api/openapi.yaml) est la source de vérité de l'API. Les interfaces Spring et le client Angular sont générés à chaque build : une incompatibilité entre le back et le front est détectée à la compilation.
 - **Cycle de vie modélisé en Java moderne** : les transitions d'une intervention (planification, démarrage, clôture, annulation) sont une `sealed interface` de records, traitée par un `switch` à pattern matching exhaustif. Toute transition non prévue lève une exception métier, et le compilateur signale un cas oublié.
 - **Concurrence maîtrisée** : verrouillage optimiste (`@Version`). Si deux responsables planifient la même intervention en même temps, le second reçoit un 409 et l'interface lui propose de recharger. Un test lance réellement les deux transactions concurrentes.
 - **Règles métier garanties par la base** : contraintes nommées et `CHECK` Oracle (une intervention terminée a obligatoirement un compte rendu, une intervention annulée un motif…).
-- **Sécurité** : API sans état, JWT signé via le support natif de Spring Security, autorisations par rôle, erreurs au format Problem Details (RFC 9457).
+- **Sécurité** : API sans état, JWT signé via le support natif de Spring Security (clé de 256 bits minimum, contrôlée au démarrage), autorisations par rôle, erreurs au format Problem Details (RFC 9457).
+
+### Oracle et performance
+
 - **Performance mesurée sur 500 000 interventions** : un package PL/SQL génère 5 ans d'historique réaliste en 41 s. Plans d'exécution analysés, index ciblés, recherche construite dynamiquement (Criteria API) : la première page de la liste passe de 480 ms à moins de 7 ms. Le problème N+1 est démontré puis corrigé par un test qui compte les requêtes SQL (41 requêtes contre 2). Le détail est dans [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md).
 - **Tests de charge Gatling** : 35 utilisateurs simultanés (responsables, techniciens, demandeurs), avec des objectifs vérifiés automatiquement. La campagne a révélé deux défauts que les tests fonctionnels ne voyaient pas, diagnostiqués dans `V$SQL` puis corrigés : p95 de 403 ms à 21 ms, contre 3,1 s sans les index.
 - **Oracle avancé** : historique des statuts alimenté par trigger, reporting en SQL analytique (`RANK`, `LAG`, calendrier `CONNECT BY`), archivage par lots en PL/SQL (`BULK COLLECT`, `FORALL`, journal en transaction autonome) appelé depuis l'API par `SimpleJdbcCall`.
-- **Interface pensée pour le terrain** : la page « Mes interventions » du technicien fonctionne sur tablette, et le démarrage comme la clôture se font en 2 clics. Les boutons d'action s'affichent selon le rôle et le statut.
-- **Tests sur une vraie base Oracle** grâce à Testcontainers, en local comme dans la CI. Développement des règles métier en TDD.
+
+### Produit
+
+- **Tableau de bord** du responsable : interventions ouvertes par priorité, équipements en panne, temps moyen de réparation, charge des techniciens, et **export CSV** des interventions d'une période.
+- **Interface « Tableau Andon »** : comme sur un tableau lumineux d'atelier, la couleur ne sert qu'à signaler (rouge = action requise, ambre = à surveiller, vert = normal), avec le même code partout ; affichage en fiches sur téléphone, transitions et animations discrètes, coupées si l'utilisateur demande moins de mouvement.
+
+### Production
+
+- **Pipeline complet à chaque merge sur `main`** : tests back et front, analyse SonarCloud, construction des images arm64, **scan Trivy** (une faille critique ou haute corrigeable bloque la publication), publication sur GHCR, déploiement par SSH (empreinte du serveur épinglée, clé dédiée), puis 15 vérifications automatiques du site en production.
+- **Conteneurs durcis** : utilisateurs non root, système de fichiers en lecture seule, aucune capacité Linux superflue, réseau interne sans accès à Internet pour l'API et la base. Seul Caddy est exposé, avec HTTPS automatique (Let's Encrypt), HTTP/3 et en-têtes de sécurité (CSP stricte, HSTS…).
+- **Sauvegardes testées** : export Data Pump chaque nuit, compressé et signé (SHA-256), copié dans Oracle Object Storage. La VM s'y authentifie par **principal d'instance**, sans aucune clé stockée, et ne peut ni écraser ni supprimer une sauvegarde. Un **test de restauration** automatique recharge chaque semaine la dernière sauvegarde dans un schéma temporaire et compare, table par table, le nombre de lignes avec l'export.
+- **Dépendances surveillées** : OWASP Dependency-Check (base NVD) et `npm audit` chaque semaine et à chaque changement de dépendances, résultats publiés dans l'onglet *Security* de GitHub.
+
+## Architecture de production
+
+```mermaid
+flowchart LR
+    U([Navigateur]) -- HTTPS --> C[Caddy<br/>TLS, en-têtes de sécurité]
+    subgraph VM["VM Oracle Cloud (Ampere arm64)"]
+        C -- /api --> A[API<br/>Spring Boot]
+        C -- le reste --> F[Front<br/>Angular + Nginx]
+        A --> O[(Oracle Free 23)]
+        S[[sauvegarder.sh<br/>chaque nuit]] -. Data Pump .-> O
+    end
+    S -- principal d'instance --> B[(Object Storage<br/>rétention 30 jours)]
+```
+
+```mermaid
+flowchart LR
+    P[Push / merge sur main] --> T[Tests back + front]
+    T --> Q[SonarCloud]
+    T --> I[Images arm64]
+    I --> V{Trivy}
+    V -- OK --> G[GHCR]
+    G --> D[Déploiement SSH]
+    D --> W[15 vérifications<br/>en production]
+```
 
 ## Modélisation
 
@@ -47,7 +107,7 @@ La [documentation technique complète](docs/MecaDetect_Documentation_technique.p
 ### Prérequis
 
 - Java 25
-- Node.js (version LTS)
+- Node.js 24 (LTS)
 - Docker Desktop
 
 ### 1. La base de données
@@ -65,7 +125,7 @@ cd backend
 mvn spring-boot:run "-Dspring-boot.run.profiles=demo"
 ```
 
-L'API démarre sur http://localhost:8080. Le profil `demo` crée les comptes de démonstration. La documentation interactive est disponible sur http://localhost:8080/swagger-ui.html.
+L'API démarre sur http://localhost:8080. Le profil `demo` crée les comptes de démonstration et un parc de 5 zones, 7 types et 20 équipements. La documentation interactive est disponible sur http://localhost:8080/swagger-ui.html.
 
 ### 3. Le front-end
 
@@ -78,16 +138,6 @@ npm start
 
 L'application est disponible sur http://localhost:4200.
 
-### Comptes de démonstration
-
-| Rôle | Email | Mot de passe |
-| --- | --- | --- |
-| Responsable maintenance | admin@mecadetect.fr | Demo2026! |
-| Technicien | technicien@mecadetect.fr | Demo2026! |
-| Demandeur | demandeur@mecadetect.fr | Demo2026! |
-
-Ces comptes n'existent qu'avec le profil `demo`, qui crée aussi un parc de démonstration : 5 zones, 7 types et 20 équipements.
-
 ### Volume réaliste et tests de charge (optionnel)
 
 Pour générer 500 000 interventions sur 5 ans (environ 40 s), puis lancer la campagne de charge, l'API étant démarrée :
@@ -98,22 +148,28 @@ cd charge
 mvn gatling:test
 ```
 
-Le rapport HTML est produit dans `charge/target/gatling/`. Les scripts SQL de mesure (plans d'exécution, requêtes réellement exécutées, archivage à blanc) sont dans [`scripts/`](scripts/), et leur mode d'emploi est dans [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md#reproduire-les-mesures).
+Le rapport HTML est produit dans `charge/target/gatling/`. Les scripts SQL de mesure sont dans [`scripts/`](scripts/), et leur mode d'emploi dans [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md#reproduire-les-mesures).
+
+### Déploiement
+
+L'environnement de production se décrit dans [`compose.prod.yaml`](compose.prod.yaml) et [`deploiement/`](deploiement/) : préparation de la VM (`preparer-serveur.sh`) et sa vérification (`verifier-serveur.sh`, 27 contrôles), Caddyfile, sauvegarde et restauration. Les secrets restent sur le serveur (`.env.prod`, modèle dans [`.env.prod.example`](.env.prod.example)) et dans les secrets GitHub ; aucun n'est versionné.
 
 ## Parcours de démonstration
 
 1. **Demandeur** : déclarer une panne sur la presse PRS-001. L'équipement passe « En panne ».
 2. **Responsable maintenance** : ouvrir l'intervention et la planifier. Seuls les techniciens habilités sur les presses sont proposés.
 3. **Technicien** : dans « Mes interventions », démarrer puis clôturer avec un compte rendu. L'équipement repasse « En service ».
+4. **Responsable maintenance** : suivre l'activité sur le tableau de bord et exporter les interventions du mois en CSV.
 
 ## Tests
 
 ```bash
-# Back-end : 206 tests (Docker doit être lancé pour Testcontainers)
+# Back-end : 265 tests, 96 % des instructions et 87 % des branches couvertes
+# (Docker doit être lancé pour Testcontainers)
 cd backend
 mvn verify
 
-# Front-end : 68 tests
+# Front-end : 100 tests
 cd frontend
 npx ng test --watch=false
 ```
@@ -127,7 +183,7 @@ npx ng test --watch=false
 | 2 | Référentiel des équipements : CRUD, recherche paginée, liste, fiche et formulaire | ✅ Terminé |
 | 3 | Interventions et cycle de vie (TDD) : déclaration, planification, réalisation, annulation, écrans par rôle | ✅ Terminé |
 | 4 | Oracle avancé : trigger d'historique, génération de 500 000 interventions, reporting analytique, index et plans d'exécution, archivage PL/SQL, tests de charge Gatling | ✅ Terminé |
-| 5 | Tableau de bord, export, sécurité, déploiement sur Oracle Cloud | ⏳ À venir |
+| 5 | Tableau de bord et export CSV, images Docker durcies, HTTPS, déploiement continu sur Oracle Cloud, SonarCloud, analyse des vulnérabilités, sauvegardes testées, affichage mobile | ✅ Terminé |
 | 6 | Tests end-to-end avec Robot Framework (optionnel) | ⏳ À venir |
 
 ## Auteur

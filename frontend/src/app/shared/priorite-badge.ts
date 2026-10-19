@@ -2,35 +2,26 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 
 import { LIBELLES_PRIORITE } from './libelles-intervention';
 
-/** Priorité d'une intervention : les priorités hautes et critiques ressortent visuellement. */
+/** Couleur du voyant selon l'urgence : seule une priorité critique s'allume en rouge. */
+const SIGNAUX: Record<string, string> = {
+  CRITIQUE: 'rouge',
+  HAUTE: 'ambre',
+  NORMALE: 'bleu',
+  BASSE: 'gris',
+};
+
+/** Priorité d'une intervention comme un voyant : libellé lisible et couleur d'urgence. */
 @Component({
   selector: 'app-priorite-badge',
   template: `<span [class]="classe()">{{ libelle() }}</span>`,
-  styles: `
-    .priorite {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      font-size: 0.85rem;
-      white-space: nowrap;
-    }
-    .priorite::before {
-      content: '';
-      width: 0.55rem;
-      height: 0.55rem;
-      border-radius: 50%;
-      background: currentColor;
-    }
-    .basse { color: #5f6b7a; }
-    .normale { color: #1f4aa8; }
-    .haute { color: #b45309; font-weight: 500; }
-    .critique { color: #b91c1c; font-weight: 600; }
-  `,
+  styleUrl: './voyant.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PrioriteBadge {
   readonly priorite = input.required<string>();
 
-  protected readonly libelle = computed(() => LIBELLES_PRIORITE[this.priorite()] ?? this.priorite());
-  protected readonly classe = computed(() => 'priorite ' + this.priorite().toLowerCase());
+  protected readonly libelle = computed(() => (LIBELLES_PRIORITE as Record<string, string>)[this.priorite()] ?? this.priorite());
+  protected readonly classe = computed(
+    () => `badge ${this.priorite().toLowerCase()} ${SIGNAUX[this.priorite()] ?? 'gris'}`,
+  );
 }

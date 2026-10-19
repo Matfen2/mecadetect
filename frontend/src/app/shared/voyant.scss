@@ -1,0 +1,47 @@
+// Style commun des badges « voyants » (statuts et priorités), inclus par chaque badge.
+// Un voyant éteint est une plaque neutre avec un point de couleur ;
+// un état qui exige une action (panne, critique) s'allume entièrement en rouge.
+.badge {
+  --couleur: var(--md-signal-eteint, #9aa4af);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.1rem 0.55rem 0.1rem 0.45rem;
+  border: 1px solid var(--md-trait, #cdd3da);
+  border-radius: 3px;
+  background: var(--md-surface, #f8f9fa);
+  color: var(--md-encre, #1f2a37);
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.badge::before {
+  content: '';
+  flex: none;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--couleur);
+}
+
+.vert { --couleur: var(--md-signal-vert, #1f8a4c); }
+.bleu { --couleur: var(--md-signal-bleu, #1565c0); }
+.gris { --couleur: var(--md-signal-eteint, #9aa4af); color: var(--md-encre-douce, #5b6673); }
+
+// À surveiller : le point rayonne
+.ambre {
+  --couleur: var(--md-signal-ambre-vif, #f2a516);
+}
+.ambre::before {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--couleur) 30%, transparent);
+}
+
+// Action requise : le voyant s'allume
+.rouge {
+  --couleur: #ffffff;
+  border-color: var(--md-signal-rouge, #c62828);
+  background: var(--md-signal-rouge, #c62828);
+  color: #ffffff;
+}

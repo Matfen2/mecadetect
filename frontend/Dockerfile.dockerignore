@@ -1,0 +1,18 @@
+# Contexte de construction de frontend/Dockerfile (la racine du dépôt).
+# Liste blanche : tout est exclu, sauf ce dont la construction a besoin.
+# Ni .env, ni .git, ni node_modules, ni dist n'entrent dans le contexte.
+*
+!api/openapi.yaml
+!frontend/package.json
+!frontend/package-lock.json
+!frontend/openapitools.json
+!frontend/angular.json
+!frontend/tsconfig*.json
+!frontend/src
+!frontend/public
+!frontend/nginx
+
+# Le client API est toujours régénéré depuis le contrat, jamais repris du poste
+frontend/src/app/core/api
+# Les tests ne font pas partie de l'application construite
+frontend/src/**/*.spec.ts

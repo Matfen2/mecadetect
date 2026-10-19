@@ -15,6 +15,11 @@
 	<description>MécaDétect - API de suivi de maintenance industrielle</description>
 	<properties>
 		<java.version>25</java.version>
+		<!-- Correctifs de sécurité en attendant Spring Boot 4.1.2 (analyse Trivy du 15/10/2026).
+		     À retirer quand Spring Boot embarque ces versions ou des plus récentes. -->
+		<tomcat.version>11.0.25</tomcat.version>
+		<jackson-bom.version>3.1.7</jackson-bom.version>
+		<jackson-2-bom.version>2.21.7</jackson-2-bom.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -125,6 +130,61 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<!-- Couverture des tests (rapport lu par SonarCloud) -->
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.15</version>
+				<configuration>
+					<excludes>
+						<!-- Interfaces et DTO générés depuis le contrat OpenAPI -->
+						<exclude>fr/mecadetect/api/**</exclude>
+					</excludes>
+				</configuration>
+				<executions>
+					<execution>
+						<id>agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>rapport</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- Vulnérabilités connues des dépendances (OWASP Dependency-Check).
+			     Pas d'exécution liée au cycle de vie : mvn verify reste rapide.
+			     Lancé à part : mvn dependency-check:check (workflow dependances.yml). -->
+			<plugin>
+				<groupId>org.owasp</groupId>
+				<artifactId>dependency-check-maven</artifactId>
+				<version>13.0.0</version>
+				<configuration>
+					<!-- Clé lue dans l'environnement : jamais dans le pom ni sur la ligne de commande -->
+					<nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
+					<!-- Échec à partir d'une faille haute (CVSS 7) -->
+					<failBuildOnCVSS>7</failBuildOnCVSS>
+					<formats>
+						<format>HTML</format>
+						<format>SARIF</format>
+					</formats>
+					<suppressionFiles>
+						<suppressionFile>${project.basedir}/dependency-check-suppressions.xml</suppressionFile>
+					</suppressionFiles>
+					<!-- OSS Index exige un compte Sonatype ; la NVD suffit -->
+					<ossIndexAnalyzerEnabled>false</ossIndexAnalyzerEnabled>
+					<!-- Pas de JavaScript ni de .NET côté API : le front est contrôlé par npm audit -->
+					<retireJsAnalyzerEnabled>false</retireJsAnalyzerEnabled>
+					<nodeAnalyzerEnabled>false</nodeAnalyzerEnabled>
+					<nodeAuditAnalyzerEnabled>false</nodeAuditAnalyzerEnabled>
+					<assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>
+				</configuration>
 			</plugin>
 			<!-- Génération des interfaces Spring et des DTO depuis le contrat OpenAPI -->
 			<plugin>

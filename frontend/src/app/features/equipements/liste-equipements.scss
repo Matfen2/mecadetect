@@ -1,11 +1,22 @@
+// Liste des équipements, thème « Tableau Andon ».
+// Trois mises en page selon la largeur :
+//   ordinateur (≥ 1024 px) : tableau complet ;
+//   tablette (600 à 1023 px) : tableau allégé (sans la date de mise en service) ;
+//   téléphone (< 600 px) : chaque équipement devient une fiche, lisible sans défilement horizontal.
+
+$tablette: 1023.98px;
+$telephone: 599.98px;
+
 .entete {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.75rem 1rem;
   margin-bottom: 1rem;
 
   h1 {
     margin: 0;
+    font-size: 2.25rem;
   }
 }
 
@@ -24,12 +35,25 @@
   }
 }
 
+// Le tableau est un panneau de travail posé sur le fond acier
 .tableau {
   overflow-x: auto;
+  background: var(--md-surface, #f8f9fa);
+  border-radius: 6px;
 }
 
 table {
   width: 100%;
+}
+
+.mat-column-reference {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+// Une date coupée en deux se lit mal
+.mat-column-dateMiseService {
+  white-space: nowrap;
 }
 
 .ligne {
@@ -42,6 +66,17 @@ table {
   }
 }
 
+// Liseré d'état à gauche de la ligne : un équipement en service reste neutre
+.ligne[data-statut='EN_PANNE'] td:first-child {
+  box-shadow: inset 4px 0 0 var(--md-signal-rouge, #c62828);
+}
+.ligne[data-statut='EN_MAINTENANCE'] td:first-child {
+  box-shadow: inset 4px 0 0 var(--md-signal-ambre-vif, #f2a516);
+}
+.ligne[data-statut='ARCHIVE'] {
+  color: var(--md-encre-douce, #5b6673);
+}
+
 .message {
   padding: 1.5rem;
   text-align: center;
@@ -49,5 +84,198 @@ table {
 
   &.erreur {
     color: var(--mat-sys-error);
+  }
+}
+
+// ------------------------------------------------------------------ Animations
+// Les lignes arrivent en cascade à chaque page (chargement, tri, filtre, pagination)
+@keyframes ligne-entree {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ligne {
+  animation: ligne-entree 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  transition: background-color 150ms ease;
+}
+
+@for $i from 1 through 20 {
+  .ligne:nth-child(#{$i}) {
+    animation-delay: #{($i - 1) * 22}ms;
+  }
+}
+
+// ------------------------------------------------------------------ Tablette
+@media (max-width: $tablette) {
+  .mat-column-dateMiseService {
+    display: none;
+  }
+
+  .mat-mdc-header-cell,
+  .mat-mdc-cell {
+    padding: 0 0.5rem;
+  }
+}
+
+// ------------------------------------------------------------------ Téléphone
+@media (max-width: $telephone) {
+  .entete {
+    flex-wrap: wrap;
+
+    h1 {
+      font-size: 1.9rem;
+    }
+  }
+
+  // Filtres sur deux colonnes : la recherche sur toute la largeur, statut et type,
+  // puis la zone à côté de la réinitialisation
+  .filtres {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    column-gap: 0.5rem;
+    row-gap: 0;
+
+    mat-form-field,
+    .recherche {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .recherche {
+      grid-column: 1 / -1;
+    }
+
+    > button {
+      justify-self: center;
+      align-self: center;
+      margin-bottom: 1.25rem;
+    }
+  }
+
+  .tableau {
+    overflow-x: visible;
+    background: transparent;
+  }
+
+  // Le tableau devient un simple conteneur de fiches. !important : la feuille de Material
+  // impose display: table, qui élargirait la page à la largeur minimale de la fiche la plus longue.
+  .mat-mdc-table {
+    display: block !important;
+    width: 100%;
+    background: transparent;
+  }
+
+  // <thead> et <tbody> sont créés par le tableau Material, hors du gabarit du composant :
+  // l'encapsulation des styles ne les atteint pas, d'où ::ng-deep, limité à ce composant par :host
+  :host ::ng-deep .mat-mdc-table > thead,
+  :host ::ng-deep .mat-mdc-table > tbody {
+    display: block;
+  }
+
+  // Les en-têtes ne servent plus : chaque fiche est lisible seule
+  .mat-mdc-header-row {
+    display: none;
+  }
+
+  // Un équipement = une fiche :
+  //   nom .............. statut
+  //   référence ........ zone
+  //   type ............. mise en service
+  tr.ligne {
+    display: grid;
+    box-sizing: border-box;
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'nom statut'
+      'reference zone'
+      'type date';
+    align-items: center;
+    gap: 0.35rem 0.75rem;
+    height: auto;
+    margin-bottom: 0.5rem;
+    padding: 0.8rem 0.9rem 0.8rem 1.1rem;
+    background: var(--md-surface, #f8f9fa);
+    border-radius: 6px;
+  }
+
+  .mat-mdc-cell {
+    display: block;
+    min-width: 0;
+    padding: 0;
+    border-bottom: none;
+  }
+
+  // Sur la fiche, le liseré borde toute la carte
+  .ligne[data-statut='EN_PANNE'] td:first-child,
+  .ligne[data-statut='EN_MAINTENANCE'] td:first-child {
+    box-shadow: none;
+  }
+  .ligne[data-statut='EN_PANNE'] {
+    box-shadow: inset 4px 0 0 var(--md-signal-rouge, #c62828);
+  }
+  .ligne[data-statut='EN_MAINTENANCE'] {
+    box-shadow: inset 4px 0 0 var(--md-signal-ambre-vif, #f2a516);
+  }
+
+  .mat-column-nom {
+    grid-area: nom;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--md-titre);
+    font-size: 1.15rem;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  .mat-column-statut {
+    grid-area: statut;
+    justify-self: end;
+  }
+
+  .mat-column-reference {
+    grid-area: reference;
+  }
+
+  // Les libellés des colonnes masquées reviennent devant les valeurs
+  .mat-column-zone {
+    grid-area: zone;
+    justify-self: end;
+    white-space: nowrap;
+
+    &::before {
+      content: 'Zone ';
+      color: var(--md-encre-douce, #5b6673);
+    }
+  }
+
+  .mat-column-type,
+  .mat-column-dateMiseService {
+    font-size: 0.8rem;
+    color: var(--md-encre-douce, #5b6673);
+  }
+
+  .mat-column-type {
+    grid-area: type;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mat-column-dateMiseService {
+    display: block;
+    grid-area: date;
+    justify-self: end;
+
+    &::before {
+      content: 'Depuis le ';
+    }
+  }
+
+  // Le paginateur reste sur le panneau, sous les fiches
+  .mat-mdc-paginator {
+    border-radius: 6px;
   }
 }

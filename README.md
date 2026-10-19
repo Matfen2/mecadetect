@@ -56,7 +56,7 @@ Application de suivi de maintenance industrielle : déclaration des pannes, plan
 ### Produit
 
 - **Tableau de bord** du responsable : interventions ouvertes par priorité, équipements en panne, temps moyen de réparation, charge des techniciens, et **export CSV** des interventions d'une période.
-- **Interface pensée pour le terrain** : la page « Mes interventions » du technicien fonctionne sur tablette et sur téléphone, et le démarrage comme la clôture se font en 2 clics. Sur petit écran, la navigation se replie dans un menu et les tableaux n'affichent que les colonnes utiles.
+- **Interface « Tableau Andon »** : comme sur un tableau lumineux d'atelier, la couleur ne sert qu'à signaler (rouge = action requise, ambre = à surveiller, vert = normal), avec le même code partout ; affichage en fiches sur téléphone, transitions et animations discrètes, coupées si l'utilisateur demande moins de mouvement.
 
 ### Production
 
@@ -169,7 +169,7 @@ L'environnement de production se décrit dans [`compose.prod.yaml`](compose.prod
 cd backend
 mvn verify
 
-# Front-end : 94 tests
+# Front-end : 100 tests
 cd frontend
 npx ng test --watch=false
 ```

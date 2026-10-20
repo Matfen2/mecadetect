@@ -1,6 +1,6 @@
 package fr.mecadetect.maintenance;
 
-import fr.mecadetect.TestcontainersConfiguration;
+import fr.mecadetect.TestPersistanceOracle;
 import fr.mecadetect.equipement.Equipement;
 import fr.mecadetect.equipement.EquipementRepository;
 import fr.mecadetect.referentiel.TypeEquipement;
@@ -14,11 +14,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -29,17 +26,13 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/**
- * Tâche 4.5 : PKG_MAINTENANCE.ARCHIVER_INTERVENTIONS, appelé par SimpleJdbcCall.
- *
- * Le test tourne dans une transaction Spring : le repository passe alors p_commit => FALSE
- * et tout est annulé à la fin du test. Seul le journal, écrit en transaction autonome,
- * est conservé : les assertions portent donc sur la dernière ligne du journal.
- * Les données de test datent de 2015, loin des données des autres tests.
- */
-@SpringBootTest
-@Import(TestcontainersConfiguration.class)
-@Transactional
+/// Tâche 4.5 : `PKG_MAINTENANCE.ARCHIVER_INTERVENTIONS`, appelé par `SimpleJdbcCall`.
+///
+/// Le test tourne dans une transaction Spring : le repository passe alors `p_commit => FALSE`
+/// et tout est annulé à la fin du test. Seul le journal, écrit en transaction autonome,
+/// est conservé : les assertions portent donc sur la dernière ligne du journal.
+/// Les données de test datent de 2015, loin des données des autres tests.
+@TestPersistanceOracle
 class ArchivageRepositoryTest {
 
     private static final LocalDate LIMITE = LocalDate.of(2016, 1, 1);

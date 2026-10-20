@@ -1,6 +1,6 @@
 package fr.mecadetect.intervention;
 
-import fr.mecadetect.TestcontainersConfiguration;
+import fr.mecadetect.TestPersistanceOracle;
 import fr.mecadetect.equipement.Equipement;
 import fr.mecadetect.equipement.EquipementRepository;
 import fr.mecadetect.referentiel.TypeEquipement;
@@ -19,9 +19,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -29,10 +26,8 @@ import java.time.LocalDateTime;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** Tests d'intégration sur Oracle : mapping, séquence, verrou optimiste et contraintes CHECK. */
-@SpringBootTest
-@Import(TestcontainersConfiguration.class)
-@Transactional
+/// Persistance des interventions : mapping, séquence, verrou optimiste et contraintes CHECK.
+@TestPersistanceOracle
 class InterventionRepositoryTest {
 
     private static final LocalDateTime LUNDI_8H = LocalDateTime.of(2026, 10, 12, 8, 0);

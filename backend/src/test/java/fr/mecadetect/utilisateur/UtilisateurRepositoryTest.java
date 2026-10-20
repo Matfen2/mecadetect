@@ -1,24 +1,16 @@
 package fr.mecadetect.utilisateur;
 
-import fr.mecadetect.TestcontainersConfiguration;
+import fr.mecadetect.TestPersistanceOracle;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/**
- * Tests d'intégration sur une vraie base Oracle (Testcontainers).
- * Chaque test est annulé en fin d'exécution grâce à @Transactional.
- */
-@SpringBootTest
-@Import(TestcontainersConfiguration.class)
-@Transactional
+/// Persistance des utilisateurs : recherche par email sans tenir compte de la casse, activation, unicité de l'email.
+@TestPersistanceOracle
 class UtilisateurRepositoryTest {
 
     @Autowired

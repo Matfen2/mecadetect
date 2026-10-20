@@ -1,6 +1,6 @@
 package fr.mecadetect.reporting;
 
-import fr.mecadetect.TestcontainersConfiguration;
+import fr.mecadetect.TestPersistanceOracle;
 import fr.mecadetect.equipement.Equipement;
 import fr.mecadetect.equipement.EquipementRepository;
 import fr.mecadetect.intervention.Priorite;
@@ -15,11 +15,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SqlParameterValue;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -30,19 +27,17 @@ import java.time.YearMonth;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
-/**
- * Tâche 4.3 (UC-DB2) : requêtes de reporting sur un jeu de données dont on connaît le résultat.
- * Toutes les dates sont en 2030 (et 2028) : aucune autre donnée de la base de test ne tombe dans ces périodes.
- *
- *  Équipement | Demandes (2030)                         | Remarque
- *  RPT-A      | février, mars, mai          (terminées) | 3 pannes
- *  RPT-B      | mars, mars, juin            (terminées) | 3 pannes : ex aequo avec A
- *  RPT-C      | mai (terminée), mai (annulée)           | 1 panne : l'annulée ne compte pas
- *  RPT-D      | 2028 seulement                          | hors période
- */
-@SpringBootTest
-@Import(TestcontainersConfiguration.class)
-@Transactional
+/// Tâche 4.3 (UC-DB2) : requêtes de reporting sur un jeu de données dont on connaît le résultat.
+///
+/// Toutes les dates sont en 2030 (et 2028) : aucune autre donnée de la base de test ne tombe dans ces périodes.
+///
+/// | Équipement | Demandes (2030)                    | Remarque                            |
+/// |------------|------------------------------------|-------------------------------------|
+/// | RPT-A      | février, mars, mai (terminées)     | 3 pannes                            |
+/// | RPT-B      | mars, mars, juin (terminées)       | 3 pannes : ex aequo avec A          |
+/// | RPT-C      | mai (terminée), mai (annulée)      | 1 panne : l'annulée ne compte pas   |
+/// | RPT-D      | 2028 seulement                     | hors période                        |
+@TestPersistanceOracle
 class ReportingRepositoryTest {
 
     private static final LocalDateTime DEBUT_2030 = LocalDateTime.of(2030, 1, 1, 0, 0);

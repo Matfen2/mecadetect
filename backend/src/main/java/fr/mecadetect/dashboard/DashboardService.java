@@ -14,30 +14,31 @@ import java.util.List;
 import java.util.Map;
 import java.util.SequencedMap;
 
-/**
- * Tableau de bord (tâche 5.1) : assemble les requêtes de reporting du Sprint 4.
- *
- * Périodes, en UTC comme toutes les dates stockées :
- * - 12 mois glissants, du 1er du mois il y a 11 mois jusqu'à la fin du mois en cours
- *   (top des équipements, évolution mensuelle, temps moyen de résolution) ;
- * - le mois en cours pour la charge des techniciens.
- * Les interventions archivées ont au moins un an : elles sont hors de ces périodes.
- */
+/// Tableau de bord (tâche 5.1) : assemble les requêtes de reporting du Sprint 4.
+///
+/// Périodes, en UTC comme toutes les dates stockées :
+///
+/// - **12 mois glissants**, du 1er du mois il y a 11 mois jusqu'à la fin du mois en cours :
+///   top des équipements, évolution mensuelle, temps moyen de résolution ;
+/// - **le mois en cours** pour la charge des techniciens.
+///
+/// Les interventions archivées ont au moins un an : elles sont hors de ces périodes.
 @Service
 public class DashboardService {
 
-    static final int TAILLE_TOP = 10;
-    private static final List<Priorite> ORDRE_URGENCE =
-            List.of(Priorite.CRITIQUE, Priorite.HAUTE, Priorite.NORMALE, Priorite.BASSE);
-
     private final ReportingRepository reporting;
     private final Clock clock;
+    private final TableauDeBordProperties proprietes;
 
-    public DashboardService(ReportingRepository reporting, Clock clock) {
+    public DashboardService(ReportingRepository reporting, Clock clock, TableauDeBordProperties proprietes) {
         this.reporting = reporting;
         this.clock = clock;
+        this.proprietes = proprietes;
     }
 
+    /// Calcule l'ensemble des indicateurs du tableau de bord à la date courante.
+    ///
+    /// @return les indicateurs, sur les périodes décrites dans la documentation de la classe
     @Transactional(readOnly = true)
     public TableauDeBord calculer() {
         LocalDateTime debutMoisSuivant = LocalDate.now(clock).withDayOfMonth(1).plusMonths(1).atStartOfDay();
@@ -48,20 +49,29 @@ public class DashboardService {
                 ouvertesParPriorite(),
                 reporting.equipementsEnPanne(),
                 tempsMoyenGlobal(reporting.tempsMoyenResolution(debutDouzeMois, debutMoisSuivant)),
-                reporting.topEquipements(debutDouzeMois, debutMoisSuivant, TAILLE_TOP),
+                reporting.topEquipements(debutDouzeMois, debutMoisSuivant, proprietes.tailleTop()),
                 reporting.evolutionMensuelle(debutDouzeMois, debutMoisSuivant),
                 reporting.chargeTechniciens(debutMois, debutMoisSuivant));
     }
 
-    /** Les 4 priorités dans l'ordre d'urgence, à 0 quand aucune intervention n'est ouverte. */
+    /// Nombre d'interventions ouvertes pour chaque priorité, dans l'ordre d'urgence de [Priorite].
+    ///
+    /// Une priorité sans intervention ouverte est présente avec la valeur 0.
+    ///
+    /// @return les compteurs, de la priorité la plus urgente à la moins urgente
     private SequencedMap<Priorite, Long> ouvertesParPriorite() {
         Map<Priorite, Long> comptes = reporting.ouvertesParPriorite();
-        SequencedMap<Priorite, Long> resultat = new LinkedHashMap<>();
-        ORDRE_URGENCE.forEach(priorite -> resultat.put(priorite, comptes.getOrDefault(priorite, 0L)));
-        return resultat;
+        SequencedMap<Priorite, Long> ouvertes = new LinkedHashMap<>();
+        for (Priorite priorite : Priorite.values()) {
+            ouvertes.put(priorite, comptes.getOrDefault(priorite, 0L));
+        }
+        return ouvertes;
     }
 
-    /** Moyenne des temps par priorité, pondérée par leur nombre d'interventions, arrondie au dixième. */
+    /// Moyenne des temps de résolution, pondérée par le nombre d'interventions de chaque priorité.
+    ///
+    /// @param temps temps moyen et nombre d'interventions par priorité
+    /// @return la moyenne en heures, arrondie au dixième, ou 0 s'il n'y a aucune intervention
     static double tempsMoyenGlobal(List<TempsResolution> temps) {
         long total = temps.stream().mapToLong(TempsResolution::nombre).sum();
         if (total == 0) {

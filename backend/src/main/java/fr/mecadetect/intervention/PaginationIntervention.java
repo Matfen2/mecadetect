@@ -7,16 +7,14 @@ import org.springframework.data.domain.Sort;
 
 import java.util.Map;
 
-/**
- * Transforme page, size et sort en Pageable, avec une liste blanche de champs triables.
- * Par défaut, les demandes les plus récentes d'abord.
- */
+/// Transforme page, size et sort en Pageable, avec une liste blanche de champs triables.
+/// Par défaut, les demandes les plus récentes d'abord.
 public final class PaginationIntervention {
 
     static final int TAILLE_PAR_DEFAUT = 20;
     static final int TAILLE_MAX = 100;
 
-    /** Tri par défaut : la date de demande, la plus récente d'abord. */
+    /// Tri par défaut : la date de demande, la plus récente d'abord.
     private static final String DATE_DEMANDE = "dateDemande";
 
     private static final Map<String, String> CHAMPS_TRIABLES = Map.of(
@@ -28,19 +26,29 @@ public final class PaginationIntervention {
     private PaginationIntervention() {
     }
 
-    /**
-     * Pagination triée selon le paramètre sort (dateDemande décroissante par défaut).
-     * L'identifiant départage les ex aequo, dans le même sens que le tri demandé : un index
-     * (date_demande, id_intervention) lu à l'envers fournit alors les lignes déjà triées,
-     * et Oracle s'arrête après la page demandée au lieu de trier toute la table (tâche 4.4).
-     */
+    /// Pagination triée selon le paramètre sort (dateDemande décroissante par défaut).
+    ///
+    /// L'identifiant départage les ex aequo, dans le même sens que le tri demandé : un index
+    /// (date_demande, id_intervention) lu à l'envers fournit alors les lignes déjà triées,
+    /// et Oracle s'arrête après la page demandée au lieu de trier toute la table (tâche 4.4).
+    ///
+    /// @param page   numéro de page, à partir de 0 ; null pour la première
+    /// @param taille nombre d'éléments par page, de 1 à 100 ; null pour 20
+    /// @param tri    champ et sens, par exemple `numero,desc` ; null pour le tri par défaut
+    /// @return la pagination correspondante
+    /// @throws DonneesInvalidesException si la page, la taille ou le tri est invalide
     public static Pageable versPageable(Integer page, Integer taille, String tri) {
         Sort sort = versSort(tri);
         Sort.Direction sens = sort.iterator().next().getDirection();
         return PageRequest.of(numero(page), nombre(taille), sort.and(Sort.by(sens, "id")));
     }
 
-    /** Pagination sans tri : l'ordre est fixé par la requête elle-même. */
+    /// Pagination sans tri : l'ordre est fixé par la requête elle-même.
+    ///
+    /// @param page   numéro de page, à partir de 0 ; null pour la première
+    /// @param taille nombre d'éléments par page, de 1 à 100 ; null pour 20
+    /// @return la pagination correspondante
+    /// @throws DonneesInvalidesException si la page ou la taille est invalide
     public static Pageable sansTri(Integer page, Integer taille) {
         return PageRequest.of(numero(page), nombre(taille));
     }

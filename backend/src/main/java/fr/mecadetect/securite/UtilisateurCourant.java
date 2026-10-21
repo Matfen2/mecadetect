@@ -5,7 +5,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 
-/** Donne l'identifiant de l'utilisateur connecté, porté par la claim "sub" du jeton. */
+/// Donne l'identifiant de l'utilisateur connecté, porté par la claim "sub" du jeton.
 @Component
 public class UtilisateurCourant {
 

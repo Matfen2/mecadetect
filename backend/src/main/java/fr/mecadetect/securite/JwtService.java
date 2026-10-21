@@ -13,10 +13,8 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 
-/**
- * Génère les jetons JWT. Le jeton contient l'identifiant de l'utilisateur (sub),
- * son email et son rôle, avec une durée de validité courte.
- */
+/// Génère les jetons JWT. Le jeton contient l'identifiant de l'utilisateur (sub),
+/// son email et son rôle, avec une durée de validité courte.
 @Service
 public class JwtService {
 

@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
-/** Conversion entre les interventions et les DTO générés depuis le contrat. */
+/// Conversion entre les interventions et les DTO générés depuis le contrat.
 public final class InterventionMapper {
 
     private InterventionMapper() {
@@ -112,12 +112,12 @@ public final class InterventionMapper {
         return StatutInterventionDto.fromValue(statut.name());
     }
 
-    /** Date reçue avec son fuseau, ramenée en UTC pour le stockage. */
+    /// Date reçue avec son fuseau, ramenée en UTC pour le stockage.
     static LocalDateTime versUtc(OffsetDateTime date) {
         return date == null ? null : date.withOffsetSameInstant(ZoneOffset.UTC).toLocalDateTime();
     }
 
-    /** Les dates sont stockées en UTC : on les expose avec leur fuseau (format ISO 8601). */
+    /// Les dates sont stockées en UTC : on les expose avec leur fuseau (format ISO 8601).
     static OffsetDateTime enUtc(LocalDateTime date) {
         return date == null ? null : date.atOffset(ZoneOffset.UTC);
     }

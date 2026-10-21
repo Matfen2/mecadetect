@@ -3,7 +3,7 @@ package fr.mecadetect.referentiel;
 import fr.mecadetect.api.dto.TypeEquipementDto;
 import fr.mecadetect.api.dto.ZoneDto;
 
-/** Conversion des entités du référentiel vers les DTO générés depuis le contrat. */
+/// Conversion des entités du référentiel vers les DTO générés depuis le contrat.
 public final class ReferentielMapper {
 
     private ReferentielMapper() {

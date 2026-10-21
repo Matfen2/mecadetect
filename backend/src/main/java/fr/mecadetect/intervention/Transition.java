@@ -6,12 +6,10 @@ import fr.mecadetect.utilisateur.Utilisateur;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-/**
- * Les transitions possibles du cycle de vie d'une intervention.
- * L'interface est scellée : la liste est fermée, et le compilateur vérifie
- * que chaque switch sur une transition traite tous les cas.
- * Chaque record porte les données de sa transition et vérifie leurs règles (RG-03).
- */
+/// Les transitions possibles du cycle de vie d'une intervention.
+/// L'interface est scellée : la liste est fermée, et le compilateur vérifie
+/// que chaque switch sur une transition traite tous les cas.
+/// Chaque record porte les données de sa transition et vérifie leurs règles (RG-03).
 public sealed interface Transition {
 
     record Planification(Utilisateur technicien, LocalDateTime datePlanifiee) implements Transition {

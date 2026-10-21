@@ -18,13 +18,11 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import java.util.List;
 import java.util.Map;
 
-/**
- * Transforme les exceptions en réponses au format Problem Details (RFC 9457),
- * toujours avec un code métier exploitable par le front.
- *
- * Volontairement, aucun gestionnaire générique (Exception.class) : les refus d'accès
- * de Spring Security (403) doivent continuer à être traités par Spring Security.
- */
+/// Transforme les exceptions en réponses au format Problem Details (RFC 9457),
+/// toujours avec un code métier exploitable par le front.
+///
+/// Volontairement, aucun gestionnaire générique (Exception.class) : les refus d'accès
+/// de Spring Security (403) doivent continuer à être traités par Spring Security.
 @RestControllerAdvice
 public class GestionErreursApi {
 
@@ -63,7 +61,7 @@ public class GestionErreursApi {
                 "La valeur du paramètre « " + exception.getName() + " » est invalide.", "PARAMETRE_INVALIDE");
     }
 
-    /** Contrainte du contrat non respectée sur un paramètre de l'URL (ex. size > 100). */
+    /// Contrainte du contrat non respectée sur un paramètre de l'URL (ex. size > 100).
     @ExceptionHandler({HandlerMethodValidationException.class, ConstraintViolationException.class})
     ProblemDetail parametresHorsLimites(Exception exception) {
         return probleme(HttpStatus.BAD_REQUEST, "Paramètre invalide",
@@ -80,7 +78,7 @@ public class GestionErreursApi {
 
     // --------------------------------------------------------------- 403
 
-    /** Bon rôle, mais pas le droit d'agir sur cette ressource précise (ex. RG-02). */
+    /// Bon rôle, mais pas le droit d'agir sur cette ressource précise (ex. RG-02).
     @ExceptionHandler(ActionNonAutoriseeException.class)
     ProblemDetail actionNonAutorisee(ActionNonAutoriseeException exception) {
         return probleme(HttpStatus.FORBIDDEN, "Action non autorisée", exception.getMessage(), exception.getCode());
@@ -100,14 +98,14 @@ public class GestionErreursApi {
         return probleme(HttpStatus.CONFLICT, "Règle métier non respectée", exception.getMessage(), exception.getCode());
     }
 
-    /** Verrouillage optimiste (@Version) : quelqu'un a modifié la donnée entre-temps (UC-DB6). */
+    /// Verrouillage optimiste (@Version) : quelqu'un a modifié la donnée entre-temps (UC-DB6).
     @ExceptionHandler(OptimisticLockingFailureException.class)
     ProblemDetail conflitDeVersion(OptimisticLockingFailureException exception) {
         return probleme(HttpStatus.CONFLICT, "Modification concurrente",
                 "Ces données ont été modifiées par un autre utilisateur. Rechargez la page.", "CONFLIT_VERSION");
     }
 
-    /** Filet de sécurité : une contrainte de la base a refusé l'opération (unicité, clé étrangère...). */
+    /// Filet de sécurité : une contrainte de la base a refusé l'opération (unicité, clé étrangère...).
     @ExceptionHandler(DataIntegrityViolationException.class)
     ProblemDetail contrainteBase(DataIntegrityViolationException exception) {
         LOG.warn("Contrainte d'intégrité violée : {}", exception.getMostSpecificCause().getMessage());

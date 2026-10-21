@@ -7,20 +7,18 @@ import org.springframework.data.domain.Sort;
 
 import java.util.Map;
 
-/**
- * Transforme les paramètres page, size et sort de l'API en Pageable Spring Data.
- * Le tri n'accepte que des champs listés : on n'expose jamais directement
- * les noms internes des entités, et on ne trie pas sur un champ non indexable.
- */
+/// Transforme les paramètres page, size et sort de l'API en Pageable Spring Data.
+/// Le tri n'accepte que des champs listés : on n'expose jamais directement
+/// les noms internes des entités, et on ne trie pas sur un champ non indexable.
 public final class PaginationEquipement {
 
     static final int TAILLE_PAR_DEFAUT = 20;
     static final int TAILLE_MAX = 100;
 
-    /** Tri par défaut : la référence. */
+    /// Tri par défaut : la référence.
     private static final String REFERENCE = "reference";
 
-    /** Nom public du champ de tri vers le chemin JPA correspondant. */
+    /// Nom public du champ de tri vers le chemin JPA correspondant.
     private static final Map<String, String> CHAMPS_TRIABLES = Map.of(
             REFERENCE, REFERENCE,
             "nom", "nom",

@@ -18,10 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 
-/**
- * Implémente l'interface InterventionsApi générée depuis le contrat.
- * Consultation : tout utilisateur connecté. Actions : selon le rôle (RG-01, RG-02).
- */
+/// Implémente l'interface InterventionsApi générée depuis le contrat.
+/// Consultation : tout utilisateur connecté. Actions : selon le rôle (RG-01, RG-02).
 @RestController
 public class InterventionController implements InterventionsApi {
 

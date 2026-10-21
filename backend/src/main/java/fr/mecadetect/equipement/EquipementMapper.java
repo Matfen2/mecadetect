@@ -7,7 +7,7 @@ import fr.mecadetect.api.dto.StatutEquipementDto;
 import fr.mecadetect.referentiel.ReferentielMapper;
 import org.springframework.data.domain.Page;
 
-/** Conversion entre l'entité et les DTO générés depuis le contrat. */
+/// Conversion entre l'entité et les DTO générés depuis le contrat.
 public final class EquipementMapper {
 
     private EquipementMapper() {

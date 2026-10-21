@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/** Techniciens avec habilitations et charge, pour choisir qui assigner (ADMIN). */
+/// Techniciens avec habilitations et charge, pour choisir qui assigner (ADMIN).
 @RestController
 public class TechnicienController implements TechniciensApi {
 

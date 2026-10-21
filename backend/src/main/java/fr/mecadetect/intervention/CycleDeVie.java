@@ -12,23 +12,26 @@ import static fr.mecadetect.intervention.StatutIntervention.EN_COURS;
 import static fr.mecadetect.intervention.StatutIntervention.PLANIFIEE;
 import static fr.mecadetect.intervention.StatutIntervention.TERMINEE;
 
-/**
- * Machine à états du cycle de vie, en un seul endroit :
- *
- * <pre>
- * DEMANDEE --planification--> PLANIFIEE --démarrage--> EN_COURS --clôture--> TERMINEE
- *     \                           \
- *      +------annulation-----------+--> ANNULEE
- * </pre>
- *
- * Toute combinaison absente de ce switch est une transition interdite.
- */
+/// Machine à états du cycle de vie, en un seul endroit :
+///
+/// ```
+/// DEMANDEE --planification--> PLANIFIEE --démarrage--> EN_COURS --clôture--> TERMINEE
+///     \                           \
+///      +------annulation-----------+--> ANNULEE
+/// ```
+///
+/// Toute combinaison absente de ce switch est une transition interdite.
 public final class CycleDeVie {
 
     private CycleDeVie() {
     }
 
-    /** Statut obtenu en appliquant la transition, ou exception si elle est interdite. */
+    /// Statut obtenu en appliquant la transition au statut actuel.
+    ///
+    /// @param actuel     statut actuel de l'intervention
+    /// @param transition transition demandée
+    /// @return le nouveau statut
+    /// @throws RegleMetierException si la transition est interdite depuis ce statut
     public static StatutIntervention statutApres(StatutIntervention actuel, Transition transition) {
         return switch (transition) {
             case Planification _ when actuel == DEMANDEE -> PLANIFIEE;
@@ -41,10 +44,8 @@ public final class CycleDeVie {
         };
     }
 
-    /**
-     * Switch exhaustif sans branche default : si une transition est ajoutée
-     * à l'interface scellée, ce code ne compile plus tant qu'elle n'est pas traitée.
-     */
+    /// Switch exhaustif sans branche default : si une transition est ajoutée
+    /// à l'interface scellée, ce code ne compile plus tant qu'elle n'est pas traitée.
     static String libelle(Transition transition) {
         return switch (transition) {
             case Planification _ -> "la planification";

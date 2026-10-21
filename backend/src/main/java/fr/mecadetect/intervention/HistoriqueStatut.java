@@ -14,11 +14,9 @@ import org.hibernate.annotations.Immutable;
 
 import java.time.LocalDateTime;
 
-/**
- * Trace d'un changement de statut (RG-08). Lecture seule côté Java : la table
- * sera alimentée par un trigger Oracle au Sprint 4 (UC-DB1), quel que soit
- * le chemin de modification, y compris une requête SQL directe.
- */
+/// Trace d'un changement de statut (RG-08). Lecture seule côté Java : la table
+/// sera alimentée par un trigger Oracle au Sprint 4 (UC-DB1), quel que soit
+/// le chemin de modification, y compris une requête SQL directe.
 @Entity
 @Immutable
 @Table(name = "historique_statut")

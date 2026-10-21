@@ -8,6 +8,8 @@ import java.util.List;
 /// peut être remplacée (fichier, autre jeu de données, double de test) sans toucher à l'initialiseur.
 public interface SourceComptesDemo {
 
-    /// @return les comptes à créer, sans doublon d'email
+    /// Comptes de démonstration à créer.
+    ///
+    /// @return les comptes, sans doublon d'email
     List<CompteDemo> comptes();
 }

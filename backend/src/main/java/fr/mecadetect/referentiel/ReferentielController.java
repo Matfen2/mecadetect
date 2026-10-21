@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/** Listes de référence utilisées par les formulaires (zones et types d'équipement). */
+/// Listes de référence utilisées par les formulaires (zones et types d'équipement).
 @RestController
 @Transactional(readOnly = true)
 public class ReferentielController implements ReferentielApi {

@@ -6,10 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Construit la clause WHERE de la recherche à partir des seuls filtres renseignés.
- * Chaque filtre est une Specification indépendante, combinée avec un ET logique.
- */
+/// Construit la clause WHERE de la recherche à partir des seuls filtres renseignés.
+/// Chaque filtre est une Specification indépendante, combinée avec un ET logique.
 public final class EquipementSpecifications {
 
     private static final char CARACTERE_ECHAPPEMENT = '\\';
@@ -41,7 +39,7 @@ public final class EquipementSpecifications {
         return (racine, requete, cb) -> cb.notEqual(racine.get("statut"), StatutEquipement.ARCHIVE);
     }
 
-    /** type.id : Hibernate utilise directement la clé étrangère id_type, sans jointure. */
+    /// type.id : Hibernate utilise directement la clé étrangère id_type, sans jointure.
     static Specification<Equipement> typeEgal(Long idType) {
         return (racine, requete, cb) -> cb.equal(racine.get("type").get("id"), idType);
     }
@@ -50,7 +48,7 @@ public final class EquipementSpecifications {
         return (racine, requete, cb) -> cb.equal(racine.get("zone").get("id"), idZone);
     }
 
-    /** Recherche sur la référence ou le nom, sans tenir compte de la casse. */
+    /// Recherche sur la référence ou le nom, sans tenir compte de la casse.
     static Specification<Equipement> texteContenu(String texte) {
         String motif = "%" + echapper(texte.trim().toLowerCase(Locale.ROOT)) + "%";
         return (racine, requete, cb) -> cb.or(
@@ -58,10 +56,8 @@ public final class EquipementSpecifications {
                 cb.like(cb.lower(racine.get("nom")), motif, CARACTERE_ECHAPPEMENT));
     }
 
-    /**
-     * Les caractères % et _ sont des jokers en SQL : on les échappe pour qu'une
-     * recherche « 50% » cherche bien le texte « 50% » et non « 50 suivi de n'importe quoi ».
-     */
+    /// Les caractères % et _ sont des jokers en SQL : on les échappe pour qu'une
+    /// recherche « 50% » cherche bien le texte « 50% » et non « 50 suivi de n'importe quoi ».
     static String echapper(String texte) {
         return texte
                 .replace("\\", "\\\\")

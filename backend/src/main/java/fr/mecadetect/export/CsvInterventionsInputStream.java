@@ -21,17 +21,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-/**
- * Le fichier CSV, produit ligne par ligne pendant que le client le télécharge.
- *
- * Rien n'est chargé d'un bloc en mémoire : la requête est ouverte à la première lecture, chaque ligne
- * lue dans Oracle (par paquets de 500) est convertie en octets à la demande, et la connexion est
- * rendue au pool à la fin du fichier ou à la fermeture du flux (Spring ferme le flux après l'envoi,
- * y compris si le client interrompt le téléchargement).
- */
+/// Le fichier CSV, produit ligne par ligne pendant que le client le télécharge.
+///
+/// Rien n'est chargé d'un bloc en mémoire : la requête est ouverte à la première lecture, chaque ligne
+/// lue dans Oracle (par paquets de 500) est convertie en octets à la demande, et la connexion est
+/// rendue au pool à la fin du fichier ou à la fermeture du flux (Spring ferme le flux après l'envoi,
+/// y compris si le client interrompt le téléchargement).
 final class CsvInterventionsInputStream extends InputStream {
 
-    /** Le tri suit l'index (date_demande, id_intervention) : Oracle lit dans l'ordre, sans trier. */
+    /// Le tri suit l'index (date_demande, id_intervention) : Oracle lit dans l'ordre, sans trier.
     private static final String REQUETE = """
             SELECT i.numero, i.titre, e.reference, e.nom AS equipement, i.priorite, i.statut,
                    d.prenom || ' ' || d.nom AS demandeur,
@@ -50,7 +48,7 @@ final class CsvInterventionsInputStream extends InputStream {
             "Priorité", "Statut", "Demandeur", "Technicien", "Demandée le", "Planifiée le", "Débutée le",
             "Terminée le", "Temps passé (min)", "Compte rendu", "Motif d'annulation");
 
-    /** Marque d'ordre des octets : sans elle, Excel lit le fichier en Windows-1252 et casse les accents. */
+    /// Marque d'ordre des octets : sans elle, Excel lit le fichier en Windows-1252 et casse les accents.
     private static final String BOM = "\uFEFF";
 
     private static final Map<String, String> PRIORITES =
@@ -105,7 +103,7 @@ final class CsvInterventionsInputStream extends InputStream {
         fermer();
     }
 
-    /** Remplit le tampon avec la ligne suivante si besoin ; false à la fin du fichier. */
+    /// Remplit le tampon avec la ligne suivante si besoin ; false à la fin du fichier.
     private boolean disponible() throws IOException {
         while (position >= tampon.length) {
             if (termine) {
@@ -177,7 +175,7 @@ final class CsvInterventionsInputStream extends InputStream {
                 rs.getString("motif_annulation"));
     }
 
-    /** Dates stockées en UTC, écrites à l'heure locale de l'atelier. */
+    /// Dates stockées en UTC, écrites à l'heure locale de l'atelier.
     private String date(Timestamp utc) {
         return utc == null ? null
                 : utc.toLocalDateTime().atOffset(ZoneOffset.UTC).atZoneSameInstant(fuseau).format(FORMAT_DATE);

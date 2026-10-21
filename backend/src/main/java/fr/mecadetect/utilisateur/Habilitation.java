@@ -14,10 +14,8 @@ import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.util.Objects;
 
-/**
- * Association porteuse ETRE_HABILITE du MCD : un technicien est habilité
- * sur un type d'équipement depuis une date donnée (RG-09).
- */
+/// Association porteuse ETRE_HABILITE du MCD : un technicien est habilité
+/// sur un type d'équipement depuis une date donnée (RG-09).
 @Entity
 @Table(name = "habilitation")
 public class Habilitation {

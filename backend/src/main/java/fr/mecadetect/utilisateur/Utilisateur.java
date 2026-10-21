@@ -11,10 +11,8 @@ import jakarta.persistence.Table;
 
 import java.util.Objects;
 
-/**
- * Utilisateur de l'application. Un technicien est un utilisateur
- * dont le rôle vaut TECHNICIEN : il n'y a pas d'entité séparée.
- */
+/// Utilisateur de l'application. Un technicien est un utilisateur
+/// dont le rôle vaut TECHNICIEN : il n'y a pas d'entité séparée.
 @Entity
 @Table(name = "utilisateur")
 public class Utilisateur {
@@ -43,7 +41,7 @@ public class Utilisateur {
     @Column(name = "actif", nullable = false)
     private boolean actif = true;
 
-    /** Constructeur requis par JPA, non utilisable dans le code métier. */
+    /// Constructeur requis par JPA, non utilisable dans le code métier.
     protected Utilisateur() {
     }
 
@@ -55,7 +53,7 @@ public class Utilisateur {
         this.role = Objects.requireNonNull(role, "role");
     }
 
-    /** Désactive le compte sans le supprimer, pour conserver l'historique. */
+    /// Désactive le compte sans le supprimer, pour conserver l'historique.
     public void desactiver() {
         this.actif = false;
     }

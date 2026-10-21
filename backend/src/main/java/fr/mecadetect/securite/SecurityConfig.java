@@ -25,13 +25,11 @@ import javax.crypto.spec.SecretKeySpec;
 import java.time.Clock;
 import java.util.Base64;
 
-/**
- * Sécurité de l'API :
- * - sans état (pas de session, pas de cookie, donc pas de CSRF) ;
- * - authentification par JWT signé en HS256 avec une clé secrète ;
- * - le rôle est porté par la claim "role" et converti en ROLE_ADMIN, ROLE_TECHNICIEN... ;
- * - les règles fines par rôle sont posées avec @PreAuthorize sur les méthodes.
- */
+/// Sécurité de l'API :
+/// - sans état (pas de session, pas de cookie, donc pas de CSRF) ;
+/// - authentification par JWT signé en HS256 avec une clé secrète ;
+/// - le rôle est porté par la claim "role" et converti en ROLE_ADMIN, ROLE_TECHNICIEN... ;
+/// - les règles fines par rôle sont posées avec @PreAuthorize sur les méthodes.
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
@@ -61,7 +59,7 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /** Convertit la claim "role" du jeton en autorité Spring Security (ROLE_xxx). */
+    /// Convertit la claim "role" du jeton en autorité Spring Security (ROLE_xxx).
     private JwtAuthenticationConverter jwtAuthenticationConverter() {
         var autorites = new JwtGrantedAuthoritiesConverter();
         autorites.setAuthoritiesClaimName("role");

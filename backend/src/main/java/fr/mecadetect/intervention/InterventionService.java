@@ -21,10 +21,8 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Set;
 
-/**
- * Cas d'usage des interventions. Les règles propres à une intervention sont dans l'entité ;
- * le service porte celles qui ont besoin de la base (équipement, utilisateurs, habilitations).
- */
+/// Cas d'usage des interventions. Les règles propres à une intervention sont dans l'entité ;
+/// le service porte celles qui ont besoin de la base (équipement, utilisateurs, habilitations).
 @Service
 @Transactional
 public class InterventionService {
@@ -52,11 +50,21 @@ public class InterventionService {
 
     // ------------------------------------------------------------------ lecture
 
+    /// Détail d'une intervention et son historique.
+    ///
+    /// @param idIntervention identifiant de l'intervention
+    /// @return l'intervention et son historique
+    /// @throws RessourceIntrouvableException si l'intervention n'existe pas
     @Transactional(readOnly = true)
     public DetailIntervention obtenir(Long idIntervention) {
         return detail(chargerIntervention(idIntervention));
     }
 
+    /// Recherche paginée des interventions.
+    ///
+    /// @param criteres filtres, tous facultatifs ; la période porte sur la date de demande
+    /// @param pageable page, taille et tri demandés
+    /// @return la page de résumés d'interventions
     @Transactional(readOnly = true)
     public Page<InterventionResume> rechercher(CriteresRechercheIntervention criteres, Pageable pageable) {
         return interventionRepository.rechercher(
@@ -67,14 +75,23 @@ public class InterventionService {
                 pageable);
     }
 
-    /** Les interventions planifiées ou en cours du technicien connecté. */
+    /// Les interventions planifiées ou en cours d'un technicien, celle en cours d'abord.
+    ///
+    /// @param idTechnicien identifiant du technicien
+    /// @param pageable     page et taille demandées
+    /// @return la page de résumés d'interventions
     @Transactional(readOnly = true)
     public Page<InterventionResume> aTraiterPar(Long idTechnicien, Pageable pageable) {
         return interventionRepository.aTraiterPar(idTechnicien,
                 Set.of(StatutIntervention.PLANIFIEE, StatutIntervention.EN_COURS), pageable);
     }
 
-    /** Historique des interventions d'un équipement, les plus récentes d'abord. */
+    /// Historique des interventions d'un équipement, les plus récentes d'abord.
+    ///
+    /// @param idEquipement identifiant de l'équipement
+    /// @param pageable     page, taille et tri demandés
+    /// @return la page de résumés d'interventions
+    /// @throws RessourceIntrouvableException si l'équipement n'existe pas
     @Transactional(readOnly = true)
     public Page<InterventionResume> historiqueEquipement(Long idEquipement, Pageable pageable) {
         if (!equipementRepository.existsById(idEquipement)) {
@@ -85,7 +102,14 @@ public class InterventionService {
 
     // ------------------------------------------------------------------ écriture
 
-    /** Déclaration d'une panne : intervention DEMANDEE et équipement EN_PANNE (RG-06, RG-07). */
+    /// Déclaration d'une panne : intervention DEMANDEE et équipement EN_PANNE (RG-06, RG-07).
+    ///
+    /// @param commande données de la panne
+    /// @param idAuteur identifiant de l'utilisateur connecté
+    /// @return l'intervention créée et son historique
+    /// @throws RessourceIntrouvableException si l'équipement n'existe pas
+    /// @throws RegleMetierException          si l'équipement est archivé
+    /// @throws ActionNonAutoriseeException   si l'utilisateur est inconnu ou désactivé
     public DetailIntervention declarer(DeclarationCommande commande, Long idAuteur) {
         var auteur = chargerUtilisateur(idAuteur);
         var equipement = chargerEquipement(commande.idEquipement());
@@ -100,7 +124,16 @@ public class InterventionService {
         return detail(interventionRepository.save(intervention));
     }
 
-    /** DEMANDEE → PLANIFIEE : l'admin assigne un technicien habilité (RG-01, RG-09). */
+    /// DEMANDEE → PLANIFIEE : l'admin assigne un technicien habilité (RG-01, RG-09).
+    ///
+    /// @param idIntervention identifiant de l'intervention
+    /// @param commande       technicien, date prévue et version affichée
+    /// @param idAuteur       identifiant de l'admin connecté
+    /// @return l'intervention planifiée et son historique
+    /// @throws RessourceIntrouvableException     si l'intervention n'existe pas
+    /// @throws DonneesInvalidesException         si le technicien n'existe pas
+    /// @throws RegleMetierException              si le technicien n'est pas habilité ou si la transition est interdite
+    /// @throws OptimisticLockingFailureException si l'intervention a été modifiée entre-temps (UC-DB6)
     public DetailIntervention planifier(Long idIntervention, PlanificationCommande commande, Long idAuteur) {
         var auteur = chargerUtilisateur(idAuteur);
         var intervention = chargerIntervention(idIntervention);
@@ -122,7 +155,16 @@ public class InterventionService {
         return detail(interventionRepository.saveAndFlush(intervention));
     }
 
-    /** PLANIFIEE → EN_COURS par le technicien assigné (RG-02), une seule à la fois (RG-04). */
+    /// PLANIFIEE → EN_COURS par le technicien assigné (RG-02), une seule à la fois (RG-04).
+    ///
+    /// @param idIntervention identifiant de l'intervention
+    /// @param version        version de l'intervention affichée au technicien
+    /// @param idAuteur       identifiant du technicien connecté
+    /// @return l'intervention démarrée et son historique
+    /// @throws RessourceIntrouvableException     si l'intervention n'existe pas
+    /// @throws RegleMetierException              si le technicien a déjà une intervention en cours
+    /// @throws ActionNonAutoriseeException       si l'auteur n'est pas le technicien assigné
+    /// @throws OptimisticLockingFailureException si l'intervention a été modifiée entre-temps (UC-DB6)
     public DetailIntervention demarrer(Long idIntervention, long version, Long idAuteur) {
         var auteur = chargerUtilisateur(idAuteur);
         var intervention = chargerIntervention(idIntervention);
@@ -140,7 +182,15 @@ public class InterventionService {
         return detail(intervention);
     }
 
-    /** EN_COURS → TERMINEE par le technicien assigné, avec compte rendu et temps passé (RG-02, RG-03). */
+    /// EN_COURS → TERMINEE par le technicien assigné, avec compte rendu et temps passé (RG-02, RG-03).
+    ///
+    /// @param idIntervention identifiant de l'intervention
+    /// @param commande       compte rendu, temps passé et version affichée
+    /// @param idAuteur       identifiant du technicien connecté
+    /// @return l'intervention clôturée et son historique
+    /// @throws RessourceIntrouvableException     si l'intervention n'existe pas
+    /// @throws ActionNonAutoriseeException       si l'auteur n'est pas le technicien assigné
+    /// @throws OptimisticLockingFailureException si l'intervention a été modifiée entre-temps (UC-DB6)
     public DetailIntervention cloturer(Long idIntervention, ClotureCommande commande, Long idAuteur) {
         var auteur = chargerUtilisateur(idAuteur);
         var intervention = chargerIntervention(idIntervention);
@@ -152,7 +202,15 @@ public class InterventionService {
         return detail(intervention);
     }
 
-    /** DEMANDEE ou PLANIFIEE → ANNULEE par l'admin, avec un motif (RG-01, RG-03). */
+    /// DEMANDEE ou PLANIFIEE → ANNULEE par l'admin, avec un motif (RG-01, RG-03).
+    ///
+    /// @param idIntervention identifiant de l'intervention
+    /// @param commande       motif et version affichée
+    /// @param idAuteur       identifiant de l'admin connecté
+    /// @return l'intervention annulée et son historique
+    /// @throws RessourceIntrouvableException     si l'intervention n'existe pas
+    /// @throws RegleMetierException              si l'intervention est déjà en cours ou close
+    /// @throws OptimisticLockingFailureException si l'intervention a été modifiée entre-temps (UC-DB6)
     public DetailIntervention annuler(Long idIntervention, AnnulationCommande commande, Long idAuteur) {
         var auteur = chargerUtilisateur(idAuteur);
         var intervention = chargerIntervention(idIntervention);
@@ -164,10 +222,8 @@ public class InterventionService {
         return detail(intervention);
     }
 
-    /**
-     * RG-05 : recalcule le statut de l'équipement d'après ses interventions en base.
-     * Appelé après le flush de l'intervention, pour que les requêtes voient son nouveau statut.
-     */
+    /// RG-05 : recalcule le statut de l'équipement d'après ses interventions en base.
+    /// Appelé après le flush de l'intervention, pour que les requêtes voient son nouveau statut.
     private void mettreAJourStatutEquipement(Equipement equipement) {
         equipement.recalculerStatut(
                 interventionRepository.existsByEquipementIdAndStatut(equipement.getId(), StatutIntervention.EN_COURS),
@@ -175,11 +231,9 @@ public class InterventionService {
         equipementRepository.flush();
     }
 
-    /**
-     * UC-DB6 : le client renvoie la version qu'il a affichée. Si elle a changé entre-temps,
-     * quelqu'un d'autre a modifié l'intervention : on refuse plutôt que d'écraser son travail.
-     * La colonne @Version protège en plus le cas de deux requêtes strictement simultanées.
-     */
+    /// UC-DB6 : le client renvoie la version qu'il a affichée. Si elle a changé entre-temps,
+    /// quelqu'un d'autre a modifié l'intervention : on refuse plutôt que d'écraser son travail.
+    /// La colonne @Version protège en plus le cas de deux requêtes strictement simultanées.
     private static void verifierVersion(Intervention intervention, long versionAttendue) {
         if (intervention.getVersion() != versionAttendue) {
             throw new OptimisticLockingFailureException(
@@ -207,7 +261,7 @@ public class InterventionService {
         return new RessourceIntrouvableException("EQUIPEMENT_INTROUVABLE", inexistant("L'équipement", idEquipement));
     }
 
-    /** Message commun aux éléments introuvables : « L'intervention 42 n'existe pas. » */
+    /// Message commun aux éléments introuvables : « L'intervention 42 n'existe pas. »
     private static String inexistant(String element, Long id) {
         return element + " " + id + " n'existe pas.";
     }
@@ -219,7 +273,7 @@ public class InterventionService {
                         "Utilisateur connecté non reconnu ou désactivé."));
     }
 
-    /** Dates enregistrées en UTC (le Clock de l'application est en UTC). */
+    /// Dates enregistrées en UTC (le Clock de l'application est en UTC).
     private LocalDateTime maintenant() {
         return LocalDateTime.now(clock);
     }

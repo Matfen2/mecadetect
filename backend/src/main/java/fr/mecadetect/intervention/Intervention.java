@@ -25,11 +25,9 @@ import jakarta.persistence.Version;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-/**
- * Intervention de maintenance sur un équipement.
- * Les changements de statut passent tous par {@link CycleDeVie} : aucun setter public
- * ne permet de contourner le cycle de vie. Les dates sont en UTC.
- */
+/// Intervention de maintenance sur un équipement.
+/// Les changements de statut passent tous par [CycleDeVie] : aucun setter public
+/// ne permet de contourner le cycle de vie. Les dates sont en UTC.
 @Entity
 @Table(name = "intervention")
 public class Intervention {
@@ -77,7 +75,7 @@ public class Intervention {
     @Column(name = "motif_annulation", length = 500)
     private String motifAnnulation;
 
-    /** Verrouillage optimiste (UC-DB6) : deux modifications simultanées, la seconde échoue. */
+    /// Verrouillage optimiste (UC-DB6) : deux modifications simultanées, la seconde échoue.
     @Version
     @Column(name = "version", nullable = false)
     private Long version;
@@ -94,7 +92,7 @@ public class Intervention {
     @JoinColumn(name = "id_technicien")
     private Utilisateur technicien;
 
-    /** Auteur du dernier changement : lu par le trigger d'historisation (Sprint 4). */
+    /// Auteur du dernier changement : lu par le trigger d'historisation (Sprint 4).
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_modifie_par", nullable = false)
     private Utilisateur modifiePar;
@@ -102,7 +100,16 @@ public class Intervention {
     protected Intervention() {
     }
 
-    /** Déclaration d'une panne : l'intervention naît au statut DEMANDEE. */
+    /// Déclaration d'une panne : l'intervention naît au statut DEMANDEE.
+    ///
+    /// @param numero      numéro métier, fourni par la séquence Oracle
+    /// @param titre       titre court de la panne
+    /// @param description description détaillée
+    /// @param priorite    priorité demandée
+    /// @param equipement  équipement en panne, non archivé
+    /// @param demandeur   utilisateur qui déclare la panne
+    /// @param dateDemande date de la déclaration, en UTC
+    /// @throws RegleMetierException si l'équipement est archivé
     public Intervention(String numero, String titre, String description, Priorite priorite,
                         Equipement equipement, Utilisateur demandeur, LocalDateTime dateDemande) {
         Objects.requireNonNull(equipement, "equipement");
@@ -121,7 +128,12 @@ public class Intervention {
         this.modifiePar = demandeur;
     }
 
-    /** DEMANDEE → PLANIFIEE, avec assignation d'un technicien. */
+    /// DEMANDEE → PLANIFIEE, avec assignation d'un technicien.
+    ///
+    /// @param technicien    technicien assigné, actif
+    /// @param datePlanifiee date et heure prévues
+    /// @param auteur        admin qui planifie
+    /// @throws RegleMetierException si la transition est interdite ou si l'utilisateur n'est pas un technicien actif
     public void planifier(Utilisateur technicien, LocalDateTime datePlanifiee, Utilisateur auteur) {
         var transition = new Planification(technicien, datePlanifiee);
         var nouveauStatut = CycleDeVie.statutApres(statut, transition);
@@ -134,7 +146,12 @@ public class Intervention {
         changerStatut(nouveauStatut, auteur);
     }
 
-    /** PLANIFIEE → EN_COURS, par le technicien assigné uniquement (RG-02). */
+    /// PLANIFIEE → EN_COURS, par le technicien assigné uniquement (RG-02).
+    ///
+    /// @param auteur     utilisateur qui démarre l'intervention
+    /// @param maintenant date de début, en UTC
+    /// @throws RegleMetierException         si la transition est interdite
+    /// @throws ActionNonAutoriseeException si l'auteur n'est pas le technicien assigné
     public void demarrer(Utilisateur auteur, LocalDateTime maintenant) {
         var transition = new Demarrage(maintenant);
         var nouveauStatut = CycleDeVie.statutApres(statut, transition);
@@ -143,7 +160,14 @@ public class Intervention {
         changerStatut(nouveauStatut, auteur);
     }
 
-    /** EN_COURS → TERMINEE, avec compte rendu et temps passé (RG-02, RG-03). */
+    /// EN_COURS → TERMINEE, avec compte rendu et temps passé (RG-02, RG-03).
+    ///
+    /// @param compteRendu   compte rendu de l'intervention
+    /// @param tempsPasseMin temps passé, en minutes
+    /// @param auteur        utilisateur qui clôture l'intervention
+    /// @param maintenant    date de fin, en UTC
+    /// @throws RegleMetierException         si la transition est interdite
+    /// @throws ActionNonAutoriseeException si l'auteur n'est pas le technicien assigné
     public void cloturer(String compteRendu, int tempsPasseMin, Utilisateur auteur, LocalDateTime maintenant) {
         var transition = new Cloture(compteRendu, tempsPasseMin, maintenant);
         var nouveauStatut = CycleDeVie.statutApres(statut, transition);
@@ -154,7 +178,11 @@ public class Intervention {
         changerStatut(nouveauStatut, auteur);
     }
 
-    /** DEMANDEE ou PLANIFIEE → ANNULEE, avec un motif (RG-03). */
+    /// DEMANDEE ou PLANIFIEE → ANNULEE, avec un motif (RG-03).
+    ///
+    /// @param motif  motif de l'annulation
+    /// @param auteur admin qui annule
+    /// @throws RegleMetierException si la transition est interdite
     public void annuler(String motif, Utilisateur auteur) {
         var transition = new Annulation(motif);
         var nouveauStatut = CycleDeVie.statutApres(statut, transition);
@@ -162,6 +190,9 @@ public class Intervention {
         changerStatut(nouveauStatut, auteur);
     }
 
+    /// Indique si l'intervention est encore ouverte : demandée, planifiée ou en cours.
+    ///
+    /// @return vrai si l'intervention n'est ni terminée ni annulée
     public boolean estOuverte() {
         return StatutIntervention.OUVERTS.contains(statut);
     }

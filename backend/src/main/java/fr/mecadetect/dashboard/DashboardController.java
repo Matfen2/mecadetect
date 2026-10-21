@@ -26,10 +26,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 
-/**
- * Tag Dashboard du contrat, entièrement réservé à l'admin : tableau de bord (tâche 5.1),
- * export CSV (tâche 5.3) et archivage (Sprint 4).
- */
+/// Tag Dashboard du contrat, entièrement réservé à l'admin : tableau de bord (tâche 5.1),
+/// export CSV (tâche 5.3) et archivage (Sprint 4).
 @RestController
 @PreAuthorize("hasRole('ADMIN')")
 public class DashboardController implements DashboardApi {

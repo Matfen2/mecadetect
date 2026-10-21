@@ -1,9 +1,7 @@
 package fr.mecadetect.erreur;
 
-/**
- * Violation d'une règle métier (transition interdite, équipement archivé...).
- * Le code est transmis au front dans la réponse d'erreur (HTTP 409).
- */
+/// Violation d'une règle métier (transition interdite, équipement archivé...).
+/// Le code est transmis au front dans la réponse d'erreur (HTTP 409).
 public class RegleMetierException extends RuntimeException {
 
     private final String code;

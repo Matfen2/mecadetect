@@ -2,7 +2,7 @@ package fr.mecadetect.intervention;
 
 import java.util.Set;
 
-/** Statuts d'une intervention : valeurs identiques à la contrainte ck_intervention_statut. */
+/// Statuts d'une intervention : valeurs identiques à la contrainte ck_intervention_statut.
 public enum StatutIntervention {
     DEMANDEE,
     PLANIFIEE,
@@ -10,6 +10,6 @@ public enum StatutIntervention {
     TERMINEE,
     ANNULEE;
 
-    /** Statuts d'une intervention qui n'est pas encore terminée ni annulée. */
+    /// Statuts d'une intervention qui n'est pas encore terminée ni annulée.
     public static final Set<StatutIntervention> OUVERTS = Set.of(DEMANDEE, PLANIFIEE, EN_COURS);
 }

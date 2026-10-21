@@ -10,18 +10,16 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.time.format.DateTimeFormatter;
 
-/**
- * Archivage des interventions closes (UC-DB4, tâche 4.6).
- *
- * Volontairement sans @Transactional : un archivage porte sur des centaines de milliers
- * de lignes, le package valide lot par lot pour ne pas tout retenir dans une seule transaction.
- */
+/// Archivage des interventions closes (UC-DB4, tâche 4.6).
+///
+/// Volontairement sans @Transactional : un archivage porte sur des centaines de milliers
+/// de lignes, le package valide lot par lot pour ne pas tout retenir dans une seule transaction.
 @Service
 public class ArchivageService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ArchivageService.class);
 
-    /** La dernière année reste en ligne : planification, historique d'équipement, reporting. */
+    /// La dernière année reste en ligne : planification, historique d'équipement, reporting.
     static final Period CONSERVATION_MINIMALE = Period.ofYears(1);
     static final int TAILLE_LOT = 10_000;
 
@@ -35,7 +33,11 @@ public class ArchivageService {
         this.clock = clock;
     }
 
-    /** @return le nombre d'interventions archivées */
+    /// Archive les interventions closes avant la date limite, avec leur historique.
+    ///
+    /// @param dateLimite date limite d'archivage ; la dernière année reste en ligne
+    /// @return le nombre d'interventions archivées
+    /// @throws DonneesInvalidesException si la date limite tombe dans la dernière année
     public long archiver(LocalDate dateLimite) {
         LocalDate auPlusTard = LocalDate.now(clock).minus(CONSERVATION_MINIMALE);
         if (dateLimite.isAfter(auPlusTard)) {

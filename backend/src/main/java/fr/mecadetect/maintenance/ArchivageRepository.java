@@ -12,17 +12,15 @@ import java.sql.Types;
 import java.time.LocalDate;
 import java.util.Map;
 
-/**
- * Appel de PKG_MAINTENANCE.ARCHIVER_INTERVENTIONS (UC-DB4) par SimpleJdbcCall.
- *
- * Les paramètres sont déclarés explicitement, dans l'ordre de la procédure : pas de lecture
- * des métadonnées du dictionnaire Oracle à chaque démarrage, et le type BOOLEAN de p_commit
- * est lié tel quel (BOOLEAN natif depuis Oracle 23ai), comme la date limite en LocalDate.
- *
- * Commit par lot seulement hors transaction Spring : en production, le service n'est pas
- * transactionnel et chaque lot archivé est acquis. Si l'appelant a ouvert une transaction
- * (les tests @Transactional), c'est lui qui décide : rien n'est validé par le package.
- */
+/// Appel de PKG_MAINTENANCE.ARCHIVER_INTERVENTIONS (UC-DB4) par SimpleJdbcCall.
+///
+/// Les paramètres sont déclarés explicitement, dans l'ordre de la procédure : pas de lecture
+/// des métadonnées du dictionnaire Oracle à chaque démarrage, et le type BOOLEAN de p_commit
+/// est lié tel quel (BOOLEAN natif depuis Oracle 23ai), comme la date limite en LocalDate.
+///
+/// Commit par lot seulement hors transaction Spring : en production, le service n'est pas
+/// transactionnel et chaque lot archivé est acquis. Si l'appelant a ouvert une transaction
+/// (les tests @Transactional), c'est lui qui décide : rien n'est validé par le package.
 @Repository
 public class ArchivageRepository {
 

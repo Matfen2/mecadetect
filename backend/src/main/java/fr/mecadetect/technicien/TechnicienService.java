@@ -20,11 +20,9 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-/**
- * Liste des techniciens pour l'écran de planification.
- * Quatre requêtes quel que soit le nombre de techniciens (pas de N+1) :
- * techniciens, habilitations, charge groupée, interventions en cours.
- */
+/// Liste des techniciens pour l'écran de planification.
+/// Quatre requêtes quel que soit le nombre de techniciens (pas de N+1) :
+/// techniciens, habilitations, charge groupée, interventions en cours.
 @Service
 @Transactional(readOnly = true)
 public class TechnicienService {
@@ -44,7 +42,10 @@ public class TechnicienService {
         this.interventionRepository = interventionRepository;
     }
 
-    /** @param idType si renseigné, seuls les techniciens habilités sur ce type sont retournés (RG-09). */
+    /// Techniciens actifs, avec leurs habilitations et leur charge, par ordre alphabétique.
+    ///
+    /// @param idType si renseigné, seuls les techniciens habilités sur ce type sont retournés (RG-09)
+    /// @return les techniciens et leur charge
     public List<TechnicienVue> lister(Long idType) {
         var techniciens = utilisateurRepository.findByRoleAndActifTrueOrderByNomAscPrenomAsc(Role.TECHNICIEN);
         if (techniciens.isEmpty()) {

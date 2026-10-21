@@ -9,7 +9,7 @@ import jakarta.persistence.Table;
 
 import java.util.Objects;
 
-/** Zone géographique du site (atelier, bâtiment...). */
+/// Zone géographique du site (atelier, bâtiment...).
 @Entity
 @Table(name = "zone")
 public class Zone {

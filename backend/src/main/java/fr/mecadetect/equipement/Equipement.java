@@ -18,10 +18,8 @@ import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.util.Objects;
 
-/**
- * Équipement du parc. Les associations sont en LAZY : la zone et le type ne sont
- * chargés que si on les utilise, ce qui évite des jointures inutiles (voir UC-DB5).
- */
+/// Équipement du parc. Les associations sont en LAZY : la zone et le type ne sont
+/// chargés que si on les utilise, ce qui évite des jointures inutiles (voir UC-DB5).
 @Entity
 @Table(name = "equipement")
 public class Equipement {
@@ -55,17 +53,33 @@ public class Equipement {
     protected Equipement() {
     }
 
+    /// Crée un équipement en service.
+    ///
+    /// @param reference       référence unique, sans espaces superflus
+    /// @param nom             nom affiché
+    /// @param dateMiseService date de mise en service
+    /// @param type            type d'équipement
+    /// @param zone            zone d'implantation
     public Equipement(String reference, String nom, LocalDate dateMiseService, TypeEquipement type, Zone zone) {
         appliquer(reference, nom, dateMiseService, type, zone);
     }
 
-    /** Modifie les informations descriptives. Interdit sur un équipement archivé. */
+    /// Modifie les informations descriptives. Interdit sur un équipement archivé.
+    ///
+    /// @param reference       nouvelle référence
+    /// @param nom             nouveau nom
+    /// @param dateMiseService nouvelle date de mise en service
+    /// @param type            nouveau type
+    /// @param zone            nouvelle zone
+    /// @throws fr.mecadetect.erreur.RegleMetierException si l'équipement est archivé
     public void modifier(String reference, String nom, LocalDate dateMiseService, TypeEquipement type, Zone zone) {
         verifierNonArchive();
         appliquer(reference, nom, dateMiseService, type, zone);
     }
 
-    /** Suppression logique : l'équipement reste en base pour conserver son historique. */
+    /// Suppression logique : l'équipement reste en base pour conserver son historique.
+    ///
+    /// @throws fr.mecadetect.erreur.RegleMetierException si l'équipement est déjà archivé
     public void archiver() {
         if (estArchive()) {
             throw new RegleMetierException("EQUIPEMENT_DEJA_ARCHIVE", "Cet équipement est déjà archivé.");
@@ -73,10 +87,10 @@ public class Equipement {
         this.statut = StatutEquipement.ARCHIVE;
     }
 
-    /**
-     * RG-06 : une panne déclarée passe l'équipement EN_PANNE.
-     * Un équipement déjà EN_MAINTENANCE le reste : une intervention y est en cours.
-     */
+    /// RG-06 : une panne déclarée passe l'équipement EN_PANNE.
+    /// Un équipement déjà EN_MAINTENANCE le reste : une intervention y est en cours.
+    ///
+    /// @throws fr.mecadetect.erreur.RegleMetierException si l'équipement est archivé
     public void signalerPanne() {
         if (estArchive()) {
             throw new RegleMetierException("EQUIPEMENT_ARCHIVE",
@@ -87,11 +101,16 @@ public class Equipement {
         }
     }
 
-    /**
-     * RG-05 : le statut suit les interventions de l'équipement.
-     * Une intervention en cours : EN_MAINTENANCE. D'autres interventions ouvertes : EN_PANNE.
-     * Plus aucune intervention ouverte : l'équipement repasse EN_SERVICE.
-     */
+    /// RG-05 : le statut suit les interventions de l'équipement.
+    ///
+    /// - une intervention en cours : EN_MAINTENANCE ;
+    /// - d'autres interventions ouvertes : EN_PANNE ;
+    /// - plus aucune intervention ouverte : l'équipement repasse EN_SERVICE.
+    ///
+    /// Un équipement archivé garde son statut.
+    ///
+    /// @param interventionEnCours vrai si une intervention de l'équipement est EN_COURS
+    /// @param interventionOuverte vrai si une intervention de l'équipement est encore ouverte
     public void recalculerStatut(boolean interventionEnCours, boolean interventionOuverte) {
         if (estArchive()) {
             return;
@@ -105,6 +124,9 @@ public class Equipement {
         }
     }
 
+    /// Indique si l'équipement a été archivé (suppression logique).
+    ///
+    /// @return vrai si le statut est ARCHIVE
     public boolean estArchive() {
         return statut == StatutEquipement.ARCHIVE;
     }

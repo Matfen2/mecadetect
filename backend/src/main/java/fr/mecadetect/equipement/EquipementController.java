@@ -14,10 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * Implémente l'interface EquipementsApi générée depuis le contrat.
- * Lecture : tout utilisateur connecté. Écriture : ADMIN uniquement.
- */
+/// Implémente l'interface EquipementsApi générée depuis le contrat.
+/// Lecture : tout utilisateur connecté. Écriture : ADMIN uniquement.
 @RestController
 public class EquipementController implements EquipementsApi {
 

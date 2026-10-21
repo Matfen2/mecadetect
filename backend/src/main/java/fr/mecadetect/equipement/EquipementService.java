@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/// Gestion du parc d'équipements : création, recherche, modification et archivage.
 @Service
 @Transactional
 public class EquipementService {
@@ -28,6 +29,12 @@ public class EquipementService {
         this.typeRepository = typeRepository;
     }
 
+    /// Crée un équipement en service.
+    ///
+    /// @param commande données de l'équipement
+    /// @return l'équipement enregistré
+    /// @throws RegleMetierException      si la référence est déjà utilisée
+    /// @throws DonneesInvalidesException si le type ou la zone n'existe pas
     public Equipement creer(EquipementCommande commande) {
         verifierReferenceDisponible(commande.reference());
 
@@ -38,17 +45,34 @@ public class EquipementService {
         return equipementRepository.save(equipement);
     }
 
-    /** Recherche paginée et filtrée ; zone et type sont chargés par jointure (pas de N+1). */
+    /// Recherche paginée et filtrée ; zone et type sont chargés par jointure (pas de N+1).
+    ///
+    /// @param criteres filtres, tous facultatifs
+    /// @param pageable page, taille et tri demandés
+    /// @return la page d'équipements
     @Transactional(readOnly = true)
     public Page<Equipement> rechercher(CriteresRechercheEquipement criteres, Pageable pageable) {
         return equipementRepository.findAll(EquipementSpecifications.selon(criteres), pageable);
     }
 
+    /// Charge un équipement avec son type et sa zone.
+    ///
+    /// @param idEquipement identifiant de l'équipement
+    /// @return l'équipement
+    /// @throws RessourceIntrouvableException si l'équipement n'existe pas
     @Transactional(readOnly = true)
     public Equipement obtenir(Long idEquipement) {
         return charger(idEquipement);
     }
 
+    /// Modifie les informations d'un équipement.
+    ///
+    /// @param idEquipement identifiant de l'équipement
+    /// @param commande     nouvelles données
+    /// @return l'équipement modifié
+    /// @throws RessourceIntrouvableException si l'équipement n'existe pas
+    /// @throws RegleMetierException          si la nouvelle référence est déjà utilisée ou si l'équipement est archivé
+    /// @throws DonneesInvalidesException     si le type ou la zone n'existe pas
     public Equipement modifier(Long idEquipement, EquipementCommande commande) {
         // Pas d'appel à obtenir() : depuis la classe elle-même, son @Transactional(readOnly = true)
         // serait ignoré (pas de proxy Spring) et laisserait croire à une lecture seule
@@ -65,13 +89,18 @@ public class EquipementService {
         return equipement;
     }
 
+    /// Archive un équipement (suppression logique).
+    ///
+    /// @param idEquipement identifiant de l'équipement
+    /// @throws RessourceIntrouvableException si l'équipement n'existe pas
+    /// @throws RegleMetierException          si l'équipement est déjà archivé
     public void archiver(Long idEquipement) {
         var equipement = equipementRepository.findById(idEquipement)
                 .orElseThrow(() -> introuvable(idEquipement));
         equipement.archiver();
     }
 
-    /** Équipement avec son type et sa zone, chargés par jointure. */
+    /// Équipement avec son type et sa zone, chargés par jointure.
     private Equipement charger(Long idEquipement) {
         return equipementRepository.trouverAvecTypeEtZone(idEquipement)
                 .orElseThrow(() -> introuvable(idEquipement));
@@ -101,7 +130,7 @@ public class EquipementService {
                 inexistant("L'équipement", idEquipement));
     }
 
-    /** Message commun aux éléments introuvables : « La zone 12 n'existe pas. » */
+    /// Message commun aux éléments introuvables : « La zone 12 n'existe pas. »
     private static String inexistant(String element, Long id) {
         return element + " " + id + " n'existe pas.";
     }

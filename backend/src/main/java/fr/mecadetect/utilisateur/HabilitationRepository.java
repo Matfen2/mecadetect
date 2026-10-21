@@ -6,10 +6,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Collection;
 import java.util.List;
 
-/** RG-09 : existsById(new HabilitationId(idType, idTechnicien)) suffit à vérifier une habilitation. */
+/// RG-09 : existsById(new HabilitationId(idType, idTechnicien)) suffit à vérifier une habilitation.
 public interface HabilitationRepository extends JpaRepository<Habilitation, HabilitationId> {
 
-    /** Habilitations de plusieurs techniciens, types chargés dans la même requête. */
+    /// Habilitations de plusieurs techniciens, types chargés dans la même requête.
+    ///
+    /// @param idsTechniciens identifiants des techniciens
+    /// @return les habilitations, avec leur type d'équipement
     @EntityGraph(attributePaths = "type")
     List<Habilitation> findByTechnicienIdIn(Collection<Long> idsTechniciens);
 }

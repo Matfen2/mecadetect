@@ -18,26 +18,24 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Tâche 4.4 : la requête ne contient que les filtres réellement demandés.
- *
- * L'ancienne version JPQL écrivait chaque filtre sous la forme (:p is null or colonne = :p).
- * Le plan d'exécution est calculé une fois pour toutes les combinaisons de paramètres :
- * Oracle ne peut alors utiliser aucun index et parcourt toute la table (mesuré : 480 ms
- * pour la première page sur 500 000 interventions). Ici, un filtre absent n'apparaît pas
- * dans le SQL : chaque combinaison a sa propre requête, et peut utiliser l'index adapté.
- *
- * La projection reste une seule requête (pas de N+1) ; le comptage ne fait aucune jointure.
- *
- * Tâche 4.8 : Hibernate limite la page par « OFFSET :n ROWS FETCH FIRST :m ROWS ONLY » avec des
- * valeurs liées. En calculant le plan, Oracle ignore alors qu'on ne veut que 20 lignes : il optimise
- * pour toutes les renvoyer (parcours complet de la table et tri). L'indication FIRST_ROWS(n) lui
- * rend cette information : il lit l'index déjà trié et s'arrête après la page (WINDOW NOSORT STOPKEY).
- * Mesuré sur 500 000 interventions : 141,5 ms → moins de 0,5 ms (scripts/plan-limite-lignes.sql).
- */
+/// Tâche 4.4 : la requête ne contient que les filtres réellement demandés.
+///
+/// L'ancienne version JPQL écrivait chaque filtre sous la forme (:p is null or colonne = :p).
+/// Le plan d'exécution est calculé une fois pour toutes les combinaisons de paramètres :
+/// Oracle ne peut alors utiliser aucun index et parcourt toute la table (mesuré : 480 ms
+/// pour la première page sur 500 000 interventions). Ici, un filtre absent n'apparaît pas
+/// dans le SQL : chaque combinaison a sa propre requête, et peut utiliser l'index adapté.
+///
+/// La projection reste une seule requête (pas de N+1) ; le comptage ne fait aucune jointure.
+///
+/// Tâche 4.8 : Hibernate limite la page par « OFFSET :n ROWS FETCH FIRST :m ROWS ONLY » avec des
+/// valeurs liées. En calculant le plan, Oracle ignore alors qu'on ne veut que 20 lignes : il optimise
+/// pour toutes les renvoyer (parcours complet de la table et tri). L'indication FIRST_ROWS(n) lui
+/// rend cette information : il lit l'index déjà trié et s'arrête après la page (WINDOW NOSORT STOPKEY).
+/// Mesuré sur 500 000 interventions : 141,5 ms → moins de 0,5 ms (scripts/plan-limite-lignes.sql).
 class InterventionRechercheRepositoryImpl implements InterventionRechercheRepository {
 
-    /** Champ projeté et filtré par période. */
+    /// Champ projeté et filtré par période.
     private static final String DATE_DEMANDE = "dateDemande";
 
     @PersistenceContext
@@ -71,15 +69,13 @@ class InterventionRechercheRepositoryImpl implements InterventionRechercheReposi
         return new PageImpl<>(contenu, pageable, compter(cb, filtres));
     }
 
-    /**
-     * Indication Oracle pour la page demandée : seule la taille de page y figure, pour que le texte SQL
-     * (et donc le plan en cache) reste le même d'une page à l'autre.
-     */
+    /// Indication Oracle pour la page demandée : seule la taille de page y figure, pour que le texte SQL
+    /// (et donc le plan en cache) reste le même d'une page à l'autre.
     static String indicationPremieresLignes(Pageable pageable) {
         return "FIRST_ROWS(" + pageable.getPageSize() + ")";
     }
 
-    /** Comptage sur la seule table INTERVENTION : les filtres portent sur ses propres colonnes. */
+    /// Comptage sur la seule table INTERVENTION : les filtres portent sur ses propres colonnes.
     private long compter(CriteriaBuilder cb, Filtres filtres) {
         var requete = cb.createQuery(Long.class);
         Root<Intervention> i = requete.from(Intervention.class);
@@ -95,7 +91,7 @@ class InterventionRechercheRepositoryImpl implements InterventionRechercheReposi
         return ordres;
     }
 
-    /** Les filtres demandés ; seuls ceux qui ont une valeur deviennent des prédicats SQL. */
+    /// Les filtres demandés ; seuls ceux qui ont une valeur deviennent des prédicats SQL.
     private record Filtres(StatutIntervention statut, Priorite priorite, Long idTechnicien,
                            Long idEquipement, LocalDateTime depuis, LocalDateTime avant) {
 

@@ -41,6 +41,9 @@ class EquipementRequetesSqlTest {
     private EquipementRepository equipementRepository;
 
     @Autowired
+    private EquipementMapper mapper;
+
+    @Autowired
     private ZoneRepository zoneRepository;
 
     @Autowired
@@ -77,7 +80,7 @@ class EquipementRequetesSqlTest {
     @DisplayName("Sans EntityGraph : 1 requête pour la liste, puis 1 par zone et 1 par type (problème N+1)")
     void demonstrationDuProblemeNPlusUn() {
         var page = equipementRepository.findAll(PageRequest.of(0, 20));
-        page.getContent().forEach(EquipementMapper::versDto); // accède à zone et type
+        page.getContent().forEach(mapper::versDto); // accède à zone et type
 
         // 1 requête + 5 zones + 5 types = 11 au minimum
         assertThat(statistiques.getPrepareStatementCount()).isGreaterThanOrEqualTo(1 + 2L * NOMBRE_EQUIPEMENTS);
@@ -89,7 +92,7 @@ class EquipementRequetesSqlTest {
         var criteres = new CriteresRechercheEquipement(null, null, null, null);
 
         var page = service.rechercher(criteres, PageRequest.of(0, 20, Sort.by("reference")));
-        page.getContent().forEach(EquipementMapper::versDto);
+        page.getContent().forEach(mapper::versDto);
 
         assertThat(page.getContent()).hasSize(NOMBRE_EQUIPEMENTS);
         // Liste avec jointures + éventuel comptage pour la pagination

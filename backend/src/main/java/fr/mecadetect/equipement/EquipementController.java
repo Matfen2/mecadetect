@@ -21,29 +21,34 @@ public class EquipementController implements EquipementsApi {
 
     private final EquipementService service;
     private final InterventionService interventionService;
+    private final EquipementMapper mapper;
+    private final InterventionMapper interventionMapper;
 
-    public EquipementController(EquipementService service, InterventionService interventionService) {
+    public EquipementController(EquipementService service, InterventionService interventionService,
+                                EquipementMapper mapper, InterventionMapper interventionMapper) {
         this.service = service;
         this.interventionService = interventionService;
+        this.mapper = mapper;
+        this.interventionMapper = interventionMapper;
     }
 
     @Override
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EquipementDto> creerEquipement(EquipementRequestDto equipementRequestDto) {
-        var equipement = service.creer(EquipementMapper.versCommande(equipementRequestDto));
-        return ResponseEntity.status(HttpStatus.CREATED).body(EquipementMapper.versDto(equipement));
+        var equipement = service.creer(mapper.versCommande(equipementRequestDto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(mapper.versDto(equipement));
     }
 
     @Override
     public ResponseEntity<EquipementDto> obtenirEquipement(Long idEquipement) {
-        return ResponseEntity.ok(EquipementMapper.versDto(service.obtenir(idEquipement)));
+        return ResponseEntity.ok(mapper.versDto(service.obtenir(idEquipement)));
     }
 
     @Override
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EquipementDto> modifierEquipement(Long idEquipement, EquipementRequestDto equipementRequestDto) {
-        var equipement = service.modifier(idEquipement, EquipementMapper.versCommande(equipementRequestDto));
-        return ResponseEntity.ok(EquipementMapper.versDto(equipement));
+        var equipement = service.modifier(idEquipement, mapper.versCommande(equipementRequestDto));
+        return ResponseEntity.ok(mapper.versDto(equipement));
     }
 
     @Override
@@ -61,7 +66,7 @@ public class EquipementController implements EquipementsApi {
                 statut != null ? StatutEquipement.valueOf(statut.getValue()) : null,
                 idType, idZone, recherche);
         var resultat = service.rechercher(criteres, PaginationEquipement.versPageable(page, size, sort));
-        return ResponseEntity.ok(EquipementMapper.versPageDto(resultat));
+        return ResponseEntity.ok(mapper.versPageDto(resultat));
     }
 
     @Override
@@ -69,6 +74,6 @@ public class EquipementController implements EquipementsApi {
             Long idEquipement, Integer page, Integer size) {
         var resultat = interventionService.historiqueEquipement(
                 idEquipement, PaginationIntervention.versPageable(page, size, null));
-        return ResponseEntity.ok(InterventionMapper.versPageDto(resultat));
+        return ResponseEntity.ok(interventionMapper.versPageDto(resultat));
     }
 }

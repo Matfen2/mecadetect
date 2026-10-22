@@ -25,22 +25,25 @@ public class InterventionController implements InterventionsApi {
 
     private final InterventionService service;
     private final UtilisateurCourant utilisateurCourant;
+    private final InterventionMapper mapper;
 
-    public InterventionController(InterventionService service, UtilisateurCourant utilisateurCourant) {
+    public InterventionController(InterventionService service, UtilisateurCourant utilisateurCourant,
+                                  InterventionMapper mapper) {
         this.service = service;
         this.utilisateurCourant = utilisateurCourant;
+        this.mapper = mapper;
     }
 
     @Override
     @PreAuthorize("hasAnyRole('DEMANDEUR', 'ADMIN')")
     public ResponseEntity<InterventionDetailDto> declarerPanne(DeclarationPanneRequestDto declarationPanneRequestDto) {
-        var detail = service.declarer(InterventionMapper.versCommande(declarationPanneRequestDto), utilisateurCourant.id());
-        return ResponseEntity.status(HttpStatus.CREATED).body(InterventionMapper.versDetailDto(detail));
+        var detail = service.declarer(mapper.versCommande(declarationPanneRequestDto), utilisateurCourant.id());
+        return ResponseEntity.status(HttpStatus.CREATED).body(mapper.versDetailDto(detail));
     }
 
     @Override
     public ResponseEntity<InterventionDetailDto> obtenirIntervention(Long idIntervention) {
-        return ResponseEntity.ok(InterventionMapper.versDetailDto(service.obtenir(idIntervention)));
+        return ResponseEntity.ok(mapper.versDetailDto(service.obtenir(idIntervention)));
     }
 
     @Override
@@ -52,23 +55,23 @@ public class InterventionController implements InterventionsApi {
                 priorite != null ? Priorite.valueOf(priorite.getValue()) : null,
                 idTechnicien, depuis, jusqua);
         var resultat = service.rechercher(criteres, PaginationIntervention.versPageable(page, size, sort));
-        return ResponseEntity.ok(InterventionMapper.versPageDto(resultat));
+        return ResponseEntity.ok(mapper.versPageDto(resultat));
     }
 
     @Override
     @PreAuthorize("hasRole('TECHNICIEN')")
     public ResponseEntity<PageInterventionDto> mesInterventions(Integer page, Integer size) {
         var resultat = service.aTraiterPar(utilisateurCourant.id(), PaginationIntervention.sansTri(page, size));
-        return ResponseEntity.ok(InterventionMapper.versPageDto(resultat));
+        return ResponseEntity.ok(mapper.versPageDto(resultat));
     }
 
     @Override
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<InterventionDetailDto> planifierIntervention(
             Long idIntervention, PlanificationRequestDto planificationRequestDto) {
-        var detail = service.planifier(idIntervention, InterventionMapper.versCommande(planificationRequestDto),
+        var detail = service.planifier(idIntervention, mapper.versCommande(planificationRequestDto),
                 utilisateurCourant.id());
-        return ResponseEntity.ok(InterventionMapper.versDetailDto(detail));
+        return ResponseEntity.ok(mapper.versDetailDto(detail));
     }
 
     @Override
@@ -76,24 +79,24 @@ public class InterventionController implements InterventionsApi {
     public ResponseEntity<InterventionDetailDto> demarrerIntervention(
             Long idIntervention, VersionRequestDto versionRequestDto) {
         var detail = service.demarrer(idIntervention, versionRequestDto.getVersion(), utilisateurCourant.id());
-        return ResponseEntity.ok(InterventionMapper.versDetailDto(detail));
+        return ResponseEntity.ok(mapper.versDetailDto(detail));
     }
 
     @Override
     @PreAuthorize("hasRole('TECHNICIEN')")
     public ResponseEntity<InterventionDetailDto> cloturerIntervention(
             Long idIntervention, ClotureRequestDto clotureRequestDto) {
-        var detail = service.cloturer(idIntervention, InterventionMapper.versCommande(clotureRequestDto),
+        var detail = service.cloturer(idIntervention, mapper.versCommande(clotureRequestDto),
                 utilisateurCourant.id());
-        return ResponseEntity.ok(InterventionMapper.versDetailDto(detail));
+        return ResponseEntity.ok(mapper.versDetailDto(detail));
     }
 
     @Override
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<InterventionDetailDto> annulerIntervention(
             Long idIntervention, AnnulationRequestDto annulationRequestDto) {
-        var detail = service.annuler(idIntervention, InterventionMapper.versCommande(annulationRequestDto),
+        var detail = service.annuler(idIntervention, mapper.versCommande(annulationRequestDto),
                 utilisateurCourant.id());
-        return ResponseEntity.ok(InterventionMapper.versDetailDto(detail));
+        return ResponseEntity.ok(mapper.versDetailDto(detail));
     }
 }

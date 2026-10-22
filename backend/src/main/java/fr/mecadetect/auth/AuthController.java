@@ -3,9 +3,6 @@ package fr.mecadetect.auth;
 import fr.mecadetect.api.AuthApi;
 import fr.mecadetect.api.dto.LoginRequestDto;
 import fr.mecadetect.api.dto.LoginResponseDto;
-import fr.mecadetect.api.dto.RoleDto;
-import fr.mecadetect.api.dto.UtilisateurResumeDto;
-import fr.mecadetect.utilisateur.Utilisateur;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -15,9 +12,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController implements AuthApi {
 
     private final AuthService authService;
+    private final AuthMapper mapper;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, AuthMapper mapper) {
         this.authService = authService;
+        this.mapper = mapper;
     }
 
     /// Authentifie l'utilisateur et lui renvoie un jeton JWT.
@@ -28,19 +27,6 @@ public class AuthController implements AuthApi {
     public ResponseEntity<LoginResponseDto> login(LoginRequestDto loginRequestDto) {
         AuthService.ResultatConnexion connexion =
                 authService.connecter(loginRequestDto.getEmail(), loginRequestDto.getMotDePasse());
-        Utilisateur utilisateurConnecte = connexion.utilisateur();
-
-        var resume = new UtilisateurResumeDto()
-                .idUtilisateur(utilisateurConnecte.getId())
-                .nom(utilisateurConnecte.getNom())
-                .prenom(utilisateurConnecte.getPrenom())
-                .role(RoleDto.fromValue(utilisateurConnecte.getRole().name()));
-
-        var reponse = new LoginResponseDto()
-                .token(connexion.jeton().valeur())
-                .expireDans((int) connexion.jeton().expireDansSecondes())
-                .utilisateur(resume);
-
-        return ResponseEntity.ok(reponse);
+        return ResponseEntity.ok(mapper.versDto(connexion));
     }
 }

@@ -2,6 +2,7 @@ package fr.mecadetect.export;
 
 import fr.mecadetect.erreur.DonneesInvalidesException;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
@@ -23,10 +24,14 @@ public class ExportInterventionsService {
     /// Un an au plus (environ 100 000 lignes sur le jeu de démonstration) : un export reste un fichier raisonnable.
     static final int JOURS_MAX = 366;
 
-    private final DataSource dataSource;
+    /// Lignes lues par paquets de 500 : peu d'allers-retours avec Oracle, peu de mémoire.
+    static final int TAILLE_PAQUET = 500;
+
+    private final JdbcTemplate jdbc;
 
     public ExportInterventionsService(DataSource dataSource) {
-        this.dataSource = dataSource;
+        this.jdbc = new JdbcTemplate(dataSource);
+        this.jdbc.setFetchSize(TAILLE_PAQUET);
     }
 
     /// Prépare l'export des interventions demandées entre deux dates. Le fichier est produit
@@ -45,7 +50,8 @@ public class ExportInterventionsService {
             throw new DonneesInvalidesException("PERIODE_TROP_LONGUE",
                     "La période exportée est limitée à " + JOURS_MAX + " jours.");
         }
-        var contenu = new CsvInterventionsInputStream(dataSource, debutEnUtc(depuis), debutEnUtc(jusqua.plusDays(1)), FUSEAU);
+        var lignes = InterventionsCsv.lignes(jdbc, debutEnUtc(depuis), debutEnUtc(jusqua.plusDays(1)), FUSEAU);
+        var contenu = Csv.enFlux(lignes);
         // InputStreamResource exactement : Spring n'essaie pas d'en calculer la taille et l'envoie en flux
         return new ExportCsv("interventions-%s-au-%s.csv".formatted(depuis, jusqua), new InputStreamResource(contenu));
     }

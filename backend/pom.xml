@@ -22,6 +22,8 @@
 		<jackson-2-bom.version>2.21.7</jackson-2-bom.version>
 		<!-- Mapping entités / DTO généré à la compilation (pas de réflexion à l'exécution) -->
 		<mapstruct.version>1.6.3</mapstruct.version>
+		<!-- Écriture CSV (échappement RFC 4180) de l'export des interventions -->
+		<commons-csv.version>1.14.0</commons-csv.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -52,6 +54,11 @@
 			<groupId>org.mapstruct</groupId>
 			<artifactId>mapstruct</artifactId>
 			<version>${mapstruct.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-csv</artifactId>
+			<version>${commons-csv.version}</version>
 		</dependency>
 
 		<dependency>

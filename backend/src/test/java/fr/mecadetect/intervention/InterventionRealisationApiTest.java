@@ -4,6 +4,9 @@ import fr.mecadetect.TestcontainersConfiguration;
 import fr.mecadetect.equipement.Equipement;
 import fr.mecadetect.equipement.EquipementRepository;
 import fr.mecadetect.equipement.StatutEquipement;
+import fr.mecadetect.intervention.domain.Intervention;
+import fr.mecadetect.intervention.domain.Priorite;
+import fr.mecadetect.intervention.infrastructure.InterventionJpaRepository;
 import fr.mecadetect.referentiel.TypeEquipement;
 import fr.mecadetect.referentiel.TypeEquipementRepository;
 import fr.mecadetect.referentiel.Zone;
@@ -46,7 +49,7 @@ class InterventionRealisationApiTest {
     private static final LocalDateTime DEBUT = LocalDateTime.of(2026, 1, 5, 8, 0);
 
     @Autowired private WebApplicationContext context;
-    @Autowired private InterventionRepository interventionRepository;
+    @Autowired private InterventionJpaRepository interventionRepository;
     @Autowired private EquipementRepository equipementRepository;
     @Autowired private ZoneRepository zoneRepository;
     @Autowired private TypeEquipementRepository typeRepository;

@@ -1,9 +1,9 @@
 package fr.mecadetect.technicien;
 
-import fr.mecadetect.intervention.ChargeTechnicien;
-import fr.mecadetect.intervention.InterventionRepository;
-import fr.mecadetect.intervention.InterventionResume;
-import fr.mecadetect.intervention.StatutIntervention;
+import fr.mecadetect.intervention.domain.ChargeTechnicien;
+import fr.mecadetect.intervention.domain.InterventionRepository;
+import fr.mecadetect.intervention.domain.InterventionResume;
+import fr.mecadetect.intervention.domain.StatutIntervention;
 import fr.mecadetect.referentiel.TypeEquipement;
 import fr.mecadetect.utilisateur.Habilitation;
 import fr.mecadetect.utilisateur.HabilitationRepository;

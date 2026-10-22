@@ -1,6 +1,6 @@
 package fr.mecadetect.reporting;
 
-import fr.mecadetect.intervention.Priorite;
+import fr.mecadetect.intervention.domain.Priorite;
 import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;

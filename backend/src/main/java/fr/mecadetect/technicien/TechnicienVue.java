@@ -1,6 +1,6 @@
 package fr.mecadetect.technicien;
 
-import fr.mecadetect.intervention.InterventionResume;
+import fr.mecadetect.intervention.domain.InterventionResume;
 import fr.mecadetect.referentiel.TypeEquipement;
 import fr.mecadetect.utilisateur.Utilisateur;
 

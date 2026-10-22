@@ -1,6 +1,6 @@
 package fr.mecadetect.dashboard;
 
-import fr.mecadetect.intervention.Priorite;
+import fr.mecadetect.intervention.domain.Priorite;
 import fr.mecadetect.reporting.ChargeTechnicienPeriode;
 import fr.mecadetect.reporting.EvolutionMensuelle;
 import fr.mecadetect.reporting.TopEquipement;

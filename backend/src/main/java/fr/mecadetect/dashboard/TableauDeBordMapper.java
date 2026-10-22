@@ -6,7 +6,7 @@ import fr.mecadetect.api.dto.DashboardEvolutionMensuelleInnerDto;
 import fr.mecadetect.api.dto.DashboardOuvertesParPrioriteInnerDto;
 import fr.mecadetect.api.dto.DashboardTopEquipementsInnerDto;
 import fr.mecadetect.api.dto.PrioriteDto;
-import fr.mecadetect.intervention.Priorite;
+import fr.mecadetect.intervention.domain.Priorite;
 import fr.mecadetect.mapping.ConfigurationMappers;
 import fr.mecadetect.reporting.ChargeTechnicienPeriode;
 import fr.mecadetect.reporting.EvolutionMensuelle;

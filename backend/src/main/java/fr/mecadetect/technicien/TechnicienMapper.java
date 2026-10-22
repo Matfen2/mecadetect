@@ -1,7 +1,7 @@
 package fr.mecadetect.technicien;
 
 import fr.mecadetect.api.dto.TechnicienDto;
-import fr.mecadetect.intervention.InterventionMapper;
+import fr.mecadetect.intervention.api.InterventionMapper;
 import fr.mecadetect.mapping.ConfigurationMappers;
 import fr.mecadetect.referentiel.ReferentielMapper;
 import org.mapstruct.Mapper;

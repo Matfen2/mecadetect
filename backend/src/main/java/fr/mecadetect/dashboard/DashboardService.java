@@ -1,6 +1,6 @@
 package fr.mecadetect.dashboard;
 
-import fr.mecadetect.intervention.Priorite;
+import fr.mecadetect.intervention.domain.Priorite;
 import fr.mecadetect.reporting.ReportingRepository;
 import fr.mecadetect.reporting.TempsResolution;
 import org.springframework.stereotype.Service;

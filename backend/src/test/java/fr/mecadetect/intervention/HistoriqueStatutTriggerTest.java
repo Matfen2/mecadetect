@@ -3,6 +3,12 @@ package fr.mecadetect.intervention;
 import fr.mecadetect.TestcontainersConfiguration;
 import fr.mecadetect.equipement.Equipement;
 import fr.mecadetect.equipement.EquipementRepository;
+import fr.mecadetect.intervention.domain.HistoriqueStatut;
+import fr.mecadetect.intervention.domain.Intervention;
+import fr.mecadetect.intervention.domain.Priorite;
+import fr.mecadetect.intervention.domain.StatutIntervention;
+import fr.mecadetect.intervention.infrastructure.HistoriqueStatutJpaRepository;
+import fr.mecadetect.intervention.infrastructure.InterventionJpaRepository;
 import fr.mecadetect.referentiel.TypeEquipement;
 import fr.mecadetect.referentiel.TypeEquipementRepository;
 import fr.mecadetect.referentiel.Zone;
@@ -54,8 +60,8 @@ class HistoriqueStatutTriggerTest {
     private static final LocalDateTime LUNDI_8H = LocalDateTime.of(2026, 1, 5, 8, 0);
 
     @Autowired private WebApplicationContext context;
-    @Autowired private InterventionRepository interventionRepository;
-    @Autowired private HistoriqueStatutRepository historiqueRepository;
+    @Autowired private InterventionJpaRepository interventionRepository;
+    @Autowired private HistoriqueStatutJpaRepository historiqueRepository;
     @Autowired private EquipementRepository equipementRepository;
     @Autowired private ZoneRepository zoneRepository;
     @Autowired private TypeEquipementRepository typeRepository;
@@ -194,7 +200,7 @@ class HistoriqueStatutTriggerTest {
     void historiqueDansLeDetail() throws Exception {
         var intervention = declarer();
 
-        mockMvc.perform(post("/api/v1/interventions/{id}/planifier", intervention.getId())
+        mockMvc.perform(post("/api/v1/interventions/{id}/planification", intervention.getId())
                         .with(connecte(admin))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""

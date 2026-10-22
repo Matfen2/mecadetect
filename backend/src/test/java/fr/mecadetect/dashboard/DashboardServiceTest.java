@@ -3,7 +3,7 @@ package fr.mecadetect.dashboard;
 import fr.mecadetect.TestcontainersConfiguration;
 import fr.mecadetect.equipement.Equipement;
 import fr.mecadetect.equipement.EquipementRepository;
-import fr.mecadetect.intervention.Priorite;
+import fr.mecadetect.intervention.domain.Priorite;
 import fr.mecadetect.referentiel.TypeEquipement;
 import fr.mecadetect.referentiel.TypeEquipementRepository;
 import fr.mecadetect.referentiel.Zone;

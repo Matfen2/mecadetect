@@ -3,6 +3,11 @@ package fr.mecadetect.intervention;
 import fr.mecadetect.TestcontainersConfiguration;
 import fr.mecadetect.equipement.Equipement;
 import fr.mecadetect.equipement.EquipementRepository;
+import fr.mecadetect.intervention.domain.Intervention;
+import fr.mecadetect.intervention.domain.InterventionResume;
+import fr.mecadetect.intervention.domain.Priorite;
+import fr.mecadetect.intervention.domain.StatutIntervention;
+import fr.mecadetect.intervention.infrastructure.InterventionJpaRepository;
 import fr.mecadetect.referentiel.TypeEquipement;
 import fr.mecadetect.referentiel.TypeEquipementRepository;
 import fr.mecadetect.referentiel.Zone;
@@ -41,7 +46,7 @@ class RechercheInterventionTest {
     private static final Pageable PLUS_RECENTES_D_ABORD =
             PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "dateDemande").and(Sort.by("id")));
 
-    @Autowired private InterventionRepository repository;
+    @Autowired private InterventionJpaRepository repository;
     @Autowired private EquipementRepository equipementRepository;
     @Autowired private ZoneRepository zoneRepository;
     @Autowired private TypeEquipementRepository typeRepository;

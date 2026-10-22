@@ -6,7 +6,7 @@ import jakarta.persistence.Embeddable;
 import java.io.Serializable;
 import java.util.Objects;
 
-/** Clé composée de la table habilitation : (type d'équipement, technicien). */
+/// Clé composée de la table habilitation : (type d'équipement, technicien).
 @Embeddable
 public class HabilitationId implements Serializable {
 

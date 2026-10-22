@@ -54,9 +54,9 @@ class ReferentielApiTest {
     }
 
     @Test
-    @DisplayName("GET /types-equipement renvoie les types triés par libellé")
+    @DisplayName("GET /equipements/types renvoie les types triés par libellé")
     void typesEquipement() throws Exception {
-        mockMvc.perform(get("/api/v1/types-equipement").with(jwt().authorities(new SimpleGrantedAuthority("ROLE_DEMANDEUR"))))
+        mockMvc.perform(get("/api/v1/equipements/types").with(jwt().authorities(new SimpleGrantedAuthority("ROLE_DEMANDEUR"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].libelle").value("Compresseur"))
                 .andExpect(jsonPath("$[1].libelle").value("Tour CN"));

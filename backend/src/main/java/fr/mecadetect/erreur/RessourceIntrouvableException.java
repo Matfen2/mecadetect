@@ -1,6 +1,6 @@
 package fr.mecadetect.erreur;
 
-/** Ressource demandée dans l'URL et absente (HTTP 404). */
+/// Ressource demandée dans l'URL et absente (HTTP 404).
 public class RessourceIntrouvableException extends RuntimeException {
 
     private final String code;

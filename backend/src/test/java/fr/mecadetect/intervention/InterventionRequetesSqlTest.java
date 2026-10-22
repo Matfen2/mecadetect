@@ -1,8 +1,14 @@
 package fr.mecadetect.intervention;
 
 import fr.mecadetect.TestcontainersConfiguration;
-import fr.mecadetect.equipement.EquipementRepository;
 import fr.mecadetect.equipement.Equipement;
+import fr.mecadetect.equipement.EquipementRepository;
+import fr.mecadetect.intervention.api.PaginationIntervention;
+import fr.mecadetect.intervention.application.CriteresRechercheIntervention;
+import fr.mecadetect.intervention.application.InterventionService;
+import fr.mecadetect.intervention.domain.Intervention;
+import fr.mecadetect.intervention.domain.Priorite;
+import fr.mecadetect.intervention.infrastructure.InterventionJpaRepository;
 import fr.mecadetect.referentiel.TypeEquipement;
 import fr.mecadetect.referentiel.TypeEquipementRepository;
 import fr.mecadetect.referentiel.Zone;
@@ -43,7 +49,7 @@ class InterventionRequetesSqlTest {
     private static final int NOMBRE = 20;
     private static final LocalDateTime DEBUT_2032 = LocalDateTime.of(2032, 1, 1, 0, 0);
 
-    @Autowired private InterventionRepository interventionRepository;
+    @Autowired private InterventionJpaRepository interventionRepository;
     @Autowired private InterventionService service;
     @Autowired private EquipementRepository equipementRepository;
     @Autowired private ZoneRepository zoneRepository;

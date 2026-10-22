@@ -1,6 +1,6 @@
 package fr.mecadetect.reporting;
 
-import fr.mecadetect.intervention.Priorite;
+import fr.mecadetect.intervention.domain.Priorite;
 import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -15,17 +15,15 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Requêtes de reporting (UC-DB2, tâche 4.3), écrites en SQL Oracle natif :
- * les fonctions analytiques (RANK, LAG) et le calendrier par CONNECT BY n'ont pas d'équivalent JPQL.
- * Chaque ligne est projetée directement dans un record, sans passer par les entités.
- *
- * Les périodes sont des intervalles [depuis ; avant[ en UTC, comme toutes les dates stockées.
- */
+/// Requêtes de reporting (UC-DB2, tâche 4.3), écrites en SQL Oracle natif :
+/// les fonctions analytiques (RANK, LAG) et le calendrier par CONNECT BY n'ont pas d'équivalent JPQL.
+/// Chaque ligne est projetée directement dans un record, sans passer par les entités.
+///
+/// Les périodes vont de `depuis` inclus à `avant` exclu, en UTC comme toutes les dates stockées.
 @Repository
 public class ReportingRepository {
 
-    /** Alias SQL des comptages, lu dans plusieurs requêtes. */
+    /// Alias SQL des comptages, lu dans plusieurs requêtes.
     private static final String NOMBRE = "nombre";
 
     private final NamedParameterJdbcTemplate jdbc;
@@ -34,11 +32,15 @@ public class ReportingRepository {
         this.jdbc = jdbc;
     }
 
-    /**
-     * Équipements les plus souvent en panne sur la période, interventions annulées exclues.
-     * RANK() et non ROW_NUMBER() : deux équipements ex aequo ont le même rang, le suivant saute un rang
-     * (1, 1, 3). Le classement peut donc compter plus de lignes que la limite en cas d'égalité.
-     */
+    /// Équipements les plus souvent en panne sur la période, interventions annulées exclues.
+    ///
+    /// RANK() et non ROW_NUMBER() : deux équipements ex aequo ont le même rang, le suivant saute un rang
+    /// (1, 1, 3). Le classement peut donc compter plus de lignes que la limite en cas d'égalité.
+    ///
+    /// @param depuis début de la période, inclus
+    /// @param avant  fin de la période, exclue
+    /// @param limite rang maximal retenu
+    /// @return le classement, du plus souvent en panne au moins souvent
     public List<TopEquipement> topEquipements(LocalDateTime depuis, LocalDateTime avant, int limite) {
         return jdbc.query("""
                 SELECT rang, reference, nom, nombre_pannes
@@ -57,11 +59,14 @@ public class ReportingRepository {
                         rs.getString("nom"), rs.getLong("nombre_pannes")));
     }
 
-    /**
-     * Demandes par mois et écart avec le mois précédent (LAG).
-     * Le calendrier est généré par CONNECT BY : un mois sans demande apparaît avec 0,
-     * sinon LAG comparerait deux mois non consécutifs.
-     */
+    /// Demandes par mois et écart avec le mois précédent (LAG).
+    ///
+    /// Le calendrier est généré par CONNECT BY : un mois sans demande apparaît avec 0,
+    /// sinon LAG comparerait deux mois non consécutifs.
+    ///
+    /// @param depuis début de la période, inclus ; le premier jour d'un mois
+    /// @param avant  fin de la période, exclue ; le premier jour d'un mois
+    /// @return une ligne par mois de la période, dans l'ordre chronologique
     public List<EvolutionMensuelle> evolutionMensuelle(LocalDateTime depuis, LocalDateTime avant) {
         return jdbc.query("""
                 WITH mois AS (
@@ -88,7 +93,12 @@ public class ReportingRepository {
                         longOuNull(rs, "variation")));
     }
 
-    /** Temps moyen de résolution (de la demande à la fin) des interventions terminées sur la période. */
+    /// Temps moyen de résolution (de la demande à la fin) des interventions terminées sur la période.
+    ///
+    /// @param depuis début de la période, inclus
+    /// @param avant  fin de la période, exclue
+    /// @return une ligne par priorité ayant au moins une intervention terminée,
+    ///         de la plus urgente à la moins urgente
     public List<TempsResolution> tempsMoyenResolution(LocalDateTime depuis, LocalDateTime avant) {
         return jdbc.query("""
                 SELECT priorite, COUNT(*) AS nombre,
@@ -104,11 +114,13 @@ public class ReportingRepository {
                         rs.getLong(NOMBRE), rs.getDouble("heures")));
     }
 
-    /**
-     * Charge par technicien actif : interventions ouvertes (planifiées ou en cours) à cet instant,
-     * interventions terminées et minutes passées sur la période. Un technicien sans intervention
-     * apparaît avec des zéros (jointure externe).
-     */
+    /// Charge par technicien actif : interventions ouvertes (planifiées ou en cours) à cet instant,
+    /// interventions terminées et minutes passées sur la période.
+    ///
+    /// @param depuis début de la période, inclus
+    /// @param avant  fin de la période, exclue
+    /// @return une ligne par technicien actif ; un technicien sans intervention apparaît avec des zéros
+    ///         (jointure externe)
     public List<ChargeTechnicienPeriode> chargeTechniciens(LocalDateTime depuis, LocalDateTime avant) {
         return jdbc.query("""
                 SELECT u.id_utilisateur, u.prenom, u.nom,
@@ -130,10 +142,10 @@ public class ReportingRepository {
                         rs.getLong("ouvertes"), rs.getLong("terminees"), rs.getLong("minutes")));
     }
 
-    /**
-     * Interventions ouvertes (demandées, planifiées ou en cours) par priorité, à cet instant.
-     * Une priorité sans intervention ouverte est absente du résultat.
-     */
+    /// Interventions ouvertes (demandées, planifiées ou en cours) par priorité, à cet instant.
+    ///
+    /// @return le nombre d'interventions ouvertes par priorité ; une priorité sans intervention
+    ///         ouverte est absente
     public Map<Priorite, Long> ouvertesParPriorite() {
         Map<Priorite, Long> resultat = new EnumMap<>(Priorite.class);
         jdbc.query("""
@@ -146,7 +158,9 @@ public class ReportingRepository {
         return resultat;
     }
 
-    /** Équipements actuellement en panne (statut tenu à jour par RG-05). */
+    /// Équipements actuellement en panne (statut tenu à jour par RG-05).
+    ///
+    /// @return le nombre d'équipements au statut EN_PANNE
     public long equipementsEnPanne() {
         return jdbc.getJdbcTemplate().queryForObject(
                 "SELECT COUNT(*) FROM equipement WHERE statut = 'EN_PANNE'", Long.class);

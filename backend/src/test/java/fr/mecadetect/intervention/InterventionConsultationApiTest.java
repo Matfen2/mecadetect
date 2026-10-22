@@ -3,6 +3,9 @@ package fr.mecadetect.intervention;
 import fr.mecadetect.TestcontainersConfiguration;
 import fr.mecadetect.equipement.Equipement;
 import fr.mecadetect.equipement.EquipementRepository;
+import fr.mecadetect.intervention.domain.Intervention;
+import fr.mecadetect.intervention.domain.Priorite;
+import fr.mecadetect.intervention.infrastructure.InterventionJpaRepository;
 import fr.mecadetect.referentiel.TypeEquipement;
 import fr.mecadetect.referentiel.TypeEquipementRepository;
 import fr.mecadetect.referentiel.Zone;
@@ -43,7 +46,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class InterventionConsultationApiTest {
 
     @Autowired private WebApplicationContext context;
-    @Autowired private InterventionRepository interventionRepository;
+    @Autowired private InterventionJpaRepository interventionRepository;
     @Autowired private EquipementRepository equipementRepository;
     @Autowired private ZoneRepository zoneRepository;
     @Autowired private TypeEquipementRepository typeRepository;
@@ -54,6 +57,7 @@ class InterventionConsultationApiTest {
     private Utilisateur admin;
     private Utilisateur demandeur;
     private Utilisateur technicien;
+    private Utilisateur autreTechnicien;
 
     private Intervention demandee;    // A, HAUTE, 1er mars
     private Intervention planifiee;   // A, NORMALE, 5 mars, technicien
@@ -72,7 +76,7 @@ class InterventionConsultationApiTest {
         admin = utilisateur("Martin", "Claire", "admin.consult@mecadetect.fr", Role.ADMIN);
         demandeur = utilisateur("Moreau", "Sophie", "demandeur.consult@mecadetect.fr", Role.DEMANDEUR);
         technicien = utilisateur("Bernard", "Lucas", "technicien.consult@mecadetect.fr", Role.TECHNICIEN);
-        var autreTechnicien = utilisateur("Petit", "Hugo", "autre.consult@mecadetect.fr", Role.TECHNICIEN);
+        autreTechnicien = utilisateur("Petit", "Hugo", "autre.consult@mecadetect.fr", Role.TECHNICIEN);
 
         demandee = enregistrer(intervention(equipementA, Priorite.HAUTE, jour(3, 1)));
 
@@ -205,12 +209,16 @@ class InterventionConsultationApiTest {
                 .andExpect(jsonPath("$.code").value("TRI_INVALIDE"));
     }
 
-    // ------------------------------------------------------------------ mes interventions
+    // ------------------------------------------------------------------ interventions d'un technicien
+
+    private String interventionsDe(Utilisateur technicienConsulte) {
+        return "/api/v1/techniciens/" + technicienConsulte.getId() + "/interventions";
+    }
 
     @Test
-    @DisplayName("Mes interventions : planifiées et en cours du technicien, celle en cours d'abord")
-    void mesInterventions() throws Exception {
-        lire("/api/v1/interventions/mes-interventions", technicien)
+    @DisplayName("Un technicien voit ses interventions planifiées et en cours, celle en cours d'abord")
+    void interventionsDuTechnicien() throws Exception {
+        lire(interventionsDe(technicien), technicien)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(2))
                 .andExpect(jsonPath("$.contenu[0].statut").value("EN_COURS"))
@@ -218,9 +226,25 @@ class InterventionConsultationApiTest {
     }
 
     @Test
-    @DisplayName("Mes interventions est réservé aux techniciens : 403")
-    void mesInterventionsParAdmin() throws Exception {
-        lire("/api/v1/interventions/mes-interventions", admin)
+    @DisplayName("Un technicien ne peut pas consulter les interventions d'un autre : 403")
+    void interventionsDUnAutreTechnicien() throws Exception {
+        lire(interventionsDe(autreTechnicien), technicien)
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("INTERVENTIONS_D_UN_AUTRE_TECHNICIEN"));
+    }
+
+    @Test
+    @DisplayName("L'admin peut consulter les interventions de n'importe quel technicien")
+    void interventionsDUnTechnicienParAdmin() throws Exception {
+        lire(interventionsDe(technicien), admin)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2));
+    }
+
+    @Test
+    @DisplayName("Un demandeur ne peut pas consulter les interventions d'un technicien : 403")
+    void interventionsDUnTechnicienParDemandeur() throws Exception {
+        lire(interventionsDe(technicien), demandeur)
                 .andExpect(status().isForbidden());
     }
 

@@ -9,30 +9,29 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/** Listes de référence utilisées par les formulaires (zones et types d'équipement). */
+/// Listes de référence utilisées par les formulaires (zones et types d'équipement).
 @RestController
 @Transactional(readOnly = true)
 public class ReferentielController implements ReferentielApi {
 
     private final ZoneRepository zoneRepository;
     private final TypeEquipementRepository typeRepository;
+    private final ReferentielMapper mapper;
 
-    public ReferentielController(ZoneRepository zoneRepository, TypeEquipementRepository typeRepository) {
+    public ReferentielController(ZoneRepository zoneRepository, TypeEquipementRepository typeRepository,
+                                 ReferentielMapper mapper) {
         this.zoneRepository = zoneRepository;
         this.typeRepository = typeRepository;
+        this.mapper = mapper;
     }
 
     @Override
     public ResponseEntity<List<ZoneDto>> listerZones() {
-        return ResponseEntity.ok(zoneRepository.findAllByOrderByCodeAsc().stream()
-                .map(ReferentielMapper::versDto)
-                .toList());
+        return ResponseEntity.ok(mapper.versZonesDto(zoneRepository.findAllByOrderByCodeAsc()));
     }
 
     @Override
     public ResponseEntity<List<TypeEquipementDto>> listerTypesEquipement() {
-        return ResponseEntity.ok(typeRepository.findAllByOrderByLibelleAsc().stream()
-                .map(ReferentielMapper::versDto)
-                .toList());
+        return ResponseEntity.ok(mapper.versTypesDto(typeRepository.findAllByOrderByLibelleAsc()));
     }
 }

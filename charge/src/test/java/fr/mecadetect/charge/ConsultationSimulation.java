@@ -63,7 +63,8 @@ public class ConsultationSimulation extends Simulation {
                 .post("/auth/login")
                 .body(StringBody("{\"email\": \"%s\", \"motDePasse\": \"%s\"}".formatted(email, MOT_DE_PASSE)))
                 .check(status().is(200))
-                .check(jsonPath("$.token").saveAs("jeton")))
+                .check(jsonPath("$.token").saveAs("jeton"))
+                .check(jsonPath("$.utilisateur.idUtilisateur").saveAs("idUtilisateur")))
                 // Sans jeton, inutile de continuer : l'utilisateur virtuel s'arrête au lieu de boucler en erreur
                 .exitHereIfFailed();
     }
@@ -121,7 +122,7 @@ public class ConsultationSimulation extends Simulation {
     private final ScenarioBuilder technicien = scenario("Technicien")
             .exec(connexion("technicien@mecadetect.fr"))
             .during(DUREE).on(
-                    exec(lire("Mes interventions", "/interventions/mes-interventions?size=20")
+                    exec(lire("Mes interventions", "/techniciens/#{idUtilisateur}/interventions?size=20")
                             .check(jsonPath("$.contenu[*].idIntervention").findRandom().optional()
                                     .saveAs("idMonIntervention")))
                     .exec(reflexion())

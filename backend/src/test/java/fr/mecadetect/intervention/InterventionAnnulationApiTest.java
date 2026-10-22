@@ -3,6 +3,9 @@ package fr.mecadetect.intervention;
 import fr.mecadetect.TestcontainersConfiguration;
 import fr.mecadetect.equipement.Equipement;
 import fr.mecadetect.equipement.EquipementRepository;
+import fr.mecadetect.intervention.domain.Intervention;
+import fr.mecadetect.intervention.domain.Priorite;
+import fr.mecadetect.intervention.infrastructure.InterventionJpaRepository;
 import fr.mecadetect.referentiel.TypeEquipement;
 import fr.mecadetect.referentiel.TypeEquipementRepository;
 import fr.mecadetect.referentiel.Zone;
@@ -43,7 +46,7 @@ class InterventionAnnulationApiTest {
     private static final LocalDateTime LUNDI_8H = LocalDateTime.of(2026, 1, 5, 8, 0);
 
     @Autowired private WebApplicationContext context;
-    @Autowired private InterventionRepository interventionRepository;
+    @Autowired private InterventionJpaRepository interventionRepository;
     @Autowired private EquipementRepository equipementRepository;
     @Autowired private ZoneRepository zoneRepository;
     @Autowired private TypeEquipementRepository typeRepository;
@@ -88,7 +91,7 @@ class InterventionAnnulationApiTest {
 
     private ResultActions annuler(Utilisateur auteur, Long idIntervention, long version, String motif)
             throws Exception {
-        return mockMvc.perform(post("/api/v1/interventions/{id}/annuler", idIntervention)
+        return mockMvc.perform(post("/api/v1/interventions/{id}/annulation", idIntervention)
                 .with(connecte(auteur))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""

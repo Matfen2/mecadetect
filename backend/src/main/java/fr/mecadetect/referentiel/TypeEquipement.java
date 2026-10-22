@@ -9,7 +9,7 @@ import jakarta.persistence.Table;
 
 import java.util.Objects;
 
-/** Type d'équipement (presse, tour CN, compresseur...). Sert aussi aux habilitations. */
+/// Type d'équipement (presse, tour CN, compresseur...). Sert aussi aux habilitations.
 @Entity
 @Table(name = "type_equipement")
 public class TypeEquipement {

@@ -53,7 +53,7 @@ describe('FormulaireEquipement', () => {
     await fixture.whenStable();
 
     http.expectOne('/api/v1/zones').flush(zones);
-    http.expectOne('/api/v1/types-equipement').flush(types);
+    http.expectOne('/api/v1/equipements/types').flush(types);
   }
 
   async function rafraichir(): Promise<void> {

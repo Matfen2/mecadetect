@@ -3,9 +3,9 @@ package fr.mecadetect.donnees;
 import fr.mecadetect.TestcontainersConfiguration;
 import fr.mecadetect.equipement.Equipement;
 import fr.mecadetect.equipement.EquipementRepository;
-import fr.mecadetect.intervention.Intervention;
-import fr.mecadetect.intervention.InterventionRepository;
-import fr.mecadetect.intervention.Priorite;
+import fr.mecadetect.intervention.domain.Intervention;
+import fr.mecadetect.intervention.infrastructure.InterventionJpaRepository;
+import fr.mecadetect.intervention.domain.Priorite;
 import fr.mecadetect.referentiel.TypeEquipement;
 import fr.mecadetect.referentiel.TypeEquipementRepository;
 import fr.mecadetect.referentiel.Zone;
@@ -45,7 +45,7 @@ class GenerationDonneesTest {
     private static final int NOMBRE = 3000;
 
     @Autowired private JdbcTemplate jdbc;
-    @Autowired private InterventionRepository interventionRepository;
+    @Autowired private InterventionJpaRepository interventionRepository;
     @Autowired private EquipementRepository equipementRepository;
     @Autowired private ZoneRepository zoneRepository;
     @Autowired private TypeEquipementRepository typeRepository;

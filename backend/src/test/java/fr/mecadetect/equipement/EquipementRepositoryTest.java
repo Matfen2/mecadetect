@@ -1,6 +1,6 @@
 package fr.mecadetect.equipement;
 
-import fr.mecadetect.TestcontainersConfiguration;
+import fr.mecadetect.TestPersistanceOracle;
 import fr.mecadetect.referentiel.TypeEquipement;
 import fr.mecadetect.referentiel.TypeEquipementRepository;
 import fr.mecadetect.referentiel.Zone;
@@ -11,19 +11,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@SpringBootTest
-@Import(TestcontainersConfiguration.class)
-@Transactional
+/// Persistance des équipements et du référentiel : mapping, contraintes d'unicité et de statut, chargement différé.
+@TestPersistanceOracle
 class EquipementRepositoryTest {
 
     @Autowired
@@ -54,7 +50,7 @@ class EquipementRepositoryTest {
     @Test
     @DisplayName("Un équipement est enregistré avec sa zone et son type")
     void enregistrement() {
-        var enregistre = equipementRepository.saveAndFlush(equipement("TST-001"));
+        Equipement enregistre = equipementRepository.saveAndFlush(equipement("TST-001"));
 
         assertThat(enregistre.getId()).isNotNull();
         assertThat(enregistre.getStatut()).isEqualTo(StatutEquipement.EN_SERVICE);
@@ -82,10 +78,10 @@ class EquipementRepositoryTest {
     @Test
     @DisplayName("La zone et le type sont chargés en différé (LAZY), pas avec l'équipement")
     void chargementDiffere() {
-        var id = equipementRepository.saveAndFlush(equipement("TST-004")).getId();
+        Long id = equipementRepository.saveAndFlush(equipement("TST-004")).getId();
         entityManager.clear();
 
-        var recharge = equipementRepository.findById(id).orElseThrow();
+        Equipement recharge = equipementRepository.findById(id).orElseThrow();
 
         assertThat(Hibernate.isInitialized(recharge.getZone())).isFalse();
         assertThat(Hibernate.isInitialized(recharge.getType())).isFalse();
@@ -94,7 +90,7 @@ class EquipementRepositoryTest {
     @Test
     @DisplayName("Le statut ARCHIVE est bien persisté (contrainte ck_equipement_statut respectée)")
     void archivagePersiste() {
-        var equipement = equipementRepository.saveAndFlush(equipement("TST-005"));
+        Equipement equipement = equipementRepository.saveAndFlush(equipement("TST-005"));
         equipement.archiver();
         equipementRepository.flush();
         entityManager.clear();

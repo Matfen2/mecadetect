@@ -16,12 +16,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 
-/**
- * Habilitations du technicien de démonstration (profil "demo").
- * Lancé quand l'application est prête, donc après la création des comptes et du référentiel.
- * Le technicien n'est volontairement pas habilité sur les compresseurs et les chariots :
- * la règle RG-09 peut ainsi être montrée en démonstration.
- */
+/// Habilitations du technicien de démonstration (profil "demo").
+/// Lancé quand l'application est prête, donc après la création des comptes et du référentiel.
+/// Le technicien n'est volontairement pas habilité sur les compresseurs et les chariots :
+/// la règle RG-09 peut ainsi être montrée en démonstration.
 @Component
 @Profile("demo")
 public class HabilitationsDemoInitialiseur {

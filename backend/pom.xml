@@ -20,6 +20,10 @@
 		<tomcat.version>11.0.25</tomcat.version>
 		<jackson-bom.version>3.1.7</jackson-bom.version>
 		<jackson-2-bom.version>2.21.7</jackson-2-bom.version>
+		<!-- Mapping entités / DTO généré à la compilation (pas de réflexion à l'exécution) -->
+		<mapstruct.version>1.6.3</mapstruct.version>
+		<!-- Écriture CSV (échappement RFC 4180) de l'export des interventions -->
+		<commons-csv.version>1.14.0</commons-csv.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -45,6 +49,16 @@
 		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-database-oracle</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.mapstruct</groupId>
+			<artifactId>mapstruct</artifactId>
+			<version>${mapstruct.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-csv</artifactId>
+			<version>${commons-csv.version}</version>
 		</dependency>
 
 		<dependency>
@@ -130,6 +144,40 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<!-- Compilation : processeur MapStruct, et vérification de la javadoc par le doclint de javac,
+			     sans générer de HTML.
+			     Uniquement sur le code de production : ni les tests, ni les interfaces et DTO générés
+			     depuis le contrat OpenAPI (fr.mecadetect.api).
+			     Une javadoc mal formée (balise inconnue, HTML invalide, référence introuvable) est une
+			     erreur et fait échouer le build ; un @param, un @return ou un commentaire manquant
+			     est un avertissement. -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<!-- Processeur MapStruct : génère l'implémentation des interfaces @Mapper -->
+					<annotationProcessorPaths>
+						<path>
+							<groupId>org.mapstruct</groupId>
+							<artifactId>mapstruct-processor</artifactId>
+							<version>${mapstruct.version}</version>
+						</path>
+					</annotationProcessorPaths>
+				</configuration>
+				<executions>
+					<execution>
+						<id>default-compile</id>
+						<configuration>
+							<compilerArgs>
+								<arg>-Xdoclint:all/protected</arg>
+								<arg>-Xdoclint/package:fr.mecadetect.*,-fr.mecadetect.api.*</arg>
+								<arg>-Xmaxwarns</arg>
+								<arg>10000</arg>
+							</compilerArgs>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 			<!-- Couverture des tests (rapport lu par SonarCloud) -->
 			<plugin>

@@ -1,5 +1,5 @@
-# Java / Maven
-backend/target/
+# Java / Maven (tous les modules : backend, charge…)
+target/
 *.class
 
 # Angular / Node
@@ -9,18 +9,14 @@ frontend/coverage/
 frontend/.angular/
 frontend/src/app/core/api/
 
-# Tests de charge (Gatling)
-charge/target/
-
 # Tests de bout en bout (Robot Framework) : environnement Python et rapports
 e2e/.venv/
 e2e/resultats/
 
-# IDE
+# IDE : le dépôt reste indépendant de l'éditeur, à tous les niveaux
 .idea/
 *.iml
-.vscode/*
-!.vscode/extensions.json
+.vscode/
 
 # Secrets et environnement
 .env

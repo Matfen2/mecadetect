@@ -10,6 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 import { InterventionDetail, InterventionResume, InterventionsService, PageIntervention } from '../../core/api';
+import { SessionService } from '../../core/auth/session.service';
 import { PrioriteBadge } from '../../shared/priorite-badge';
 import { messageErreur } from '../../shared/probleme-api';
 import { StatutInterventionBadge } from '../../shared/statut-intervention-badge';
@@ -58,6 +59,7 @@ const DUREES_RAPIDES = [15, 30, 60, 90, 120];
 })
 export class MesInterventions {
   private readonly interventionsApi = inject(InterventionsService);
+  private readonly session = inject(SessionService);
 
   protected readonly dureesRapides = DUREES_RAPIDES;
 
@@ -85,16 +87,26 @@ export class MesInterventions {
   constructor() {
     toObservable(this.rechargement)
       .pipe(
-        switchMap(() =>
-          this.interventionsApi.mesInterventions({ page: 0, size: 50 }).pipe(
-            map((page): EtatListe => ({ statut: 'succes', page })),
-            catchError(() => of<EtatListe>({ statut: 'erreur' })),
-            startWith<EtatListe>({ statut: 'chargement' }),
-          ),
-        ),
+        switchMap(() => this.chargerListe()),
         takeUntilDestroyed(),
       )
       .subscribe((etat) => this.etat.set(etat));
+  }
+
+  /**
+   * Interventions du technicien connecté : son identifiant vient de la session,
+   * et le back-end vérifie qu'il correspond bien au jeton.
+   */
+  private chargerListe(): Observable<EtatListe> {
+    const idTechnicien = this.session.utilisateur()?.idUtilisateur;
+    if (idTechnicien == null) {
+      return of<EtatListe>({ statut: 'erreur' });
+    }
+    return this.interventionsApi.listerInterventionsTechnicien({ idTechnicien, page: 0, size: 50 }).pipe(
+      map((page): EtatListe => ({ statut: 'succes', page })),
+      catchError(() => of<EtatListe>({ statut: 'erreur' })),
+      startWith<EtatListe>({ statut: 'chargement' }),
+    );
   }
 
   /** Premier clic : charge le détail (et sa version) puis affiche la confirmation ou le formulaire. */

@@ -19,11 +19,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Crée un parc d'équipements réaliste pour la démonstration (profil "demo" uniquement) :
- * un site industriel avec ses ateliers, ses machines et quelques équipements réformés.
- * Idempotent : un élément déjà présent n'est ni recréé ni modifié.
- */
+/// Crée un parc d'équipements réaliste pour la démonstration (profil "demo" uniquement) :
+/// un site industriel avec ses ateliers, ses machines et quelques équipements réformés.
+/// Idempotent : un élément déjà présent n'est ni recréé ni modifié.
 @Component
 @Profile("demo")
 public class DonneesDemoReferentielInitialiseur implements ApplicationRunner {

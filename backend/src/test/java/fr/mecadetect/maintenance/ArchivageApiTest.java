@@ -1,4 +1,4 @@
-package fr.mecadetect.dashboard;
+package fr.mecadetect.maintenance;
 
 import fr.mecadetect.TestcontainersConfiguration;
 import fr.mecadetect.equipement.Equipement;

@@ -48,7 +48,7 @@ describe('ListeEquipements', () => {
 
     // Listes déroulantes chargées au démarrage
     http.expectOne('/api/v1/zones').flush([]);
-    http.expectOne('/api/v1/types-equipement').flush([]);
+    http.expectOne('/api/v1/equipements/types').flush([]);
   });
 
   afterEach(() => http.verify());

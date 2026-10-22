@@ -30,7 +30,11 @@ tags:
   - name: Techniciens
     description: Techniciens et habilitations
   - name: Dashboard
-    description: Indicateurs et exports
+    description: Indicateurs du tableau de bord
+  - name: Exports
+    description: Exports de données
+  - name: Archivage
+    description: Archivage des interventions anciennes
 
 paths:
   # ------------------------------------------------------------------
@@ -80,7 +84,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /types-equipement:
+  /equipements/types:
     get:
       tags: [Referentiel]
       operationId: listerTypesEquipement
@@ -111,21 +115,24 @@ paths:
         - $ref: '#/components/parameters/SortEquipements'
         - name: statut
           in: query
+          description: Statut recherché ; sans statut, les équipements archivés sont exclus
           schema:
             $ref: '#/components/schemas/StatutEquipement'
         - name: idType
           in: query
+          description: Identifiant du type d'équipement
           schema:
             type: integer
             format: int64
         - name: idZone
           in: query
+          description: Identifiant de la zone d'implantation
           schema:
             type: integer
             format: int64
         - name: recherche
           in: query
-          description: Recherche texte sur la référence ou le nom
+          description: Texte cherché dans la référence ou le nom, sans tenir compte de la casse
           schema:
             type: string
             maxLength: 100
@@ -261,14 +268,17 @@ paths:
         - $ref: '#/components/parameters/SortInterventions'
         - name: statut
           in: query
+          description: Statut recherché
           schema:
             $ref: '#/components/schemas/StatutIntervention'
         - name: priorite
           in: query
+          description: Priorité recherchée
           schema:
             $ref: '#/components/schemas/Priorite'
         - name: idTechnicien
           in: query
+          description: Identifiant du technicien affecté
           schema:
             type: integer
             format: int64
@@ -320,26 +330,6 @@ paths:
         '409':
           $ref: '#/components/responses/Conflict'
 
-  /interventions/mes-interventions:
-    get:
-      tags: [Interventions]
-      operationId: mesInterventions
-      summary: Interventions assignées au technicien connecté (TECHNICIEN)
-      parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/Size'
-      responses:
-        '200':
-          description: Page d'interventions
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PageIntervention'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-
   /interventions/{idIntervention}:
     parameters:
       - $ref: '#/components/parameters/IdIntervention'
@@ -359,7 +349,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /interventions/{idIntervention}/planifier:
+  /interventions/{idIntervention}/planification:
     parameters:
       - $ref: '#/components/parameters/IdIntervention'
     post:
@@ -391,7 +381,7 @@ paths:
         '409':
           $ref: '#/components/responses/Conflict'
 
-  /interventions/{idIntervention}/demarrer:
+  /interventions/{idIntervention}/demarrage:
     parameters:
       - $ref: '#/components/parameters/IdIntervention'
     post:
@@ -421,7 +411,7 @@ paths:
         '409':
           $ref: '#/components/responses/Conflict'
 
-  /interventions/{idIntervention}/cloturer:
+  /interventions/{idIntervention}/cloture:
     parameters:
       - $ref: '#/components/parameters/IdIntervention'
     post:
@@ -453,7 +443,7 @@ paths:
         '409':
           $ref: '#/components/responses/Conflict'
 
-  /interventions/{idIntervention}/annuler:
+  /interventions/{idIntervention}/annulation:
     parameters:
       - $ref: '#/components/parameters/IdIntervention'
     post:
@@ -514,8 +504,34 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
 
+  /techniciens/{idTechnicien}/interventions:
+    parameters:
+      - $ref: '#/components/parameters/IdTechnicien'
+    get:
+      tags: [Interventions]
+      operationId: listerInterventionsTechnicien
+      summary: Interventions planifiées et en cours d'un technicien (TECHNICIEN pour lui-même, ADMIN)
+      description: |
+        L'intervention en cours d'abord, puis les planifiées par date prévue.
+        Un technicien ne peut consulter que ses propres interventions : l'identifiant
+        est comparé à celui du jeton, et toute autre valeur est refusée (403).
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Page d'interventions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageIntervention'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
   # ------------------------------------------------------------------
-  # Dashboard et exports
+  # Dashboard
   # ------------------------------------------------------------------
   /dashboard:
     get:
@@ -534,21 +550,26 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
 
+  # ------------------------------------------------------------------
+  # Exports
+  # ------------------------------------------------------------------
   /exports/interventions:
     get:
-      tags: [Dashboard]
+      tags: [Exports]
       operationId: exporterInterventions
       summary: Export CSV des interventions sur une période (ADMIN)
       parameters:
         - name: depuis
           in: query
           required: true
+          description: Premier jour de la période de demande, inclus (heure de Paris)
           schema:
             type: string
             format: date
         - name: jusqua
           in: query
           required: true
+          description: Dernier jour de la période de demande, inclus (366 jours au plus)
           schema:
             type: string
             format: date
@@ -568,11 +589,11 @@ paths:
           $ref: '#/components/responses/Forbidden'
 
   # ------------------------------------------------------------------
-  # Administration
+  # Archivage
   # ------------------------------------------------------------------
   /admin/archivage:
     post:
-      tags: [Dashboard]
+      tags: [Archivage]
       operationId: archiverInterventions
       summary: Archiver les interventions anciennes via PL/SQL (ADMIN, UC-DB4)
       requestBody:
@@ -614,7 +635,7 @@ components:
     Size:
       name: size
       in: query
-      description: Taille de page
+      description: Nombre d'éléments par page
       schema:
         type: integer
         minimum: 1
@@ -630,7 +651,7 @@ components:
     SortInterventions:
       name: sort
       in: query
-      description: "Tri au format champ,asc ou champ,desc"
+      description: "Tri au format champ,asc ou champ,desc. Champs : numero, dateDemande, datePlanifiee, statut"
       schema:
         type: string
         example: dateDemande,desc
@@ -638,6 +659,7 @@ components:
       name: idEquipement
       in: path
       required: true
+      description: Identifiant de l'équipement
       schema:
         type: integer
         format: int64
@@ -645,6 +667,15 @@ components:
       name: idIntervention
       in: path
       required: true
+      description: Identifiant de l'intervention
+      schema:
+        type: integer
+        format: int64
+    IdTechnicien:
+      name: idTechnicien
+      in: path
+      required: true
+      description: Identifiant du technicien
       schema:
         type: integer
         format: int64

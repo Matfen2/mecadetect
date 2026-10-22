@@ -88,7 +88,7 @@ class InterventionAnnulationApiTest {
 
     private ResultActions annuler(Utilisateur auteur, Long idIntervention, long version, String motif)
             throws Exception {
-        return mockMvc.perform(post("/api/v1/interventions/{id}/annuler", idIntervention)
+        return mockMvc.perform(post("/api/v1/interventions/{id}/annulation", idIntervention)
                 .with(connecte(auteur))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""

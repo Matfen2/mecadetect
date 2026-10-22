@@ -4,6 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideRouter } from '@angular/router';
 
 import { BASE_PATH } from '../../core/api';
+import { SessionService } from '../../core/auth/session.service';
 import { MesInterventions } from './mes-interventions';
 
 describe('MesInterventions', () => {
@@ -58,6 +59,8 @@ describe('MesInterventions', () => {
         provideHttpClientTesting(),
         provideRouter([]),
         { provide: BASE_PATH, useValue: '/api/v1' },
+        // Technicien connecté : la liste est demandée pour son identifiant
+        { provide: SessionService, useValue: { utilisateur: () => lucas } },
       ],
     }).compileComponents();
 
@@ -74,7 +77,7 @@ describe('MesInterventions', () => {
   }
 
   async function chargerListe(contenu: object[]): Promise<void> {
-    http.expectOne((r) => r.url === '/api/v1/interventions/mes-interventions').flush(page(contenu));
+    http.expectOne((r) => r.url === '/api/v1/techniciens/3/interventions').flush(page(contenu));
     await rafraichir();
   }
 
@@ -112,7 +115,7 @@ describe('MesInterventions', () => {
 
     // Clic 2 : démarrage avec la version reçue, puis rechargement de la liste
     bouton('Confirmer le démarrage')!.click();
-    const requete = http.expectOne('/api/v1/interventions/42/demarrer');
+    const requete = http.expectOne('/api/v1/interventions/42/demarrage');
     expect(requete.request.body).toEqual({ version: 1 });
     requete.flush(detail(planifiee, { statut: 'EN_COURS', version: 2 }));
     await rafraichir();
@@ -128,7 +131,7 @@ describe('MesInterventions', () => {
     await rafraichir();
 
     bouton('Confirmer le démarrage')!.click();
-    http.expectOne('/api/v1/interventions/42/demarrer').flush(
+    http.expectOne('/api/v1/interventions/42/demarrage').flush(
       { status: 409, code: 'INTERVENTION_DEJA_EN_COURS', detail: 'Vous avez déjà une intervention en cours.' },
       { status: 409, statusText: 'Conflict' },
     );
@@ -150,7 +153,7 @@ describe('MesInterventions', () => {
 
     fixture.componentInstance.cloture.controls.compteRendu.setValue('Roulement remplacé, bruit disparu');
     bouton('Valider la clôture')!.click();
-    const requete = http.expectOne('/api/v1/interventions/41/cloturer');
+    const requete = http.expectOne('/api/v1/interventions/41/cloture');
     expect(requete.request.body).toEqual({ version: 4, compteRendu: 'Roulement remplacé, bruit disparu', tempsPasseMin: 90 });
     requete.flush(detail(enCours, { statut: 'TERMINEE', version: 5 }));
     await rafraichir();

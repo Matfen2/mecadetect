@@ -143,7 +143,7 @@ describe('DetailIntervention', () => {
     fixture.componentInstance.planification.setValue({ idTechnicien: 3, datePlanifiee: '2026-03-09T08:00' });
     fixture.componentInstance.planifier();
 
-    const requete = http.expectOne('/api/v1/interventions/42/planifier');
+    const requete = http.expectOne('/api/v1/interventions/42/planification');
     expect(requete.request.body.version).toBe(0);
     expect(requete.request.body.idTechnicien).toBe(3);
     expect(requete.request.body.datePlanifiee).toBe(new Date('2026-03-09T08:00').toISOString());
@@ -160,7 +160,7 @@ describe('DetailIntervention', () => {
     expect(boutons()).toEqual(["Démarrer l'intervention"]);
 
     (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.actions button')!.click();
-    const requete = http.expectOne('/api/v1/interventions/42/demarrer');
+    const requete = http.expectOne('/api/v1/interventions/42/demarrage');
     expect(requete.request.body).toEqual({ version: 1 });
     requete.flush(enCours);
     await rafraichir();
@@ -187,7 +187,7 @@ describe('DetailIntervention', () => {
     fixture.componentInstance.cloture.setValue({ compteRendu: '  Joint du vérin remplacé  ', tempsPasseMin: 90 });
 
     fixture.componentInstance.cloturer();
-    const requete = http.expectOne('/api/v1/interventions/42/cloturer');
+    const requete = http.expectOne('/api/v1/interventions/42/cloture');
     expect(requete.request.body).toEqual({ version: 2, compteRendu: 'Joint du vérin remplacé', tempsPasseMin: 90 });
     requete.flush({ ...enCours, statut: 'TERMINEE', version: 3, compteRendu: 'Joint du vérin remplacé', tempsPasseMin: 90, dateFin: '2026-03-09T08:35:00Z' });
     await rafraichir();
@@ -202,7 +202,7 @@ describe('DetailIntervention', () => {
     fixture.componentInstance.annulation.setValue({ motif: 'Doublon de la demande 41' });
 
     fixture.componentInstance.annuler();
-    http.expectOne('/api/v1/interventions/42/annuler').flush(
+    http.expectOne('/api/v1/interventions/42/annulation').flush(
       { status: 409, code: 'CONFLIT_VERSION', detail: "L'intervention a été modifiée entre-temps." },
       { status: 409, statusText: 'Conflict' },
     );

@@ -88,7 +88,7 @@ class InterventionPlanificationApiTest {
 
     private ResultActions planifier(Utilisateur auteur, Long idIntervention, long version, Long idTechnicien)
             throws Exception {
-        return mockMvc.perform(post("/api/v1/interventions/{id}/planifier", idIntervention)
+        return mockMvc.perform(post("/api/v1/interventions/{id}/planification", idIntervention)
                 .with(connecte(auteur))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""

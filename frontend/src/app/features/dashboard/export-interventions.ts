@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
-import { DashboardService } from '../../core/api';
+import { ExportsService } from '../../core/api';
 import { MESSAGE_ERREUR_INATTENDUE, messageErreur } from '../../shared/probleme-api';
 import { Telechargement } from '../../shared/telechargement';
 
@@ -69,7 +69,7 @@ export function joursInclus(depuis: string, jusqua: string): number {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExportInterventions {
-  private readonly dashboardApi = inject(DashboardService);
+  private readonly exportsApi = inject(ExportsService);
   private readonly telechargement = inject(Telechargement);
 
   protected readonly enCours = signal(false);
@@ -93,7 +93,7 @@ export class ExportInterventions {
     }
 
     this.enCours.set(true);
-    this.dashboardApi.exporterInterventions({ depuis, jusqua }).subscribe({
+    this.exportsApi.exporterInterventions({ depuis, jusqua }).subscribe({
       next: (fichier) => {
         this.enCours.set(false);
         this.telechargement.enregistrer(fichier, `interventions-${depuis}-au-${jusqua}.csv`);

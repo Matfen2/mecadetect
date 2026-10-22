@@ -194,7 +194,7 @@ class HistoriqueStatutTriggerTest {
     void historiqueDansLeDetail() throws Exception {
         var intervention = declarer();
 
-        mockMvc.perform(post("/api/v1/interventions/{id}/planifier", intervention.getId())
+        mockMvc.perform(post("/api/v1/interventions/{id}/planification", intervention.getId())
                         .with(connecte(admin))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""

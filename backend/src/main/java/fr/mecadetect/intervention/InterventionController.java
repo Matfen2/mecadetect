@@ -10,6 +10,7 @@ import fr.mecadetect.api.dto.PlanificationRequestDto;
 import fr.mecadetect.api.dto.PrioriteDto;
 import fr.mecadetect.api.dto.StatutInterventionDto;
 import fr.mecadetect.api.dto.VersionRequestDto;
+import fr.mecadetect.erreur.ActionNonAutoriseeException;
 import fr.mecadetect.securite.UtilisateurCourant;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -58,10 +59,23 @@ public class InterventionController implements InterventionsApi {
         return ResponseEntity.ok(mapper.versPageDto(resultat));
     }
 
+    /// Interventions planifiées et en cours d'un technicien.
+    ///
+    /// Un technicien ne consulte que les siennes : l'identifiant du chemin est comparé à celui
+    /// du jeton. L'admin peut consulter celles de n'importe quel technicien.
+    ///
+    /// @param idTechnicien identifiant du technicien
+    /// @param page         numéro de page
+    /// @param size         nombre d'éléments par page
+    /// @return la page d'interventions, celle en cours d'abord
     @Override
-    @PreAuthorize("hasRole('TECHNICIEN')")
-    public ResponseEntity<PageInterventionDto> mesInterventions(Integer page, Integer size) {
-        var resultat = service.aTraiterPar(utilisateurCourant.id(), PaginationIntervention.sansTri(page, size));
+    @PreAuthorize("hasAnyRole('TECHNICIEN', 'ADMIN')")
+    public ResponseEntity<PageInterventionDto> listerInterventionsTechnicien(Long idTechnicien, Integer page, Integer size) {
+        if (!utilisateurCourant.estAdmin() && !idTechnicien.equals(utilisateurCourant.id())) {
+            throw new ActionNonAutoriseeException("INTERVENTIONS_D_UN_AUTRE_TECHNICIEN",
+                    "Un technicien ne peut consulter que ses propres interventions.");
+        }
+        var resultat = service.aTraiterPar(idTechnicien, PaginationIntervention.sansTri(page, size));
         return ResponseEntity.ok(mapper.versPageDto(resultat));
     }
 

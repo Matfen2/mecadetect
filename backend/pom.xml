@@ -206,9 +206,11 @@
 					</execution>
 				</executions>
 			</plugin>
-			<!-- Vulnérabilités connues des dépendances (OWASP Dependency-Check).
+			<!-- Vulnérabilités connues des dépendances (OWASP Dependency-Check), en local uniquement :
+			     mvn dependency-check:check (clé NVD dans la variable d'environnement NVD_API_KEY).
 			     Pas d'exécution liée au cycle de vie : mvn verify reste rapide.
-			     Lancé à part : mvn dependency-check:check (workflow dependances.yml). -->
+			     En CI, c'est Trivy qui analyse les dépendances (workflow dependances.yml) : l'API de la
+			     NVD, dont dépend Dependency-Check, est trop lente pour reconstruire sa base à chaque run. -->
 			<plugin>
 				<groupId>org.owasp</groupId>
 				<artifactId>dependency-check-maven</artifactId>

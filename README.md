@@ -34,7 +34,7 @@ Application de suivi de maintenance industrielle : déclaration des pannes, plan
 | Front-end | Angular 21 (standalone, signals), Angular Material, RxJS |
 | Contrat d'API | OpenAPI 3 en contract-first, avec génération des interfaces Spring et du client Angular |
 | Tests | JUnit 5, AssertJ, Mockito, Testcontainers (Oracle), Vitest, Robot Framework (bout en bout), Gatling (charge) |
-| Qualité et sécurité | SonarQube Cloud, JaCoCo, Trivy, OWASP Dependency-Check, npm audit |
+| Qualité et sécurité | SonarQube Cloud, JaCoCo, Trivy, npm audit (OWASP Dependency-Check en local) |
 | Déploiement | Docker (images multi-étapes arm64), Docker Compose, Caddy (HTTPS), GitHub Actions, GHCR, Oracle Cloud (VM Ampere, Object Storage) |
 
 ## Points clés
@@ -65,7 +65,7 @@ Application de suivi de maintenance industrielle : déclaration des pannes, plan
 - **Parcours testés dans un vrai navigateur** : Robot Framework (bibliothèque Browser, Playwright) joue le parcours de démonstration à travers les trois rôles, de la déclaration à la clôture, sur une base neuve démarrée avec `compose.prod.yaml`. Les tests tournent sur chaque pull request vers `main`, et une version qui casse un parcours n'est pas déployée.
 - **Conteneurs durcis** : utilisateurs non root, système de fichiers en lecture seule, aucune capacité Linux superflue, réseau interne sans accès à Internet pour l'API et la base. Seul Caddy est exposé, avec HTTPS automatique (Let's Encrypt), HTTP/3 et en-têtes de sécurité (CSP stricte, HSTS…).
 - **Sauvegardes testées** : export Data Pump chaque nuit, compressé et signé (SHA-256), copié dans Oracle Object Storage. La VM s'y authentifie par **principal d'instance**, sans aucune clé stockée, et ne peut ni écraser ni supprimer une sauvegarde. Un **test de restauration** automatique recharge chaque semaine la dernière sauvegarde dans un schéma temporaire et compare, table par table, le nombre de lignes avec l'export.
-- **Dépendances surveillées** : OWASP Dependency-Check (base NVD) et `npm audit` chaque semaine et à chaque changement de dépendances, résultats publiés dans l'onglet *Security* de GitHub.
+- **Dépendances surveillées** : Trivy (dépendances Maven) et `npm audit` chaque semaine et à chaque changement de dépendances, résultats publiés dans l'onglet *Security* de GitHub. Une faille critique ou haute corrigeable fait échouer le contrôle. OWASP Dependency-Check reste disponible en local : en CI, l'API de la NVD dont il dépend est devenue trop lente pour reconstruire sa base (plus de 5 heures).
 
 ## Architecture de production
 

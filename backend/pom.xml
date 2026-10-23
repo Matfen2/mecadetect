@@ -192,7 +192,7 @@
 						<configuration>
 							<compilerArgs>
 								<arg>-Xdoclint:all/protected</arg>
-								<arg>-Xdoclint/package:fr.mecadetect.*,-fr.mecadetect.api.*</arg>
+								<arg>-Xdoclint/package:fr.mecadetect.*,-fr.mecadetect.api,-fr.mecadetect.api.*</arg>
 								<arg>-Xmaxwarns</arg>
 								<arg>10000</arg>
 							</compilerArgs>

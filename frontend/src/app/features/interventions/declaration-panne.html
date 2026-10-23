@@ -1,0 +1,54 @@
+<a mat-button routerLink="/interventions">← Annuler</a>
+
+<h1>Déclarer une panne</h1>
+
+<form [formGroup]="formulaire" (ngSubmit)="declarer()" novalidate>
+  <mat-form-field appearance="outline">
+    <mat-label>Équipement</mat-label>
+    <mat-select formControlName="idEquipement">
+      @for (equipement of equipements(); track equipement.idEquipement) {
+        <mat-option [value]="equipement.idEquipement">{{ equipement.reference }} · {{ equipement.nom }}</mat-option>
+      }
+    </mat-select>
+    @if (erreur('idEquipement'); as message) {
+      <mat-error>{{ message }}</mat-error>
+    }
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Titre</mat-label>
+    <input matInput formControlName="titre" maxlength="100" autocomplete="off" />
+    <mat-hint>Par exemple : Fuite d'huile sur le vérin principal</mat-hint>
+    @if (erreur('titre'); as message) {
+      <mat-error>{{ message }}</mat-error>
+    }
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Description</mat-label>
+    <textarea matInput formControlName="description" rows="5" maxlength="1000"></textarea>
+    <mat-hint>Ce qui a été constaté, depuis quand, dans quelles conditions</mat-hint>
+    <mat-hint align="end">{{ formulaire.controls.description.value.length }} / 1000</mat-hint>
+    @if (erreur('description'); as message) {
+      <mat-error>{{ message }}</mat-error>
+    }
+  </mat-form-field>
+
+  <fieldset class="priorite">
+    <legend>Priorité</legend>
+    <mat-button-toggle-group formControlName="priorite" aria-label="Priorité">
+      @for (priorite of priorites; track priorite.valeur) {
+        <mat-button-toggle [value]="priorite.valeur">{{ priorite.libelle }}</mat-button-toggle>
+      }
+    </mat-button-toggle-group>
+  </fieldset>
+
+  @if (erreurGlobale(); as message) {
+    <p class="message erreur" role="alert">{{ message }}</p>
+  }
+
+  <div class="actions">
+    <button mat-flat-button type="submit" [disabled]="envoiEnCours()">Déclarer la panne</button>
+    <a mat-button routerLink="/interventions">Annuler</a>
+  </div>
+</form>

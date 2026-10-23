@@ -1,0 +1,107 @@
+name: Dépendances
+
+# Les bases de vulnérabilités évoluent même quand le code ne bouge pas :
+# contrôle chaque semaine, et à chaque modification des dépendances
+on:
+  schedule:
+    - cron: '17 4 * * 1' # lundi, vers 6 h à Paris
+  push:
+    branches: [main, develop]
+    paths:
+      - backend/pom.xml
+      - backend/dependency-check-suppressions.xml
+      - frontend/package-lock.json
+      - .github/workflows/dependances.yml
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - backend/pom.xml
+      - backend/dependency-check-suppressions.xml
+      - frontend/package-lock.json
+      - .github/workflows/dependances.yml
+  workflow_dispatch:
+
+# Une analyse commencée va à son terme : elle ne dure qu'une minute
+concurrency:
+  group: dependances-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  # Trivy plutôt qu'OWASP Dependency-Check : sa base de vulnérabilités est publiée sur GitHub
+  # et téléchargée en quelques secondes, alors que l'API de la NVD, très lente et instable,
+  # ne permettait plus de reconstruire la base de Dependency-Check en moins de 5 heures.
+  # Dependency-Check reste disponible en local : mvn dependency-check:check
+  backend:
+    name: Back-end (Trivy)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write # résultats publiés dans l'onglet Security
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v5
+
+      # Trivy lit backend/pom.xml et résout les dépendances (versions gérées par Spring Boot
+      # comprises). Toutes les sévérités, pour l'onglet Security ; jamais bloquant.
+      # Version 0.35.0 : publication immuable, comme pour l'analyse des images (ci.yml).
+      - name: Rapport complet (Trivy)
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          scan-type: fs
+          scan-ref: backend
+          scanners: vuln
+          format: sarif
+          output: trivy-backend.sarif
+          exit-code: '0'
+
+      # Les pull requests venant d'un fork n'ont pas le droit d'écrire
+      - name: Publier dans l'onglet Security
+        if: ${{ !cancelled() && hashFiles('trivy-backend.sarif') != '' && github.event.pull_request.head.repo.fork != true }}
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-backend.sarif
+          category: trivy-backend
+
+      # Même règle que pour les images : une faille critique ou haute qui a un correctif
+      # fait échouer le contrôle. Le tableau affiché dans le journal donne la version corrigée.
+      - name: Failles critiques et hautes (bloquant)
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          scan-type: fs
+          scan-ref: backend
+          scanners: vuln
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          format: table
+          exit-code: '1'
+          skip-setup-trivy: true
+
+  frontend:
+    name: Front-end (npm audit)
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v5
+
+      - name: Installer Node 24 LTS
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+
+      # npm audit lit package-lock.json : pas besoin d'installer les paquets.
+      # Bloquant pour ce qui part en production (le code livré au navigateur)
+      - name: Dépendances de production
+        run: npm audit --omit=dev --audit-level=high
+
+      # Outillage de build et de test : signalé, non bloquant
+      - name: Dépendances de développement (information)
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: npm audit --audit-level=high

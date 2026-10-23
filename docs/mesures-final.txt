@@ -1,0 +1,408 @@
+
+                                                                                                                                                                                                        
+                                                                                                                                                                                                        
+
+                                                                                                                                                                                                        
+                                                                                                                                                                                                        
+
+                                                                                                                                                                                                        
+                                                                                                                                                                                                        
+
+                                                                                                                                                                                                        
+                                                                                                                                                                                                        
+
+======================================================================
+Mesures « final » - intervention     250001, équipement PRS-001 (         1), technicien          2
+======================================================================
+
+PLAN_TABLE_OUTPUT                                                                                                                                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Index sur INTERVENTION et HISTORIQUE_STATUT : 8                                                                                                                                                         
+
+PLAN_TABLE_OUTPUT                                                                                                                                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  IDX_HISTORIQUE_INTERVENTION (ID_INTERVENTION, DATE_CHANGEMENT)                                                                                                                                        
+  IDX_INTERVENTION_DATE_DEMANDE (DATE_DEMANDE, ID_INTERVENTION)                                                                                                                                         
+  IDX_INTERVENTION_EQUIPEMENT_DATE (ID_EQUIPEMENT, DATE_DEMANDE, ID_INTERVENTION)                                                                                                                       
+  IDX_INTERVENTION_STATUT_DATE (STATUT, DATE_DEMANDE)                                                                                                                                                   
+  IDX_INTERVENTION_TECHNICIEN_STATUT (ID_TECHNICIEN, STATUT)                                                                                                                                            
+  PK_HISTORIQUE_STATUT (ID_HISTORIQUE)                                                                                                                                                                  
+  PK_INTERVENTION (ID_INTERVENTION)                                                                                                                                                                     
+  UK_INTERVENTION_NUMERO (NUMERO)                                                                                                                                                                       
+
+---------- Q1. Détail : historique des statuts d'une intervention
+
+PLAN_TABLE_OUTPUT                                                                                                                                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Plan hash value: 243601749                                                                                                                                                                              
+                                                                                                                                                                                                        
+---------------------------------------------------------------------------------------------------                                                                                                     
+| Id  | Operation                              | Name                        | Rows  | Cost (%CPU)|                                                                                                     
+---------------------------------------------------------------------------------------------------                                                                                                     
+|   0 | SELECT STATEMENT                       |                             |     4 |     8  (25)|                                                                                                     
+|   1 |  SORT ORDER BY                         |                             |     4 |     8  (25)|                                                                                                     
+|   2 |   MERGE JOIN                           |                             |     4 |     7  (15)|                                                                                                     
+|   3 |    TABLE ACCESS BY INDEX ROWID         | UTILISATEUR                 |    14 |     2   (0)|                                                                                                     
+|   4 |     INDEX FULL SCAN                    | PK_UTILISATEUR              |    14 |     1   (0)|                                                                                                     
+|*  5 |    SORT JOIN                           |                             |     4 |     5  (20)|                                                                                                     
+|   6 |     TABLE ACCESS BY INDEX ROWID BATCHED| HISTORIQUE_STATUT           |     4 |     4   (0)|                                                                                                     
+|*  7 |      INDEX RANGE SCAN                  | IDX_HISTORIQUE_INTERVENTION |     4 |     3   (0)|                                                                                                     
+---------------------------------------------------------------------------------------------------                                                                                                     
+                                                                                                                                                                                                        
+Predicate Information (identified by operation id):                                                                                                                                                     
+---------------------------------------------------                                                                                                                                                     
+                                                                                                                                                                                                        
+   5 - access("U"."ID_UTILISATEUR"="H"."ID_AUTEUR")                                                                                                                                                     
+       filter("U"."ID_UTILISATEUR"="H"."ID_AUTEUR")                                                                                                                                                     
+   7 - access("H"."ID_INTERVENTION"=TO_NUMBER(:ID))                                                                                                                                                     
+
+---------- Q2a. Liste sans filtre (page 1, 20 lignes)
+
+PLAN_TABLE_OUTPUT                                                                                                                                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Plan hash value: 4109790031                                                                                                                                                                             
+                                                                                                                                                                                                        
+-----------------------------------------------------------------------------------------------                                                                                                         
+| Id  | Operation                        | Name                          | Rows  | Cost (%CPU)|                                                                                                         
+-----------------------------------------------------------------------------------------------                                                                                                         
+|   0 | SELECT STATEMENT                 |                               |    20 |    65   (0)|                                                                                                         
+|*  1 |  VIEW                            |                               |    20 |    65   (0)|                                                                                                         
+|*  2 |   WINDOW NOSORT STOPKEY          |                               |    20 |    65   (0)|                                                                                                         
+|   3 |    NESTED LOOPS                  |                               |    20 |    65   (0)|                                                                                                         
+|   4 |     NESTED LOOPS                 |                               |    21 |    65   (0)|                                                                                                         
+|   5 |      NESTED LOOPS OUTER          |                               |    21 |    44   (0)|                                                                                                         
+|   6 |       TABLE ACCESS BY INDEX ROWID| INTERVENTION                  |   500K|    24   (0)|                                                                                                         
+|   7 |        INDEX FULL SCAN DESCENDING| IDX_INTERVENTION_DATE_DEMANDE |    21 |     3   (0)|                                                                                                         
+|   8 |       TABLE ACCESS BY INDEX ROWID| UTILISATEUR                   |     1 |     1   (0)|                                                                                                         
+|*  9 |        INDEX UNIQUE SCAN         | PK_UTILISATEUR                |     1 |     0   (0)|                                                                                                         
+|* 10 |      INDEX UNIQUE SCAN           | PK_EQUIPEMENT                 |     1 |     0   (0)|                                                                                                         
+|  11 |     TABLE ACCESS BY INDEX ROWID  | EQUIPEMENT                    |     1 |     1   (0)|                                                                                                         
+-----------------------------------------------------------------------------------------------                                                                                                         
+                                                                                                                                                                                                        
+Predicate Information (identified by operation id):                                                                                                                                                     
+---------------------------------------------------                                                                                                                                                     
+                                                                                                                                                                                                        
+   1 - filter("from$_subquery$_006"."rowlimit_$$_rownumber"<=20 AND                                                                                                                                     
+              "from$_subquery$_006"."rowlimit_$$_rownumber">0)                                                                                                                                          
+   2 - filter(ROW_NUMBER() OVER ( ORDER BY "I"."DATE_DEMANDE" DESC                                                                                                                                      
+              ,"I"."ID_INTERVENTION" DESC )<=20)                                                                                                                                                        
+   9 - access("T"."ID_UTILISATEUR"(+)="I"."ID_TECHNICIEN")                                                                                                                                              
+  10 - access("E"."ID_EQUIPEMENT"="I"."ID_EQUIPEMENT")                                                                                                                                                  
+
+PLAN_TABLE_OUTPUT                                                                                                                                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Plan hash value: 825970127                                                                                                                                                                              
+                                                                                                                                                                                                        
+----------------------------------------------------------------------                                                                                                                                  
+| Id  | Operation             | Name            | Rows  | Cost (%CPU)|                                                                                                                                  
+----------------------------------------------------------------------                                                                                                                                  
+|   0 | SELECT STATEMENT      |                 |     1 |   273   (1)|                                                                                                                                  
+|   1 |  SORT AGGREGATE       |                 |     1 |            |                                                                                                                                  
+|   2 |   INDEX FAST FULL SCAN| PK_INTERVENTION |   500K|   273   (1)|                                                                                                                                  
+----------------------------------------------------------------------                                                                                                                                  
+
+---------- Q2b. Liste filtrée sur un statut
+
+PLAN_TABLE_OUTPUT                                                                                                                                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Plan hash value: 4109790031                                                                                                                                                                             
+                                                                                                                                                                                                        
+-----------------------------------------------------------------------------------------------                                                                                                         
+| Id  | Operation                        | Name                          | Rows  | Cost (%CPU)|                                                                                                         
+-----------------------------------------------------------------------------------------------                                                                                                         
+|   0 | SELECT STATEMENT                 |                               |    20 |   143   (0)|                                                                                                         
+|*  1 |  VIEW                            |                               |    20 |   143   (0)|                                                                                                         
+|*  2 |   WINDOW NOSORT STOPKEY          |                               |    20 |   143   (0)|                                                                                                         
+|   3 |    NESTED LOOPS                  |                               |    20 |   143   (0)|                                                                                                         
+|   4 |     NESTED LOOPS                 |                               |    21 |   143   (0)|                                                                                                         
+|   5 |      NESTED LOOPS OUTER          |                               |    21 |   122   (0)|                                                                                                         
+|*  6 |       TABLE ACCESS BY INDEX ROWID| INTERVENTION                  |   100K|   103   (0)|                                                                                                         
+|   7 |        INDEX FULL SCAN DESCENDING| IDX_INTERVENTION_DATE_DEMANDE |   100 |     3   (0)|                                                                                                         
+|   8 |       TABLE ACCESS BY INDEX ROWID| UTILISATEUR                   |     1 |     1   (0)|                                                                                                         
+|*  9 |        INDEX UNIQUE SCAN         | PK_UTILISATEUR                |     1 |     0   (0)|                                                                                                         
+|* 10 |      INDEX UNIQUE SCAN           | PK_EQUIPEMENT                 |     1 |     0   (0)|                                                                                                         
+|  11 |     TABLE ACCESS BY INDEX ROWID  | EQUIPEMENT                    |     1 |     1   (0)|                                                                                                         
+-----------------------------------------------------------------------------------------------                                                                                                         
+                                                                                                                                                                                                        
+Predicate Information (identified by operation id):                                                                                                                                                     
+---------------------------------------------------                                                                                                                                                     
+                                                                                                                                                                                                        
+   1 - filter("from$_subquery$_006"."rowlimit_$$_rownumber"<=20 AND                                                                                                                                     
+              "from$_subquery$_006"."rowlimit_$$_rownumber">0)                                                                                                                                          
+   2 - filter(ROW_NUMBER() OVER ( ORDER BY "I"."DATE_DEMANDE" DESC                                                                                                                                      
+              ,"I"."ID_INTERVENTION" DESC )<=20)                                                                                                                                                        
+   6 - filter("I"."STATUT"=:STATUT)                                                                                                                                                                     
+   9 - access("T"."ID_UTILISATEUR"(+)="I"."ID_TECHNICIEN")                                                                                                                                              
+  10 - access("E"."ID_EQUIPEMENT"="I"."ID_EQUIPEMENT")                                                                                                                                                  
+
+PLAN_TABLE_OUTPUT                                                                                                                                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Plan hash value: 1257965174                                                                                                                                                                             
+                                                                                                                                                                                                        
+-----------------------------------------------------------------------------------------                                                                                                               
+| Id  | Operation             | Name                               | Rows  | Cost (%CPU)|                                                                                                               
+-----------------------------------------------------------------------------------------                                                                                                               
+|   0 | SELECT STATEMENT      |                                    |     1 |   445   (1)|                                                                                                               
+|   1 |  SORT AGGREGATE       |                                    |     1 |            |                                                                                                               
+|*  2 |   INDEX FAST FULL SCAN| IDX_INTERVENTION_TECHNICIEN_STATUT |   100K|   445   (1)|                                                                                                               
+-----------------------------------------------------------------------------------------                                                                                                               
+                                                                                                                                                                                                        
+Predicate Information (identified by operation id):                                                                                                                                                     
+---------------------------------------------------                                                                                                                                                     
+                                                                                                                                                                                                        
+   2 - filter("I"."STATUT"=:STATUT)                                                                                                                                                                     
+
+---------- Q2c. Historique d'un équipement
+
+PLAN_TABLE_OUTPUT                                                                                                                                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Plan hash value: 3291779727                                                                                                                                                                             
+                                                                                                                                                                                                        
+--------------------------------------------------------------------------------------------------                                                                                                      
+| Id  | Operation                        | Name                             | Rows  | Cost (%CPU)|                                                                                                      
+--------------------------------------------------------------------------------------------------                                                                                                      
+|   0 | SELECT STATEMENT                 |                                  |    20 |    25   (0)|                                                                                                      
+|*  1 |  VIEW                            |                                  |    20 |    25   (0)|                                                                                                      
+|*  2 |   WINDOW NOSORT STOPKEY          |                                  |    20 |    25   (0)|                                                                                                      
+|   3 |    NESTED LOOPS OUTER            |                                  |    20 |    25   (0)|                                                                                                      
+|   4 |     NESTED LOOPS                 |                                  |    20 |     6   (0)|                                                                                                      
+|   5 |      TABLE ACCESS BY INDEX ROWID | EQUIPEMENT                       |     1 |     1   (0)|                                                                                                      
+|*  6 |       INDEX UNIQUE SCAN          | PK_EQUIPEMENT                    |     1 |     0   (0)|                                                                                                      
+|   7 |      TABLE ACCESS BY INDEX ROWID | INTERVENTION                     |    20 |    22   (0)|                                                                                                      
+|*  8 |       INDEX RANGE SCAN DESCENDING| IDX_INTERVENTION_EQUIPEMENT_DATE |    20 |     2   (0)|                                                                                                      
+|   9 |     TABLE ACCESS BY INDEX ROWID  | UTILISATEUR                      |     1 |     1   (0)|                                                                                                      
+|* 10 |      INDEX UNIQUE SCAN           | PK_UTILISATEUR                   |     1 |     0   (0)|                                                                                                      
+--------------------------------------------------------------------------------------------------                                                                                                      
+                                                                                                                                                                                                        
+Predicate Information (identified by operation id):                                                                                                                                                     
+---------------------------------------------------                                                                                                                                                     
+                                                                                                                                                                                                        
+   1 - filter("from$_subquery$_006"."rowlimit_$$_rownumber"<=20 AND                                                                                                                                     
+              "from$_subquery$_006"."rowlimit_$$_rownumber">0)                                                                                                                                          
+   2 - filter(ROW_NUMBER() OVER ( ORDER BY "I"."DATE_DEMANDE" DESC ,"I"."ID_INTERVENTION"                                                                                                               
+              DESC )<=20)                                                                                                                                                                               
+   6 - access("E"."ID_EQUIPEMENT"=TO_NUMBER(:EQ))                                                                                                                                                       
+   8 - access("I"."ID_EQUIPEMENT"=TO_NUMBER(:EQ))                                                                                                                                                       
+  10 - access("T"."ID_UTILISATEUR"(+)="I"."ID_TECHNICIEN")                                                                                                                                              
+
+PLAN_TABLE_OUTPUT                                                                                                                                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Plan hash value: 1397362670                                                                                                                                                                             
+                                                                                                                                                                                                        
+-----------------------------------------------------------------------------------                                                                                                                     
+| Id  | Operation         | Name                             | Rows  | Cost (%CPU)|                                                                                                                     
+-----------------------------------------------------------------------------------                                                                                                                     
+|   0 | SELECT STATEMENT  |                                  |     1 |   130   (0)|                                                                                                                     
+|   1 |  SORT AGGREGATE   |                                  |     1 |            |                                                                                                                     
+|*  2 |   INDEX RANGE SCAN| IDX_INTERVENTION_EQUIPEMENT_DATE | 29412 |   130   (0)|                                                                                                                     
+-----------------------------------------------------------------------------------                                                                                                                     
+                                                                                                                                                                                                        
+Predicate Information (identified by operation id):                                                                                                                                                     
+---------------------------------------------------                                                                                                                                                     
+                                                                                                                                                                                                        
+   2 - access("I"."ID_EQUIPEMENT"=TO_NUMBER(:EQ))                                                                                                                                                       
+
+---------- Q2d. Liste filtrée sur un technicien
+
+PLAN_TABLE_OUTPUT                                                                                                                                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Plan hash value: 187316478                                                                                                                                                                              
+                                                                                                                                                                                                        
+----------------------------------------------------------------------------------------------                                                                                                          
+| Id  | Operation                       | Name                          | Rows  | Cost (%CPU)|                                                                                                          
+----------------------------------------------------------------------------------------------                                                                                                          
+|   0 | SELECT STATEMENT                |                               |    20 |   313   (0)|                                                                                                          
+|*  1 |  VIEW                           |                               |    20 |   313   (0)|                                                                                                          
+|*  2 |   WINDOW NOSORT STOPKEY         |                               |    20 |   313   (0)|                                                                                                          
+|   3 |    NESTED LOOPS OUTER           |                               |    20 |   313   (0)|                                                                                                          
+|   4 |     NESTED LOOPS                |                               |    21 |   292   (0)|                                                                                                          
+|*  5 |      TABLE ACCESS BY INDEX ROWID| INTERVENTION                  | 39443 |   271   (0)|                                                                                                          
+|   6 |       INDEX FULL SCAN DESCENDING| IDX_INTERVENTION_DATE_DEMANDE |   267 |     4   (0)|                                                                                                          
+|   7 |      TABLE ACCESS BY INDEX ROWID| EQUIPEMENT                    |     1 |     1   (0)|                                                                                                          
+|*  8 |       INDEX UNIQUE SCAN         | PK_EQUIPEMENT                 |     1 |     0   (0)|                                                                                                          
+|   9 |     TABLE ACCESS BY INDEX ROWID | UTILISATEUR                   |     1 |     1   (0)|                                                                                                          
+|* 10 |      INDEX UNIQUE SCAN          | PK_UTILISATEUR                |     1 |     0   (0)|                                                                                                          
+----------------------------------------------------------------------------------------------                                                                                                          
+                                                                                                                                                                                                        
+Predicate Information (identified by operation id):                                                                                                                                                     
+---------------------------------------------------                                                                                                                                                     
+                                                                                                                                                                                                        
+   1 - filter("from$_subquery$_006"."rowlimit_$$_rownumber"<=20 AND                                                                                                                                     
+              "from$_subquery$_006"."rowlimit_$$_rownumber">0)                                                                                                                                          
+   2 - filter(ROW_NUMBER() OVER ( ORDER BY "I"."DATE_DEMANDE" DESC                                                                                                                                      
+              ,"I"."ID_INTERVENTION" DESC )<=20)                                                                                                                                                        
+   5 - filter("I"."ID_TECHNICIEN"=TO_NUMBER(:TECH))                                                                                                                                                     
+   8 - access("E"."ID_EQUIPEMENT"="I"."ID_EQUIPEMENT")                                                                                                                                                  
+  10 - access("T"."ID_UTILISATEUR"(+)=TO_NUMBER(:TECH))                                                                                                                                                 
+
+PLAN_TABLE_OUTPUT                                                                                                                                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Plan hash value: 123153780                                                                                                                                                                              
+                                                                                                                                                                                                        
+-------------------------------------------------------------------------------------                                                                                                                   
+| Id  | Operation         | Name                               | Rows  | Cost (%CPU)|                                                                                                                   
+-------------------------------------------------------------------------------------                                                                                                                   
+|   0 | SELECT STATEMENT  |                                    |     1 |   128   (0)|                                                                                                                   
+|   1 |  SORT AGGREGATE   |                                    |     1 |            |                                                                                                                   
+|*  2 |   INDEX RANGE SCAN| IDX_INTERVENTION_TECHNICIEN_STATUT | 39443 |   128   (0)|                                                                                                                   
+-------------------------------------------------------------------------------------                                                                                                                   
+                                                                                                                                                                                                        
+Predicate Information (identified by operation id):                                                                                                                                                     
+---------------------------------------------------                                                                                                                                                     
+                                                                                                                                                                                                        
+   2 - access("I"."ID_TECHNICIEN"=TO_NUMBER(:TECH))                                                                                                                                                     
+
+---------- Q3. Mes interventions d'un technicien (50 lignes, en cours d'abord)
+
+PLAN_TABLE_OUTPUT                                                                                                                                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Plan hash value: 3564194391                                                                                                                                                                             
+                                                                                                                                                                                                        
+------------------------------------------------------------------------------------------------------------                                                                                            
+| Id  | Operation                                | Name                               | Rows  | Cost (%CPU)|                                                                                            
+------------------------------------------------------------------------------------------------------------                                                                                            
+|   0 | SELECT STATEMENT                         |                                    |    50 |    81   (2)|                                                                                            
+|*  1 |  VIEW                                    |                                    |    50 |    81   (2)|                                                                                            
+|*  2 |   WINDOW SORT PUSHED RANK                |                                    |   176 |    81   (2)|                                                                                            
+|*  3 |    HASH JOIN                             |                                    |   176 |    80   (0)|                                                                                            
+|   4 |     TABLE ACCESS FULL                    | EQUIPEMENT                         |    20 |     3   (0)|                                                                                            
+|   5 |     NESTED LOOPS                         |                                    |   176 |    77   (0)|                                                                                            
+|   6 |      TABLE ACCESS BY INDEX ROWID         | UTILISATEUR                        |     1 |     1   (0)|                                                                                            
+|*  7 |       INDEX UNIQUE SCAN                  | PK_UTILISATEUR                     |     1 |     0   (0)|                                                                                            
+|   8 |      INLIST ITERATOR                     |                                    |       |            |                                                                                            
+|   9 |       TABLE ACCESS BY INDEX ROWID BATCHED| INTERVENTION                       |   176 |    76   (0)|                                                                                            
+|* 10 |        INDEX RANGE SCAN                  | IDX_INTERVENTION_TECHNICIEN_STATUT |   176 |     3   (0)|                                                                                            
+------------------------------------------------------------------------------------------------------------                                                                                            
+                                                                                                                                                                                                        
+Predicate Information (identified by operation id):                                                                                                                                                     
+---------------------------------------------------                                                                                                                                                     
+                                                                                                                                                                                                        
+   1 - filter("from$_subquery$_006"."rowlimit_$$_rownumber"<=50 AND                                                                                                                                     
+              "from$_subquery$_006"."rowlimit_$$_rownumber">0)                                                                                                                                          
+   2 - filter(ROW_NUMBER() OVER ( ORDER BY CASE "I"."STATUT" WHEN 'EN_COURS' THEN 0 ELSE 1 END                                                                                                          
+              ,"I"."DATE_PLANIFIEE","I"."ID_INTERVENTION")<=50)                                                                                                                                         
+   3 - access("E"."ID_EQUIPEMENT"="I"."ID_EQUIPEMENT")                                                                                                                                                  
+   7 - access("T"."ID_UTILISATEUR"=TO_NUMBER(:TECH))                                                                                                                                                    
+  10 - access("I"."ID_TECHNICIEN"=TO_NUMBER(:TECH) AND ("I"."STATUT"='EN_COURS' OR                                                                                                                      
+              "I"."STATUT"='PLANIFIEE'))                                                                                                                                                                
+
+---------- Q4. RG-04 : le technicien a-t-il déjà une intervention en cours ?
+
+PLAN_TABLE_OUTPUT                                                                                                                                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Plan hash value: 2595973142                                                                                                                                                                             
+                                                                                                                                                                                                        
+--------------------------------------------------------------------------------------------------------                                                                                                
+| Id  | Operation                            | Name                               | Rows  | Cost (%CPU)|                                                                                                
+--------------------------------------------------------------------------------------------------------                                                                                                
+|   0 | SELECT STATEMENT                     |                                    |     1 |     4   (0)|                                                                                                
+|*  1 |  COUNT STOPKEY                       |                                    |       |            |                                                                                                
+|   2 |   TABLE ACCESS BY INDEX ROWID BATCHED| INTERVENTION                       |     1 |     4   (0)|                                                                                                
+|*  3 |    INDEX RANGE SCAN                  | IDX_INTERVENTION_TECHNICIEN_STATUT |     1 |     3   (0)|                                                                                                
+--------------------------------------------------------------------------------------------------------                                                                                                
+                                                                                                                                                                                                        
+Predicate Information (identified by operation id):                                                                                                                                                     
+---------------------------------------------------                                                                                                                                                     
+                                                                                                                                                                                                        
+   1 - filter(ROWNUM<=1)                                                                                                                                                                                
+   3 - access("I"."ID_TECHNICIEN"=TO_NUMBER(:TECH) AND "I"."STATUT"='EN_COURS')                                                                                                                         
+
+---------- Q5. RG-05 : l'équipement a-t-il encore une intervention ouverte ?
+
+PLAN_TABLE_OUTPUT                                                                                                                                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Plan hash value: 1984705604                                                                                                                                                                             
+                                                                                                                                                                                                        
+------------------------------------------------------------------------------------------------------                                                                                                  
+| Id  | Operation                            | Name                             | Rows  | Cost (%CPU)|                                                                                                  
+------------------------------------------------------------------------------------------------------                                                                                                  
+|   0 | SELECT STATEMENT                     |                                  |     1 |    18  (28)|                                                                                                  
+|*  1 |  COUNT STOPKEY                       |                                  |       |            |                                                                                                  
+|   2 |   TABLE ACCESS BY INDEX ROWID BATCHED| INTERVENTION                     |     2 |    18  (28)|                                                                                                  
+|   3 |    BITMAP CONVERSION TO ROWIDS       |                                  |       |            |                                                                                                  
+|   4 |     BITMAP AND                       |                                  |       |            |                                                                                                  
+|   5 |      BITMAP CONVERSION FROM ROWIDS   |                                  |       |            |                                                                                                  
+|   6 |       SORT ORDER BY                  |                                  |       |            |                                                                                                  
+|*  7 |        INDEX RANGE SCAN              | IDX_INTERVENTION_EQUIPEMENT_DATE |  3935 |     4   (0)|                                                                                                  
+|   8 |      BITMAP OR                       |                                  |       |            |                                                                                                  
+|   9 |       BITMAP CONVERSION FROM ROWIDS  |                                  |       |            |                                                                                                  
+|  10 |        SORT ORDER BY                 |                                  |       |            |                                                                                                  
+|* 11 |         INDEX RANGE SCAN             | IDX_INTERVENTION_STATUT_DATE     |  3935 |     3   (0)|                                                                                                  
+|  12 |       BITMAP CONVERSION FROM ROWIDS  |                                  |       |            |                                                                                                  
+|  13 |        SORT ORDER BY                 |                                  |       |            |                                                                                                  
+|* 14 |         INDEX RANGE SCAN             | IDX_INTERVENTION_STATUT_DATE     |  3935 |     3   (0)|                                                                                                  
+|  15 |       BITMAP CONVERSION FROM ROWIDS  |                                  |       |            |                                                                                                  
+|  16 |        SORT ORDER BY                 |                                  |       |            |                                                                                                  
+|* 17 |         INDEX RANGE SCAN             | IDX_INTERVENTION_STATUT_DATE     |  3935 |     3   (0)|                                                                                                  
+------------------------------------------------------------------------------------------------------                                                                                                  
+                                                                                                                                                                                                        
+Predicate Information (identified by operation id):                                                                                                                                                     
+---------------------------------------------------                                                                                                                                                     
+                                                                                                                                                                                                        
+   1 - filter(ROWNUM<=1)                                                                                                                                                                                
+   7 - access("I"."ID_EQUIPEMENT"=TO_NUMBER(:EQ))                                                                                                                                                       
+       filter("I"."ID_EQUIPEMENT"=TO_NUMBER(:EQ))                                                                                                                                                       
+  11 - access("I"."STATUT"='DEMANDEE')                                                                                                                                                                  
+       filter("I"."STATUT"='DEMANDEE')                                                                                                                                                                  
+  14 - access("I"."STATUT"='EN_COURS')                                                                                                                                                                  
+       filter("I"."STATUT"='EN_COURS')                                                                                                                                                                  
+  17 - access("I"."STATUT"='PLANIFIEE')                                                                                                                                                                 
+       filter("I"."STATUT"='PLANIFIEE')                                                                                                                                                                 
+
+---------- Q6. Reporting : top 10 des équipements sur 12 mois
+
+PLAN_TABLE_OUTPUT                                                                                                                                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Plan hash value: 3620420327                                                                                                                                                                             
+                                                                                                                                                                                                        
+---------------------------------------------------------------------------------------------------------                                                                                               
+| Id  | Operation                                  | Name                          | Rows  | Cost (%CPU)|                                                                                               
+---------------------------------------------------------------------------------------------------------                                                                                               
+|   0 | SELECT STATEMENT                           |                               |  1125 |   517   (2)|                                                                                               
+|   1 |  SORT ORDER BY                             |                               |  1125 |   517   (2)|                                                                                               
+|*  2 |   VIEW                                     |                               |  1125 |   516   (1)|                                                                                               
+|*  3 |    WINDOW SORT PUSHED RANK                 |                               |  1125 |   516   (1)|                                                                                               
+|   4 |     HASH GROUP BY                          |                               |  1125 |   516   (1)|                                                                                               
+|*  5 |      FILTER                                |                               |       |            |                                                                                               
+|   6 |       MERGE JOIN                           |                               |  1125 |   513   (1)|                                                                                               
+|   7 |        TABLE ACCESS BY INDEX ROWID         | EQUIPEMENT                    |    20 |     2   (0)|                                                                                               
+|   8 |         INDEX FULL SCAN                    | PK_EQUIPEMENT                 |    20 |     1   (0)|                                                                                               
+|*  9 |        SORT JOIN                           |                               |  1125 |   511   (1)|                                                                                               
+|  10 |         TABLE ACCESS BY INDEX ROWID BATCHED| INTERVENTION                  |  1125 |   510   (1)|                                                                                               
+|  11 |          BITMAP CONVERSION TO ROWIDS       |                               |       |            |                                                                                               
+|  12 |           BITMAP MINUS                     |                               |       |            |                                                                                               
+|  13 |            BITMAP CONVERSION FROM ROWIDS   |                               |       |            |                                                                                               
+|  14 |             SORT ORDER BY                  |                               |       |            |                                                                                               
+|* 15 |              INDEX RANGE SCAN              | IDX_INTERVENTION_DATE_DEMANDE |  2250 |    11   (0)|                                                                                               
+|  16 |            BITMAP CONVERSION FROM ROWIDS   |                               |       |            |                                                                                               
+|  17 |             SORT ORDER BY                  |                               |       |            |                                                                                               
+|* 18 |              INDEX RANGE SCAN              | IDX_INTERVENTION_STATUT_DATE  |  2250 |   226   (0)|                                                                                               
+---------------------------------------------------------------------------------------------------------                                                                                               
+                                                                                                                                                                                                        
+Predicate Information (identified by operation id):                                                                                                                                                     
+---------------------------------------------------                                                                                                                                                     
+                                                                                                                                                                                                        
+   2 - filter("RANG"<=10)                                                                                                                                                                               
+   3 - filter(RANK() OVER ( ORDER BY COUNT(*) DESC )<=10)                                                                                                                                               
+   5 - filter(TO_TIMESTAMP(:AVANT)>TO_TIMESTAMP(:DEPUIS))                                                                                                                                               
+   9 - access("E"."ID_EQUIPEMENT"="I"."ID_EQUIPEMENT")                                                                                                                                                  
+       filter("E"."ID_EQUIPEMENT"="I"."ID_EQUIPEMENT")                                                                                                                                                  
+  15 - access("I"."DATE_DEMANDE">=TO_TIMESTAMP(:DEPUIS) AND                                                                                                                                             
+              "I"."DATE_DEMANDE"<TO_TIMESTAMP(:AVANT))                                                                                                                                                  
+       filter("I"."DATE_DEMANDE"<TO_TIMESTAMP(:AVANT) AND                                                                                                                                               
+              "I"."DATE_DEMANDE">=TO_TIMESTAMP(:DEPUIS))                                                                                                                                                
+  18 - access("I"."STATUT"='ANNULEE')                                                                                                                                                                   
+
+======================================================================
+Temps moyen sur 20 exécutions (après une exécution de chauffe)
+======================================================================
+Q1  Historique d'une intervention (détail)..........      0.0 ms   4 ligne(s)                                                                                                                           
+Q2a Liste sans filtre, page 1 + comptage............      5.0 ms   20 sur 500004 ligne(s)                                                                                                               
+Q2b Liste filtrée statut PLANIFIEE + comptage.......      2.0 ms   20 sur 2229 ligne(s)                                                                                                                 
+Q2c Historique de PRS-001, page 1 + comptage........      2.5 ms   20 sur 121242 ligne(s)                                                                                                               
+Q2d Liste filtrée technicien Lucas + comptage.......      2.5 ms   20 sur 84841 ligne(s)                                                                                                                
+Q3  Mes interventions (technicien)..................      0.5 ms   50 ligne(s)                                                                                                                          
+Q4  RG-04 intervention en cours du technicien.......      0.0 ms   1 ligne(s)                                                                                                                           
+Q4b RG-04, technicien sans intervention en cours....      0.0 ms   0 ligne(s)                                                                                                                           
+Q5  RG-05 intervention ouverte sur l'équipement.....      0.0 ms   1 ligne(s)                                                                                                                           
+Q6  Reporting : top 10 des équipements (12 mois)....     53.0 ms   10 ligne(s)                                                                                                                          

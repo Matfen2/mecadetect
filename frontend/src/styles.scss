@@ -1,0 +1,159 @@
+// Thème « Tableau Andon » de MécaDétect.
+//
+// Principe : l'interface est neutre (gris acier, bleu ardoise) et la couleur ne sert
+// qu'à signaler un état, avec le même code partout, proche de la signalétique ISO 7010 :
+//   vert   : en service, terminé
+//   ambre  : en maintenance, en cours, priorité haute
+//   rouge  : en panne, priorité critique
+//   bleu   : planifié
+// Un responsable repère ainsi une machine en panne avant d'avoir lu.
+@use 'sass:string';
+@use '@angular/material' as mat;
+
+:root {
+  // Fond d'atelier et surfaces de travail
+  --md-acier: #e9ecef;
+  --md-surface: #f8f9fa;
+  --md-encre: #1f2a37;
+  --md-encre-douce: #5b6673;
+  --md-trait: #cdd3da;
+
+  // Signaux (texte lisible sur fond clair : contraste AA)
+  --md-signal-vert: #1f8a4c;
+  --md-signal-ambre: #b87500;
+  --md-signal-ambre-vif: #f2a516;
+  --md-signal-rouge: #c62828;
+  --md-signal-bleu: #1565c0;
+  --md-signal-eteint: #9aa4af;
+
+  --md-titre: 'Barlow Condensed', Barlow, system-ui, sans-serif;
+}
+
+html {
+  height: 100%;
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
+        tertiary: mat.$blue-palette,
+        theme-type: light,
+      ),
+      typography: (
+        // Polices de repli si Google Fonts est injoignable : jamais d'empattements par défaut
+        plain-family: string.unquote('Barlow, system-ui, sans-serif'),
+        brand-family: string.unquote("'Barlow Condensed', Barlow, system-ui, sans-serif"),
+        regular-weight: 400,
+        medium-weight: 500,
+        bold-weight: 600,
+      ),
+      density: 0,
+    )
+  );
+
+  // Boutons et éléments actifs en bleu ardoise : la couleur vive reste aux signaux
+  @include mat.theme-overrides(
+    (
+      primary: #1f2a37,
+      on-primary: #ffffff,
+      primary-container: #d9dee4,
+      on-primary-container: #1f2a37,
+      secondary-container: #dde2e7,
+      on-secondary-container: #1f2a37,
+      surface: #f8f9fa,
+      on-surface: #1f2a37,
+      on-surface-variant: #5b6673,
+      outline: #8a95a1,
+      outline-variant: #cdd3da,
+      surface-container-lowest: #ffffff,
+      surface-container-low: #f1f3f5,
+      surface-container: #eceff2,
+      surface-container-high: #e4e8ec,
+      surface-container-highest: #dde2e7,
+    )
+  );
+}
+
+body {
+  color-scheme: light;
+  margin: 0;
+  height: 100%;
+  background-color: var(--md-acier);
+  color: var(--md-encre);
+  font: var(--mat-sys-body-medium);
+  font-size: 0.975rem;
+}
+
+// Titres en Barlow Condensed : la voix « signalétique » de l'application
+h1,
+h2,
+h3 {
+  font-family: var(--md-titre);
+  color: var(--md-encre);
+  letter-spacing: 0.005em;
+}
+
+h1 {
+  font-size: 2.25rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+h2 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+// Chiffres alignés partout (tableaux, compteurs, paginateur)
+table,
+.mat-mdc-paginator {
+  font-variant-numeric: tabular-nums;
+}
+
+// Les tableaux posés sur le fond acier deviennent des panneaux de travail
+.mat-mdc-table {
+  background: var(--md-surface);
+}
+
+// Focus clavier toujours visible
+:focus-visible {
+  outline: 2px solid var(--md-signal-bleu);
+  outline-offset: 2px;
+}
+
+// ------------------------------------------------------------------ Changement de page
+// Transition native du navigateur (View Transitions, activée dans app.config) :
+// l'ancienne page s'efface, la nouvelle monte légèrement. La barre du haut ne bouge pas.
+@keyframes page-sortie {
+  to { opacity: 0; transform: translateY(-4px); }
+}
+@keyframes page-entree {
+  from { opacity: 0; transform: translateY(8px); }
+}
+::view-transition-old(root) {
+  animation: 140ms ease-in both page-sortie;
+}
+::view-transition-new(root) {
+  animation: 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both page-entree;
+}
+::view-transition-group(barre) {
+  animation: none;
+}
+
+// ------------------------------------------------------------------ Moins d'animations
+// Respecte le réglage du système : les animations finissent aussitôt, à leur état final
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

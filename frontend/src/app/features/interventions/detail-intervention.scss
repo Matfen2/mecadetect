@@ -1,0 +1,124 @@
+.entete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 1rem 0 1.5rem;
+
+  h1 {
+    margin: 0;
+  }
+}
+
+.numero {
+  margin: 0 0 0.25rem;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.badges {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.actions {
+  margin-bottom: 1.5rem;
+}
+
+.boutons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.panneau {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-width: 640px;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  background: var(--mat-sys-surface-container);
+
+  h2 {
+    margin: 0 0 0.75rem;
+    font-size: 1.1rem;
+  }
+
+  mat-form-field {
+    width: 100%;
+  }
+
+  .court {
+    max-width: 240px;
+  }
+}
+
+.details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin: 0 0 1.5rem;
+
+  dt {
+    font-size: 0.8rem;
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  dd {
+    margin: 0.25rem 0 0;
+  }
+}
+
+.bloc {
+  margin-bottom: 1.5rem;
+
+  h2 {
+    font-size: 1.1rem;
+    margin: 0 0 0.5rem;
+  }
+}
+
+.texte {
+  margin: 0;
+  max-width: 75ch;
+  white-space: pre-line;
+}
+
+.historique {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 1rem;
+  border-left: 2px solid var(--mat-sys-outline-variant);
+
+  li {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    padding: 0.4rem 0;
+  }
+
+  time {
+    min-width: 9rem;
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  .auteur {
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+.message {
+  color: var(--mat-sys-on-surface-variant);
+
+  &.erreur {
+    margin-top: 0.75rem;
+    color: var(--mat-sys-error);
+
+    p {
+      margin: 0 0 0.5rem;
+    }
+  }
+}

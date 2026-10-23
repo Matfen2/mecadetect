@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Faux positifs d'OWASP Dependency-Check.
+  Chaque suppression doit être justifiée (notes), ciblée (packageUrl + CVE)
+  et datée (until) pour être réexaminée : on ne masque jamais une vraie faille.
+-->
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+</suppressions>

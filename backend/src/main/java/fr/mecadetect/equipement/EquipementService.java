@@ -7,6 +7,7 @@ import fr.mecadetect.referentiel.TypeEquipement;
 import fr.mecadetect.referentiel.TypeEquipementRepository;
 import fr.mecadetect.referentiel.Zone;
 import fr.mecadetect.referentiel.ZoneRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -15,19 +16,12 @@ import org.springframework.transaction.annotation.Transactional;
 /// Gestion du parc d'équipements : création, recherche, modification et archivage.
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class EquipementService {
 
     private final EquipementRepository equipementRepository;
     private final ZoneRepository zoneRepository;
     private final TypeEquipementRepository typeRepository;
-
-    public EquipementService(EquipementRepository equipementRepository,
-                             ZoneRepository zoneRepository,
-                             TypeEquipementRepository typeRepository) {
-        this.equipementRepository = equipementRepository;
-        this.zoneRepository = zoneRepository;
-        this.typeRepository = typeRepository;
-    }
 
     /// Crée un équipement en service.
     ///

@@ -20,7 +20,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// - le **domaine** ne dépend ni des cas d'usage, ni de l'infrastructure, ni de l'API ;
 /// - les **cas d'usage** (application) ne dépendent ni de l'infrastructure ni de l'API :
 ///   ils passent par les ports du domaine ;
-/// - l'**infrastructure** ne dépend pas de l'API.
+/// - l'**infrastructure** ne dépend pas de l'API ;
+/// - le **domaine** et les **cas d'usage** ne dépendent d'aucun framework (Spring, Lombok) :
+///   une montée de version ou un changement de framework ne touche pas au code métier.
+///   Seules les annotations JPA des entités sont tolérées dans le domaine, par choix pragmatique.
 ///
 /// Le test lit les `import` des fichiers : une dépendance interdite fait échouer le build.
 class ArchitectureHexagonaleTest {
@@ -55,6 +58,29 @@ class ArchitectureHexagonaleTest {
                     .toList();
 
             assertThat(violations).as("fichiers de %s.%s avec une dépendance interdite", module, couche).isEmpty();
+        }
+    }
+
+    static Stream<Arguments> couchesMetier() {
+        return MODULES.stream().flatMap(module -> Stream.of(
+                Arguments.of(module, "domain"),
+                Arguments.of(module, "application")));
+    }
+
+    @ParameterizedTest(name = "{0}.{1} ne dépend d'aucun framework")
+    @MethodSource("couchesMetier")
+    @DisplayName("Le code métier est indépendant des frameworks")
+    void codeMetierSansFramework(String module, String couche) throws IOException {
+        Pattern importFramework = Pattern.compile("^import (static )?(org\\.springframework|lombok)\\.", Pattern.MULTILINE);
+
+        try (Stream<Path> fichiers = Files.list(SOURCES.resolve(module).resolve(couche))) {
+            List<String> violations = fichiers
+                    .filter(fichier -> fichier.toString().endsWith(".java"))
+                    .filter(fichier -> importFramework.matcher(lire(fichier)).find())
+                    .map(fichier -> fichier.getFileName().toString())
+                    .toList();
+
+            assertThat(violations).as("fichiers de %s.%s qui dépendent d'un framework", module, couche).isEmpty();
         }
     }
 

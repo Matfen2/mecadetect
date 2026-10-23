@@ -10,6 +10,7 @@ import fr.mecadetect.utilisateur.HabilitationRepository;
 import fr.mecadetect.utilisateur.Role;
 import fr.mecadetect.utilisateur.Utilisateur;
 import fr.mecadetect.utilisateur.UtilisateurRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 /// techniciens, habilitations, charge groupée, interventions en cours.
 @Service
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class TechnicienService {
 
     private static final Set<StatutIntervention> OUVERTES =
@@ -33,14 +35,6 @@ public class TechnicienService {
     private final UtilisateurRepository utilisateurRepository;
     private final HabilitationRepository habilitationRepository;
     private final InterventionRepository interventionRepository;
-
-    public TechnicienService(UtilisateurRepository utilisateurRepository,
-                             HabilitationRepository habilitationRepository,
-                             InterventionRepository interventionRepository) {
-        this.utilisateurRepository = utilisateurRepository;
-        this.habilitationRepository = habilitationRepository;
-        this.interventionRepository = interventionRepository;
-    }
 
     /// Techniciens actifs, avec leurs habilitations et leur charge, par ordre alphabétique.
     ///

@@ -1,14 +1,14 @@
 package fr.mecadetect.intervention.api;
 
 import fr.mecadetect.erreur.DonneesInvalidesException;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import fr.mecadetect.intervention.domain.DemandePage;
 
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
-/// Transforme page, size et sort en Pageable, avec une liste blanche de champs triables.
-/// Par défaut, les demandes les plus récentes d'abord.
+/// Transforme les paramètres page, size et sort de l'API en [DemandePage] du domaine,
+/// avec une liste blanche de champs triables. Par défaut, les demandes les plus récentes d'abord.
 public final class PaginationIntervention {
 
     static final int TAILLE_PAR_DEFAUT = 20;
@@ -16,6 +16,9 @@ public final class PaginationIntervention {
 
     /// Tri par défaut : la date de demande, la plus récente d'abord.
     private static final String DATE_DEMANDE = "dateDemande";
+
+    /// Départage des ex aequo.
+    private static final String IDENTIFIANT = "id";
 
     private static final Map<String, String> CHAMPS_TRIABLES = Map.of(
             "numero", "numero",
@@ -35,22 +38,22 @@ public final class PaginationIntervention {
     /// @param page   numéro de page, à partir de 0 ; null pour la première
     /// @param taille nombre d'éléments par page, de 1 à 100 ; null pour 20
     /// @param tri    champ et sens, par exemple `numero,desc` ; null pour le tri par défaut
-    /// @return la pagination correspondante
+    /// @return la demande de page correspondante
     /// @throws DonneesInvalidesException si la page, la taille ou le tri est invalide
-    public static Pageable versPageable(Integer page, Integer taille, String tri) {
-        Sort sort = versSort(tri);
-        Sort.Direction sens = sort.iterator().next().getDirection();
-        return PageRequest.of(numero(page), nombre(taille), sort.and(Sort.by(sens, "id")));
+    public static DemandePage versDemandePage(Integer page, Integer taille, String tri) {
+        DemandePage.Tri principal = versTri(tri);
+        var departage = new DemandePage.Tri(IDENTIFIANT, principal.croissant());
+        return new DemandePage(numero(page), nombre(taille), List.of(principal, departage));
     }
 
     /// Pagination sans tri : l'ordre est fixé par la requête elle-même.
     ///
     /// @param page   numéro de page, à partir de 0 ; null pour la première
     /// @param taille nombre d'éléments par page, de 1 à 100 ; null pour 20
-    /// @return la pagination correspondante
+    /// @return la demande de page correspondante
     /// @throws DonneesInvalidesException si la page ou la taille est invalide
-    public static Pageable sansTri(Integer page, Integer taille) {
-        return PageRequest.of(numero(page), nombre(taille));
+    public static DemandePage sansTri(Integer page, Integer taille) {
+        return DemandePage.sansTri(numero(page), nombre(taille));
     }
 
     private static int numero(Integer page) {
@@ -70,9 +73,9 @@ public final class PaginationIntervention {
         return nombre;
     }
 
-    static Sort versSort(String tri) {
+    static DemandePage.Tri versTri(String tri) {
         if (tri == null || tri.isBlank()) {
-            return Sort.by(Sort.Direction.DESC, DATE_DEMANDE);
+            return new DemandePage.Tri(DATE_DEMANDE, false);
         }
         String[] morceaux = tri.split(",");
         String chemin = CHAMPS_TRIABLES.get(morceaux[0].trim());
@@ -80,11 +83,13 @@ public final class PaginationIntervention {
             throw new DonneesInvalidesException("TRI_INVALIDE",
                     "Tri impossible sur « " + morceaux[0].trim() + " ». Champs autorisés : " + CHAMPS_TRIABLES.keySet());
         }
-        Sort.Direction direction = morceaux.length > 1
-                ? Sort.Direction.fromOptionalString(morceaux[1].trim())
-                    .orElseThrow(() -> new DonneesInvalidesException("TRI_INVALIDE",
-                            "Le sens de tri doit être asc ou desc."))
-                : Sort.Direction.ASC;
-        return Sort.by(direction, chemin);
+        if (morceaux.length == 1) {
+            return new DemandePage.Tri(chemin, true);
+        }
+        return switch (morceaux[1].trim().toLowerCase(Locale.ROOT)) {
+            case "asc" -> new DemandePage.Tri(chemin, true);
+            case "desc" -> new DemandePage.Tri(chemin, false);
+            default -> throw new DonneesInvalidesException("TRI_INVALIDE", "Le sens de tri doit être asc ou desc.");
+        };
     }
 }

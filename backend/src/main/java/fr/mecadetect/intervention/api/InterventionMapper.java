@@ -16,11 +16,11 @@ import fr.mecadetect.intervention.application.DetailIntervention;
 import fr.mecadetect.intervention.application.PlanificationCommande;
 import fr.mecadetect.intervention.domain.HistoriqueStatut;
 import fr.mecadetect.intervention.domain.InterventionResume;
+import fr.mecadetect.intervention.domain.PageResultat;
 import fr.mecadetect.mapping.ConfigurationMappers;
 import fr.mecadetect.utilisateur.UtilisateurMapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -72,17 +72,17 @@ public interface InterventionMapper {
     /// @return les lignes exposées par l'API, dans le même ordre
     List<InterventionResumeDto> versResumesDto(List<InterventionResume> resumes);
 
-    /// Page d'interventions. Écrite à la main : une [Page] Spring est itérable,
-    /// et MapStruct ne convertit pas un itérable en objet simple.
+    /// Page d'interventions. Écrite à la main : elle assemble les métadonnées de pagination
+    /// et la liste convertie élément par élément.
     ///
-    /// @param page page renvoyée par le service
+    /// @param page page renvoyée par le cas d'usage
     /// @return la page exposée par l'API
-    default PageInterventionDto versPageDto(Page<InterventionResume> page) {
+    default PageInterventionDto versPageDto(PageResultat<InterventionResume> page) {
         return new PageInterventionDto()
-                .page(page.getNumber())
-                .taille(page.getSize())
-                .totalElements(page.getTotalElements())
-                .totalPages(page.getTotalPages())
-                .contenu(versResumesDto(page.getContent()));
+                .page(page.numero())
+                .taille(page.taille())
+                .totalElements(page.totalElements())
+                .totalPages(page.totalPages())
+                .contenu(versResumesDto(page.contenu()));
     }
 }

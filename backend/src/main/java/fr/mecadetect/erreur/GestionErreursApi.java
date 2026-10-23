@@ -99,8 +99,8 @@ public class GestionErreursApi {
     }
 
     /// Verrouillage optimiste (@Version) : quelqu'un a modifié la donnée entre-temps (UC-DB6).
-    @ExceptionHandler(OptimisticLockingFailureException.class)
-    ProblemDetail conflitDeVersion(OptimisticLockingFailureException exception) {
+    @ExceptionHandler({OptimisticLockingFailureException.class, ConflitVersionException.class})
+    ProblemDetail conflitDeVersion(RuntimeException exception) {
         return probleme(HttpStatus.CONFLICT, "Modification concurrente",
                 "Ces données ont été modifiées par un autre utilisateur. Rechargez la page.", "CONFLIT_VERSION");
     }

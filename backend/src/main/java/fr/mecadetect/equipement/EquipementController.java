@@ -9,6 +9,7 @@ import fr.mecadetect.api.dto.StatutEquipementDto;
 import fr.mecadetect.intervention.api.InterventionMapper;
 import fr.mecadetect.intervention.application.InterventionService;
 import fr.mecadetect.intervention.api.PaginationIntervention;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,20 +18,13 @@ import org.springframework.web.bind.annotation.RestController;
 /// Implémente l'interface EquipementsApi générée depuis le contrat.
 /// Lecture : tout utilisateur connecté. Écriture : ADMIN uniquement.
 @RestController
+@RequiredArgsConstructor
 public class EquipementController implements EquipementsApi {
 
     private final EquipementService service;
     private final InterventionService interventionService;
     private final EquipementMapper mapper;
     private final InterventionMapper interventionMapper;
-
-    public EquipementController(EquipementService service, InterventionService interventionService,
-                                EquipementMapper mapper, InterventionMapper interventionMapper) {
-        this.service = service;
-        this.interventionService = interventionService;
-        this.mapper = mapper;
-        this.interventionMapper = interventionMapper;
-    }
 
     @Override
     @PreAuthorize("hasRole('ADMIN')")
@@ -73,7 +67,7 @@ public class EquipementController implements EquipementsApi {
     public ResponseEntity<PageInterventionDto> historiqueInterventionsEquipement(
             Long idEquipement, Integer page, Integer size) {
         var resultat = interventionService.historiqueEquipement(
-                idEquipement, PaginationIntervention.versPageable(page, size, null));
+                idEquipement, PaginationIntervention.versDemandePage(page, size, null));
         return ResponseEntity.ok(interventionMapper.versPageDto(resultat));
     }
 }

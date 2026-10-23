@@ -5,6 +5,7 @@ import fr.mecadetect.utilisateur.Habilitation;
 import fr.mecadetect.utilisateur.HabilitationId;
 import fr.mecadetect.utilisateur.HabilitationRepository;
 import fr.mecadetect.utilisateur.UtilisateurRepository;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -22,6 +23,7 @@ import java.util.List;
 /// la règle RG-09 peut ainsi être montrée en démonstration.
 @Component
 @Profile("demo")
+@RequiredArgsConstructor
 public class HabilitationsDemoInitialiseur {
 
     private static final Logger LOG = LoggerFactory.getLogger(HabilitationsDemoInitialiseur.class);
@@ -33,14 +35,6 @@ public class HabilitationsDemoInitialiseur {
     private final UtilisateurRepository utilisateurRepository;
     private final TypeEquipementRepository typeRepository;
     private final HabilitationRepository habilitationRepository;
-
-    public HabilitationsDemoInitialiseur(UtilisateurRepository utilisateurRepository,
-                                         TypeEquipementRepository typeRepository,
-                                         HabilitationRepository habilitationRepository) {
-        this.utilisateurRepository = utilisateurRepository;
-        this.typeRepository = typeRepository;
-        this.habilitationRepository = habilitationRepository;
-    }
 
     @EventListener(ApplicationReadyEvent.class)
     @Transactional

@@ -104,10 +104,10 @@ class InterventionRequetesSqlTest {
     void rechercheSansNPlusUn() {
         var page = service.rechercher(
                 new CriteresRechercheIntervention(null, null, null, LocalDate.of(2032, 1, 1), LocalDate.of(2032, 12, 31)),
-                PaginationIntervention.versPageable(0, NOMBRE, null));
+                PaginationIntervention.versDemandePage(0, NOMBRE, null));
 
-        assertThat(page.getContent()).hasSize(NOMBRE);
-        assertThat(page.getContent()).allSatisfy(resume -> {
+        assertThat(page.contenu()).hasSize(NOMBRE);
+        assertThat(page.contenu()).allSatisfy(resume -> {
             assertThat(resume.equipementReference()).startsWith("N1-");
             assertThat(resume.technicienNomComplet()).isNotNull();
         });

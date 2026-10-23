@@ -1,13 +1,18 @@
 package fr.mecadetect.intervention.infrastructure;
 
 import fr.mecadetect.intervention.domain.ChargeTechnicien;
+import fr.mecadetect.intervention.domain.DemandePage;
 import fr.mecadetect.intervention.domain.Intervention;
 import fr.mecadetect.intervention.domain.InterventionRepository;
 import fr.mecadetect.intervention.domain.InterventionResume;
+import fr.mecadetect.intervention.domain.PageResultat;
 import fr.mecadetect.intervention.domain.Priorite;
 import fr.mecadetect.intervention.domain.StatutIntervention;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -17,13 +22,10 @@ import java.util.Optional;
 
 /// Adaptateur : implémente le port [InterventionRepository] avec Spring Data JPA.
 @Repository
+@RequiredArgsConstructor
 class InterventionRepositoryAdapter implements InterventionRepository {
 
     private final InterventionJpaRepository jpa;
-
-    InterventionRepositoryAdapter(InterventionJpaRepository jpa) {
-        this.jpa = jpa;
-    }
 
     @Override
     public Intervention enregistrer(Intervention intervention) {
@@ -61,16 +63,18 @@ class InterventionRepositoryAdapter implements InterventionRepository {
     }
 
     @Override
-    public Page<InterventionResume> aTraiterPar(Long idTechnicien, Collection<StatutIntervention> statuts,
-                                                Pageable pageable) {
-        return jpa.aTraiterPar(idTechnicien, statuts, pageable);
+    public PageResultat<InterventionResume> aTraiterPar(Long idTechnicien, Collection<StatutIntervention> statuts,
+                                                        DemandePage page) {
+        return versResultat(jpa.aTraiterPar(idTechnicien, statuts, versPageable(page)));
     }
 
     @Override
-    public Page<InterventionResume> rechercher(StatutIntervention statut, Priorite priorite, Long idTechnicien,
-                                               Long idEquipement, LocalDateTime depuis, LocalDateTime avant,
-                                               Pageable pageable) {
-        return jpa.rechercher(statut, priorite, idTechnicien, idEquipement, depuis, avant, pageable);
+    public PageResultat<InterventionResume> rechercher(StatutIntervention statut, Priorite priorite,
+                                                       Long idTechnicien, Long idEquipement,
+                                                       LocalDateTime depuis, LocalDateTime avant,
+                                                       DemandePage page) {
+        return versResultat(jpa.rechercher(statut, priorite, idTechnicien, idEquipement, depuis, avant,
+                versPageable(page)));
     }
 
     @Override
@@ -81,5 +85,20 @@ class InterventionRepositoryAdapter implements InterventionRepository {
     @Override
     public List<InterventionResume> enCours() {
         return jpa.enCours();
+    }
+
+    /// Demande de page du domaine vers la pagination de Spring Data.
+    static Pageable versPageable(DemandePage page) {
+        Sort tri = Sort.by(page.tri().stream()
+                .map(critere -> critere.croissant()
+                        ? Sort.Order.asc(critere.champ())
+                        : Sort.Order.desc(critere.champ()))
+                .toList());
+        return PageRequest.of(page.numero(), page.taille(), tri);
+    }
+
+    /// Page de Spring Data vers la page de résultats du domaine.
+    private static <T> PageResultat<T> versResultat(Page<T> page) {
+        return new PageResultat<>(page.getContent(), page.getNumber(), page.getSize(), page.getTotalElements());
     }
 }

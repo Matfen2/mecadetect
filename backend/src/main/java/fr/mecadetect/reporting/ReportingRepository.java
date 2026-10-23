@@ -1,6 +1,7 @@
 package fr.mecadetect.reporting;
 
 import fr.mecadetect.intervention.domain.Priorite;
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -21,16 +22,13 @@ import java.util.Map;
 ///
 /// Les périodes vont de `depuis` inclus à `avant` exclu, en UTC comme toutes les dates stockées.
 @Repository
+@RequiredArgsConstructor
 public class ReportingRepository {
 
     /// Alias SQL des comptages, lu dans plusieurs requêtes.
     private static final String NOMBRE = "nombre";
 
     private final NamedParameterJdbcTemplate jdbc;
-
-    public ReportingRepository(NamedParameterJdbcTemplate jdbc) {
-        this.jdbc = jdbc;
-    }
 
     /// Équipements les plus souvent en panne sur la période, interventions annulées exclues.
     ///

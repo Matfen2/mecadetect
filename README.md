@@ -29,7 +29,7 @@ Application de suivi de maintenance industrielle : déclaration des pannes, plan
 
 | Couche | Technologies |
 | --- | --- |
-| Back-end | Java 25 (LTS), Spring Boot 4, Spring Data JPA / Hibernate, Spring Security (JWT) |
+| Back-end | Java 25 (LTS), Spring Boot 4, Spring Data JPA / Hibernate, Spring Security (JWT), MapStruct |
 | Base de données | Oracle Database Free 23, Flyway, PL/SQL, Data Pump |
 | Front-end | Angular 21 (standalone, signals), Angular Material, RxJS |
 | Contrat d'API | OpenAPI 3 en contract-first, avec génération des interfaces Spring et du client Angular |
@@ -41,7 +41,18 @@ Application de suivi de maintenance industrielle : déclaration des pannes, plan
 
 ### Conception et code
 
-- **Contract-first** : le fichier [`api/openapi.yaml`](api/openapi.yaml) est la source de vérité de l'API. Les interfaces Spring et le client Angular sont générés à chaque build : une incompatibilité entre le back et le front est détectée à la compilation.
+- **Architecture hexagonale** (module `intervention`) : le domaine (entités, cycle de vie, ports), les cas d'usage, l'infrastructure (Spring Data, SQL Oracle) et l'API sont séparés. Le service ne dépend que des ports du domaine, implémentés par des adaptateurs. Un test d'architecture fait échouer le build si une dépendance va dans le mauvais sens.
+
+  ```
+  intervention/
+  ├── domain/          entités, cycle de vie, ports (InterventionRepository…)
+  ├── application/     cas d'usage (InterventionService), commandes
+  ├── infrastructure/  repositories Spring Data, recherche Criteria, adaptateurs
+  └── api/             contrôleur, mapper MapStruct, pagination
+  ```
+
+- **Contract-first** : le fichier [`api/openapi.yaml`](api/openapi.yaml) est la source de vérité de l'API. Les interfaces Spring et le client Angular sont générés à chaque build : une incompatibilité entre le back et le front est détectée à la compilation. Les routes suivent les conventions REST : des ressources et des noms d'action (`/interventions/{id}/planification`), jamais de verbe.
+- **Mapping strict avec MapStruct** : la conversion entre entités et DTO est générée à la compilation, et un champ du contrat oublié dans un mapper fait échouer le build.
 - **Cycle de vie modélisé en Java moderne** : les transitions d'une intervention (planification, démarrage, clôture, annulation) sont une `sealed interface` de records, traitée par un `switch` à pattern matching exhaustif. Toute transition non prévue lève une exception métier, et le compilateur signale un cas oublié.
 - **Concurrence maîtrisée** : verrouillage optimiste (`@Version`). Si deux responsables planifient la même intervention en même temps, le second reçoit un 409 et l'interface lui propose de recharger. Un test lance réellement les deux transactions concurrentes.
 - **Règles métier garanties par la base** : contraintes nommées et `CHECK` Oracle (une intervention terminée a obligatoirement un compte rendu, une intervention annulée un motif…).
@@ -169,7 +180,7 @@ L'environnement de production se décrit dans [`compose.prod.yaml`](compose.prod
 ## Tests
 
 ```bash
-# Back-end : 265 tests, 96 % des instructions et 87 % des branches couvertes
+# Back-end : 290 tests, couverture suivie dans SonarCloud
 # (Docker doit être lancé pour Testcontainers)
 cd backend
 mvn verify
@@ -194,6 +205,7 @@ robot --outputdir e2e/resultats e2e/tests
 | 4 | Oracle avancé : trigger d'historique, génération de 500 000 interventions, reporting analytique, index et plans d'exécution, archivage PL/SQL, tests de charge Gatling | ✅ Terminé |
 | 5 | Tableau de bord et export CSV, images Docker durcies, HTTPS, déploiement continu sur Oracle Cloud, SonarCloud, analyse des vulnérabilités, sauvegardes testées, affichage mobile | ✅ Terminé |
 | 6 | Tests de bout en bout avec Robot Framework : connexion par rôle, parcours complet d'une intervention, exécution dans la CI avant chaque déploiement | ✅ Terminé |
+| 7 | Retours d'une revue de code externe : architecture hexagonale (module intervention), routes REST sans verbe, MapStruct, `@DataJpaTest`, colonnes Oracle en caractères, javadoc vérifiée à la compilation, export CSV avec Commons CSV, Trivy pour les dépendances | ✅ Terminé |
 
 ## Auteur
 

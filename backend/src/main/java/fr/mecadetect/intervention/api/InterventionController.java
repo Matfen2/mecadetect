@@ -16,6 +16,7 @@ import fr.mecadetect.intervention.application.InterventionService;
 import fr.mecadetect.intervention.domain.Priorite;
 import fr.mecadetect.intervention.domain.StatutIntervention;
 import fr.mecadetect.securite.UtilisateurCourant;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,18 +27,12 @@ import java.time.LocalDate;
 /// Implémente l'interface InterventionsApi générée depuis le contrat.
 /// Consultation : tout utilisateur connecté. Actions : selon le rôle (RG-01, RG-02).
 @RestController
+@RequiredArgsConstructor
 public class InterventionController implements InterventionsApi {
 
     private final InterventionService service;
     private final UtilisateurCourant utilisateurCourant;
     private final InterventionMapper mapper;
-
-    public InterventionController(InterventionService service, UtilisateurCourant utilisateurCourant,
-                                  InterventionMapper mapper) {
-        this.service = service;
-        this.utilisateurCourant = utilisateurCourant;
-        this.mapper = mapper;
-    }
 
     @Override
     @PreAuthorize("hasAnyRole('DEMANDEUR', 'ADMIN')")
@@ -59,7 +54,7 @@ public class InterventionController implements InterventionsApi {
                 statut != null ? StatutIntervention.valueOf(statut.getValue()) : null,
                 priorite != null ? Priorite.valueOf(priorite.getValue()) : null,
                 idTechnicien, depuis, jusqua);
-        var resultat = service.rechercher(criteres, PaginationIntervention.versPageable(page, size, sort));
+        var resultat = service.rechercher(criteres, PaginationIntervention.versDemandePage(page, size, sort));
         return ResponseEntity.ok(mapper.versPageDto(resultat));
     }
 

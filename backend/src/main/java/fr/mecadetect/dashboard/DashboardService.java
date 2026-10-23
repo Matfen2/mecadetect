@@ -3,6 +3,7 @@ package fr.mecadetect.dashboard;
 import fr.mecadetect.intervention.domain.Priorite;
 import fr.mecadetect.reporting.ReportingRepository;
 import fr.mecadetect.reporting.TempsResolution;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,17 +25,12 @@ import java.util.SequencedMap;
 ///
 /// Les interventions archivées ont au moins un an : elles sont hors de ces périodes.
 @Service
+@RequiredArgsConstructor
 public class DashboardService {
 
     private final ReportingRepository reporting;
     private final Clock clock;
     private final TableauDeBordProperties proprietes;
-
-    public DashboardService(ReportingRepository reporting, Clock clock, TableauDeBordProperties proprietes) {
-        this.reporting = reporting;
-        this.clock = clock;
-        this.proprietes = proprietes;
-    }
 
     /// Calcule l'ensemble des indicateurs du tableau de bord à la date courante.
     ///

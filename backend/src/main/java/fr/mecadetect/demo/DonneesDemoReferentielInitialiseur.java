@@ -6,6 +6,7 @@ import fr.mecadetect.referentiel.TypeEquipement;
 import fr.mecadetect.referentiel.TypeEquipementRepository;
 import fr.mecadetect.referentiel.Zone;
 import fr.mecadetect.referentiel.ZoneRepository;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -24,6 +25,7 @@ import java.util.Map;
 /// Idempotent : un élément déjà présent n'est ni recréé ni modifié.
 @Component
 @Profile("demo")
+@RequiredArgsConstructor
 public class DonneesDemoReferentielInitialiseur implements ApplicationRunner {
 
     private static final Logger LOG = LoggerFactory.getLogger(DonneesDemoReferentielInitialiseur.class);
@@ -78,14 +80,6 @@ public class DonneesDemoReferentielInitialiseur implements ApplicationRunner {
     private final ZoneRepository zoneRepository;
     private final TypeEquipementRepository typeRepository;
     private final EquipementRepository equipementRepository;
-
-    public DonneesDemoReferentielInitialiseur(ZoneRepository zoneRepository,
-                                              TypeEquipementRepository typeRepository,
-                                              EquipementRepository equipementRepository) {
-        this.zoneRepository = zoneRepository;
-        this.typeRepository = typeRepository;
-        this.equipementRepository = equipementRepository;
-    }
 
     @Override
     @Transactional

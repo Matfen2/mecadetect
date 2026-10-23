@@ -1,6 +1,7 @@
 package fr.mecadetect.maintenance;
 
 import fr.mecadetect.erreur.DonneesInvalidesException;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,7 @@ import java.time.format.DateTimeFormatter;
 /// Volontairement sans @Transactional : un archivage porte sur des centaines de milliers
 /// de lignes, le package valide lot par lot pour ne pas tout retenir dans une seule transaction.
 @Service
+@RequiredArgsConstructor
 public class ArchivageService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ArchivageService.class);
@@ -27,11 +29,6 @@ public class ArchivageService {
 
     private final ArchivageRepository repository;
     private final Clock clock;
-
-    public ArchivageService(ArchivageRepository repository, Clock clock) {
-        this.repository = repository;
-        this.clock = clock;
-    }
 
     /// Archive les interventions closes avant la date limite, avec leur historique.
     ///

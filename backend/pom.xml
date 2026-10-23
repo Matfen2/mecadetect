@@ -55,6 +55,13 @@
 			<artifactId>mapstruct</artifactId>
 			<version>${mapstruct.version}</version>
 		</dependency>
+		<!-- Constructeurs d'injection des beans Spring (@RequiredArgsConstructor), version gérée
+		     par Spring Boot. Interdit dans le domaine et les cas d'usage (ArchitectureHexagonaleTest). -->
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-csv</artifactId>
@@ -144,6 +151,15 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<!-- Lombok ne sert qu'à la compilation : il n'est pas embarqué dans l'application -->
+					<excludes>
+						<exclude>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</exclude>
+					</excludes>
+				</configuration>
 			</plugin>
 			<!-- Compilation : processeur MapStruct, et vérification de la javadoc par le doclint de javac,
 			     sans générer de HTML.
@@ -156,8 +172,13 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
-					<!-- Processeur MapStruct : génère l'implémentation des interfaces @Mapper -->
+					<!-- Processeurs d'annotations : Lombok (constructeurs), puis MapStruct (mappers) -->
 					<annotationProcessorPaths>
+						<path>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+							<version>${lombok.version}</version>
+						</path>
 						<path>
 							<groupId>org.mapstruct</groupId>
 							<artifactId>mapstruct-processor</artifactId>

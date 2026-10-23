@@ -1,8 +1,5 @@
 package fr.mecadetect.intervention.domain;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -12,8 +9,8 @@ import java.util.Optional;
 /// exprimé dans leur vocabulaire.
 ///
 /// L'implémentation est un adaptateur de l'infrastructure (Spring Data JPA et SQL Oracle) :
-/// le service ne connaît ni JPA, ni les requêtes, ni la séquence Oracle. Seules les classes de
-/// pagination de Spring Data (`Page`, `Pageable`) traversent la frontière, par choix pragmatique.
+/// le service ne connaît ni JPA, ni les requêtes, ni la séquence Oracle. La pagination passe par
+/// des types du domaine, [DemandePage] et [PageResultat].
 public interface InterventionRepository {
 
     /// Enregistre une nouvelle intervention.
@@ -66,9 +63,10 @@ public interface InterventionRepository {
     ///
     /// @param idTechnicien identifiant du technicien
     /// @param statuts      statuts retenus
-    /// @param pageable     page et taille demandées
+    /// @param page         page et taille demandées ; le tri est fixé par la requête
     /// @return la page de résumés d'interventions
-    Page<InterventionResume> aTraiterPar(Long idTechnicien, Collection<StatutIntervention> statuts, Pageable pageable);
+    PageResultat<InterventionResume> aTraiterPar(Long idTechnicien, Collection<StatutIntervention> statuts,
+                                                 DemandePage page);
 
     /// Recherche paginée ; un paramètre null désactive son filtre.
     ///
@@ -78,11 +76,11 @@ public interface InterventionRepository {
     /// @param idEquipement identifiant de l'équipement
     /// @param depuis       début de la période de demande, inclus
     /// @param avant        fin de la période de demande, exclue
-    /// @param pageable     page, taille et tri demandés
+    /// @param page         page, taille et tri demandés
     /// @return la page de résumés d'interventions
-    Page<InterventionResume> rechercher(StatutIntervention statut, Priorite priorite, Long idTechnicien,
-                                        Long idEquipement, LocalDateTime depuis, LocalDateTime avant,
-                                        Pageable pageable);
+    PageResultat<InterventionResume> rechercher(StatutIntervention statut, Priorite priorite, Long idTechnicien,
+                                                Long idEquipement, LocalDateTime depuis, LocalDateTime avant,
+                                                DemandePage page);
 
     /// Nombre d'interventions dans ces statuts, par technicien affecté.
     ///

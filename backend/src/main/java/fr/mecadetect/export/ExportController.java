@@ -1,6 +1,7 @@
 package fr.mecadetect.export;
 
 import fr.mecadetect.api.ExportsApi;
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -15,15 +16,12 @@ import java.time.LocalDate;
 /// Tag Exports du contrat, réservé à l'admin : export CSV des interventions (tâche 5.3).
 @RestController
 @PreAuthorize("hasRole('ADMIN')")
+@RequiredArgsConstructor
 public class ExportController implements ExportsApi {
 
     private static final MediaType CSV = new MediaType("text", "csv", StandardCharsets.UTF_8);
 
     private final ExportInterventionsService exportService;
-
-    public ExportController(ExportInterventionsService exportService) {
-        this.exportService = exportService;
-    }
 
     /// Envoie le fichier CSV en pièce jointe, produit pendant le téléchargement.
     ///

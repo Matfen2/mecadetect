@@ -3,21 +3,18 @@ package fr.mecadetect.auth;
 import fr.mecadetect.api.AuthApi;
 import fr.mecadetect.api.dto.LoginRequestDto;
 import fr.mecadetect.api.dto.LoginResponseDto;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
 /// Implémente l'interface `AuthApi` générée depuis `openapi.yaml` :
 /// la route, la méthode HTTP et la validation viennent du contrat.
 @RestController
+@RequiredArgsConstructor
 public class AuthController implements AuthApi {
 
     private final AuthService authService;
     private final AuthMapper mapper;
-
-    public AuthController(AuthService authService, AuthMapper mapper) {
-        this.authService = authService;
-        this.mapper = mapper;
-    }
 
     /// Authentifie l'utilisateur et lui renvoie un jeton JWT.
     ///

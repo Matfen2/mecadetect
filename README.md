@@ -177,6 +177,7 @@ L'environnement de production se décrit dans [`compose.prod.yaml`](compose.prod
 2. **Responsable maintenance** : ouvrir l'intervention et la planifier. Seuls les techniciens habilités sur les presses sont proposés.
 3. **Technicien** : dans « Mes interventions », démarrer puis clôturer avec un compte rendu. L'équipement repasse « En service ».
 4. **Responsable maintenance** : suivre l'activité sur le tableau de bord et exporter les interventions du mois en CSV.
+5. **Import du parc** (API) : connecté en admin dans Swagger UI, envoyer [`docs/exemple-import-equipements.csv`](docs/exemple-import-equipements.csv) sur `POST /equipements/imports`. Le rapport indique 5 équipements créés et 4 lignes rejetées, chacune avec son numéro et son motif.
 
 ## Tests
 

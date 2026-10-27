@@ -33,6 +33,8 @@ tags:
     description: Indicateurs du tableau de bord
   - name: Exports
     description: Exports de données
+  - name: Imports
+    description: Imports de données par lots (Spring Batch)
   - name: Archivage
     description: Archivage des interventions anciennes
 
@@ -170,6 +172,48 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '409':
           $ref: '#/components/responses/Conflict'
+
+  /equipements/imports:
+    post:
+      tags: [Imports]
+      operationId: importerEquipements
+      summary: Importer le parc d'équipements depuis un fichier CSV (ADMIN)
+      description: |
+        Traitement par lots (Spring Batch). Le fichier est en UTF-8, avec le point-virgule comme
+        séparateur et une ligne d'en-tête : `reference;nom;date_mise_service;type;zone`.
+        La date est au format AAAA-MM-JJ ou JJ/MM/AAAA, le type est désigné par son libellé
+        et la zone par son code.
+
+        Chaque ligne valide crée un équipement en service. Une ligne invalide est rejetée avec
+        son numéro et le motif du rejet, sans bloquer les autres. Au-delà de 1 000 rejets, l'import
+        est interrompu ; les lots déjà enregistrés sont conservés.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [fichier]
+              properties:
+                fichier:
+                  type: string
+                  format: binary
+                  description: Fichier CSV du parc (2 Mo au plus)
+      responses:
+        '200':
+          description: Import terminé, avec le détail des lignes rejetées
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RapportImport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
 
   /equipements/{idEquipement}:
     parameters:
@@ -699,6 +743,12 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetail'
+    PayloadTooLarge:
+      description: Fichier trop volumineux
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
     NotFound:
       description: Ressource introuvable
       content:
@@ -1131,6 +1181,40 @@ components:
                 type: integer
               tempsPasseMinMois:
                 type: integer
+
+    # ---------------- Import du parc ----------------
+    RapportImport:
+      type: object
+      required: [lignesLues, importes, rejetes, rejets]
+      properties:
+        lignesLues:
+          type: integer
+          format: int64
+          description: Lignes de données lues, en-tête exclu
+        importes:
+          type: integer
+          format: int64
+          description: Équipements créés
+        rejetes:
+          type: integer
+          format: int64
+          description: Lignes rejetées
+        rejets:
+          type: array
+          description: Détail des rejets, par numéro de ligne (100 premiers au plus)
+          items:
+            $ref: '#/components/schemas/RejetImport'
+    RejetImport:
+      type: object
+      required: [ligne, motif]
+      properties:
+        ligne:
+          type: integer
+          format: int64
+          description: Numéro de la ligne dans le fichier, en-tête compris (comme dans un tableur)
+        motif:
+          type: string
+          description: Raison du rejet
 
     # ---------------- Archivage ----------------
     ArchivageRequest:

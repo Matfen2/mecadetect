@@ -11,6 +11,14 @@ spring:
       ddl-auto: validate
   flyway:
     locations: classpath:db/migration
+  batch:
+    job:
+      # Les jobs sont lancés à la demande (import du parc), jamais au démarrage de l'application
+      enabled: false
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 2MB
 
 management:
   endpoints:

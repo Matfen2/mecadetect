@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { catchError, debounceTime, distinctUntilChanged, map, of, startWith, switchMap } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
@@ -61,6 +61,7 @@ const CRITERES_INITIAUX: Criteres = {
     MatSelectModule,
     MatSortModule,
     MatTableModule,
+    RouterLink,
     StatutEquipementBadge,
   ],
   templateUrl: './liste-equipements.html',

@@ -25,6 +25,10 @@ Application de suivi de maintenance industrielle : déclaration des pannes, plan
 | --- | --- |
 | ![Détail d'une intervention](docs/captures/detail-intervention.png) | ![Vue mobile](docs/captures/mobile.png) |
 
+**Import du parc (Spring Batch)** : chaque ligne rejetée est listée avec son numéro et son motif.
+
+![Import du parc](docs/captures/import-parc.png)
+
 ## Stack technique
 
 | Couche | Technologies |
@@ -67,7 +71,7 @@ Application de suivi de maintenance industrielle : déclaration des pannes, plan
 ### Produit
 
 - **Tableau de bord** du responsable : interventions ouvertes par priorité, équipements en panne, temps moyen de réparation, charge des techniciens, et **export CSV** des interventions d'une période.
-- **Import du parc par lots avec Spring Batch** : l'admin importe ses équipements depuis un fichier CSV exporté d'Excel. Le job lit, valide et enregistre les lignes par lots de 100, une transaction par lot. Une ligne invalide (zone inconnue, référence en double, date impossible…) est écartée sans bloquer les autres, et le rapport renvoyé indique pour chaque rejet le numéro de ligne et le motif. Réimporter le même fichier ne crée aucun doublon. Un fichier d'essai, avec des lignes valides et des erreurs volontaires, est fourni : [`docs/exemple-import-equipements.csv`](docs/exemple-import-equipements.csv).
+- **Import du parc par lots avec Spring Batch** : depuis la liste des équipements, l'admin importe son parc à partir d'un fichier CSV exporté d'Excel (un modèle est proposé au téléchargement). Le job lit, valide et enregistre les lignes par lots de 100, une transaction par lot. Une ligne invalide (zone inconnue, référence en double, date impossible…) est écartée sans bloquer les autres, et le rapport renvoyé indique pour chaque rejet le numéro de ligne et le motif. Réimporter le même fichier ne crée aucun doublon. Un fichier d'essai, avec des lignes valides et des erreurs volontaires, est fourni : [`docs/exemple-import-equipements.csv`](docs/exemple-import-equipements.csv).
 - **Interface « Tableau Andon »**, inspirée des tableaux de signalisation d'atelier : un voyant par indicateur (vert, ambre, rouge), animations sobres désactivées quand le système demande moins de mouvement.
 - **Interface pensée pour le terrain** : la page « Mes interventions » du technicien fonctionne sur tablette et sur téléphone, et le démarrage comme la clôture se font en 2 clics. Sur petit écran, la navigation se replie dans un menu et les tableaux n'affichent que les colonnes utiles.
 
@@ -177,7 +181,7 @@ L'environnement de production se décrit dans [`compose.prod.yaml`](compose.prod
 2. **Responsable maintenance** : ouvrir l'intervention et la planifier. Seuls les techniciens habilités sur les presses sont proposés.
 3. **Technicien** : dans « Mes interventions », démarrer puis clôturer avec un compte rendu. L'équipement repasse « En service ».
 4. **Responsable maintenance** : suivre l'activité sur le tableau de bord et exporter les interventions du mois en CSV.
-5. **Import du parc** (API) : connecté en admin dans Swagger UI, envoyer [`docs/exemple-import-equipements.csv`](docs/exemple-import-equipements.csv) sur `POST /equipements/imports`. Le rapport indique 5 équipements créés et 4 lignes rejetées, chacune avec son numéro et son motif.
+5. **Responsable maintenance** : dans « Équipements », cliquer sur « Importer un fichier » et envoyer [`docs/exemple-import-equipements.csv`](docs/exemple-import-equipements.csv). Le rapport indique 5 équipements créés et 4 lignes rejetées, chacune avec son numéro et son motif.
 
 ## Tests
 
@@ -187,7 +191,7 @@ L'environnement de production se décrit dans [`compose.prod.yaml`](compose.prod
 cd backend
 mvn verify
 
-# Front-end : 100 tests
+# Front-end : 108 tests
 cd frontend
 npx ng test --watch=false
 
@@ -208,7 +212,7 @@ robot --outputdir e2e/resultats e2e/tests
 | 5 | Tableau de bord et export CSV, images Docker durcies, HTTPS, déploiement continu sur Oracle Cloud, SonarCloud, analyse des vulnérabilités, sauvegardes testées, affichage mobile | ✅ Terminé |
 | 6 | Tests de bout en bout avec Robot Framework : connexion par rôle, parcours complet d'une intervention, exécution dans la CI avant chaque déploiement | ✅ Terminé |
 | 7 | Retours d'une revue de code externe : architecture hexagonale (module intervention), routes REST sans verbe, MapStruct, `@DataJpaTest`, colonnes Oracle en caractères, javadoc vérifiée à la compilation, export CSV avec Commons CSV, Trivy pour les dépendances | ✅ Terminé |
-| 8 | Import du parc d'équipements par lots avec Spring Batch : lecture CSV, validation, écriture par lots, lignes rejetées avec leur motif | ✅ Terminé |
+| 8 | Import du parc d'équipements par lots avec Spring Batch : lecture CSV, validation, écriture par lots, lignes rejetées avec leur motif, page d'import et rapport côté Angular | ✅ Terminé |
 
 ## Auteur
 

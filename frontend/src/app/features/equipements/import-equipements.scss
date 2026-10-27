@@ -1,0 +1,205 @@
+// Import du parc, thème « Tableau Andon » : des plaques sobres, et un voyant rouge
+// seulement là où l'admin doit agir (les lignes rejetées).
+
+$telephone: 599.98px;
+
+:host {
+  display: block;
+  max-width: 56rem;
+}
+
+.entete h1 {
+  margin: 0.5rem 0 1rem;
+  font-size: 2.25rem;
+}
+
+h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.4rem;
+}
+
+.format,
+.rapport {
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--md-trait);
+  border-radius: 4px;
+  background: var(--md-surface);
+  margin-bottom: 1rem;
+
+  p {
+    margin: 0.25rem 0 0.5rem;
+  }
+
+  ul {
+    margin: 0.5rem 0;
+    padding-left: 1.25rem;
+  }
+}
+
+.entete-csv {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  border-left: 4px solid var(--md-signal-bleu);
+  background: var(--md-acier);
+  font-size: 0.95rem;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.aide {
+  color: var(--md-encre-douce);
+  font-size: 0.9rem;
+}
+
+.envoi {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.choix {
+  position: relative;
+  display: inline-flex;
+  cursor: pointer;
+
+  &.inactif {
+    cursor: default;
+    opacity: 0.6;
+  }
+}
+
+// Masqué visuellement, mais toujours focalisable et lu par les lecteurs d'écran
+.champ-fichier {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.choix-bouton {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 1.25rem;
+  border: 1px solid var(--md-encre-douce);
+  border-radius: 20px;
+  background: #fff;
+  font-weight: 500;
+}
+
+.choix:hover:not(.inactif) .choix-bouton {
+  background: var(--md-surface);
+}
+
+.choix:focus-within .choix-bouton {
+  outline: 2px solid var(--md-signal-bleu);
+  outline-offset: 2px;
+}
+
+.nom-fichier {
+  margin: 0;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.erreur {
+  margin: 0.5rem 0 1rem;
+  color: var(--mat-sys-error, #ba1a1a);
+}
+
+.chiffres {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.chiffre {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--md-trait);
+  border-top: 4px solid var(--md-signal-eteint);
+  border-radius: 3px;
+  background: #fff;
+
+  strong {
+    font-family: var(--md-titre);
+    font-size: 2.25rem;
+    line-height: 1;
+  }
+
+  span {
+    color: var(--md-encre-douce);
+  }
+
+  &.importes {
+    border-top-color: var(--md-signal-vert);
+  }
+
+  &.rejetes {
+    border-top-color: var(--md-signal-rouge);
+  }
+}
+
+.succes {
+  color: var(--md-signal-vert);
+  font-weight: 500;
+}
+
+.rejets {
+  width: 100%;
+  margin-bottom: 1rem;
+  border-collapse: collapse;
+  background: #fff;
+
+  caption {
+    text-align: left;
+    font-weight: 500;
+    padding-bottom: 0.25rem;
+  }
+
+  th,
+  td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--md-trait);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .numero {
+    width: 4.5rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--md-signal-rouge);
+    font-weight: 600;
+  }
+}
+
+// Téléphone : les trois chiffres restent côte à côte, plus compacts ; le bouton prend toute la largeur
+@media (max-width: $telephone) {
+  .chiffre {
+    padding: 0.5rem;
+
+    strong {
+      font-size: 1.75rem;
+    }
+
+    span {
+      font-size: 0.8rem;
+    }
+  }
+
+  .entete-csv {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .envoi button {
+    width: 100%;
+  }
+}

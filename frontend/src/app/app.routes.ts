@@ -25,13 +25,21 @@ export const routes: Routes = [
           import('./features/equipements/list-equipements').then((m) => m.ListeEquipements),
       },
       {
-        // Déclarée avant :id, sinon « nouveau » serait lu comme un identifiant
+        // Déclarées avant :id, sinon « nouveau » et « import » seraient lus comme des identifiants
         path: 'equipements/nouveau',
         title: 'Nouvel équipement · MécaDétect',
         canActivate: [roleGuard],
         data: { roles: ['ADMIN'] },
         loadComponent: () =>
           import('./features/equipements/formulaire-equipement').then((m) => m.FormulaireEquipement),
+      },
+      {
+        path: 'equipements/import',
+        title: 'Importer le parc · MécaDétect',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./features/equipements/import-equipements').then((m) => m.ImportEquipements),
       },
       {
         path: 'equipements/:id',

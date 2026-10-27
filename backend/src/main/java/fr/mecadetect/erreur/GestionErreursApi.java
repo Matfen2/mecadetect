@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.util.List;
 import java.util.Map;
@@ -59,6 +61,13 @@ public class GestionErreursApi {
     ProblemDetail parametreInvalide(MethodArgumentTypeMismatchException exception) {
         return probleme(HttpStatus.BAD_REQUEST, "Paramètre invalide",
                 "La valeur du paramètre « " + exception.getName() + " » est invalide.", "PARAMETRE_INVALIDE");
+    }
+
+    /// Fichier attendu absent de la requête multipart (import du parc).
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    ProblemDetail fichierManquant(MissingServletRequestPartException exception) {
+        return probleme(HttpStatus.BAD_REQUEST, "Fichier manquant",
+                "Le fichier « " + exception.getRequestPartName() + " » est obligatoire.", "FICHIER_MANQUANT");
     }
 
     /// Contrainte du contrat non respectée sur un paramètre de l'URL (ex. size > 100).
@@ -111,6 +120,15 @@ public class GestionErreursApi {
         LOG.warn("Contrainte d'intégrité violée : {}", exception.getMostSpecificCause().getMessage());
         return probleme(HttpStatus.CONFLICT, "Conflit de données",
                 "L'opération viole une contrainte d'intégrité des données.", "CONFLIT_DONNEES");
+    }
+
+    // --------------------------------------------------------------- 413
+
+    /// Fichier plus gros que la limite de spring.servlet.multipart.max-file-size.
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    ProblemDetail fichierTropVolumineux(MaxUploadSizeExceededException exception) {
+        return probleme(HttpStatus.CONTENT_TOO_LARGE, "Fichier trop volumineux",
+                "Le fichier dépasse la taille maximale autorisée (2 Mo).", "FICHIER_TROP_VOLUMINEUX");
     }
 
     // --------------------------------------------------------------- 501

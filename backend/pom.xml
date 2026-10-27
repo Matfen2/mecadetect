@@ -46,6 +46,13 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webmvc</artifactId>
 		</dependency>
+		<!-- Import du parc d'équipements par lots (Spring Batch 6). Métadonnées des jobs en mémoire :
+		     l'import est synchrone et court, son rapport est renvoyé directement à l'appelant.
+		     Pour historiser les exécutions en base, passer à spring-boot-starter-batch-jdbc. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-batch</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-database-oracle</artifactId>

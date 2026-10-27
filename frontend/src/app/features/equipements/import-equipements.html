@@ -1,0 +1,92 @@
+<a mat-button routerLink="/equipements">← Retour à la liste</a>
+
+<header class="entete">
+  <h1>Importer le parc</h1>
+</header>
+
+<section class="format" aria-labelledby="titre-format">
+  <h2 id="titre-format">Format du fichier</h2>
+  <p>
+    Un fichier CSV en UTF-8, avec le point-virgule comme séparateur, et cette ligne d'en-tête :
+  </p>
+  <code class="entete-csv">{{ entete }}</code>
+  <ul>
+    <li><strong>date_mise_service</strong> : au format AAAA-MM-JJ ou JJ/MM/AAAA ;</li>
+    <li><strong>type</strong> : le libellé du type d'équipement, par exemple « Presse hydraulique » ;</li>
+    <li><strong>zone</strong> : le code de la zone, par exemple « A1 ».</li>
+  </ul>
+  <p class="aide">
+    Chaque ligne valide crée un équipement en service. Une ligne invalide est écartée sans bloquer les autres,
+    et le rapport indique pourquoi.
+  </p>
+  <button mat-stroked-button type="button" class="modele" (click)="telechargerModele()">
+    Télécharger un modèle
+  </button>
+</section>
+
+<form class="envoi" (submit)="$event.preventDefault(); importer()" aria-label="Import du fichier CSV">
+  <!-- Le champ natif est masqué visuellement mais reste accessible au clavier : son libellé sert de bouton -->
+  <label class="choix" [class.inactif]="enCours()">
+    <input
+      class="champ-fichier"
+      type="file"
+      accept=".csv,text/csv"
+      (change)="choisir($event)"
+      [disabled]="enCours()"
+    />
+    <span class="choix-bouton">Choisir un fichier CSV</span>
+  </label>
+  <p class="nom-fichier" aria-live="polite">{{ fichier()?.name ?? 'Aucun fichier choisi' }}</p>
+  <button mat-flat-button type="submit" [disabled]="!fichier() || enCours()">
+    {{ enCours() ? 'Import en cours…' : 'Importer' }}
+  </button>
+</form>
+
+@if (enCours()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+@if (erreur(); as message) {
+  <p class="erreur" role="alert">{{ message }}</p>
+}
+
+@if (rapport(); as rapport) {
+  <section class="rapport" aria-labelledby="titre-rapport">
+    <h2 id="titre-rapport">Rapport de l'import</h2>
+
+    <div class="chiffres">
+      <p class="chiffre"><strong>{{ rapport.lignesLues }}</strong> <span>lignes lues</span></p>
+      <p class="chiffre importes"><strong>{{ rapport.importes }}</strong> <span>équipements créés</span></p>
+      <p class="chiffre" [class.rejetes]="rapport.rejetes > 0">
+        <strong>{{ rapport.rejetes }}</strong> <span>lignes rejetées</span>
+      </p>
+    </div>
+
+    @if (rapport.rejetes === 0) {
+      <p class="succes" role="status">Toutes les lignes ont été importées.</p>
+    } @else {
+      @if (rejetsNonDetailles()) {
+        <p class="aide">Seules les {{ rapport.rejets.length }} premières lignes rejetées sont détaillées.</p>
+      }
+      <table class="rejets">
+        <caption>Lignes rejetées</caption>
+        <thead>
+          <tr>
+            <th scope="col">Ligne</th>
+            <th scope="col">Motif</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (rejet of rapport.rejets; track $index) {
+            <tr>
+              <td class="numero">{{ rejet.ligne > 0 ? rejet.ligne : '—' }}</td>
+              <td>{{ rejet.motif }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+
+    <a mat-flat-button routerLink="/equipements">Voir les équipements</a>
+  </section>
+}

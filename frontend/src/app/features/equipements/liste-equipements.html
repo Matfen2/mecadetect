@@ -1,7 +1,10 @@
 <header class="entete">
   <h1>Équipements</h1>
   @if (estAdmin()) {
-    <button mat-flat-button (click)="creer()">Nouvel équipement</button>
+    <div class="actions">
+      <a mat-stroked-button routerLink="/equipements/import">Importer un fichier</a>
+      <button mat-flat-button (click)="creer()">Nouvel équipement</button>
+    </div>
   }
 </header>
 

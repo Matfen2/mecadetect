@@ -45,6 +45,12 @@ LABEL org.opencontainers.image.source="https://github.com/Matfen2/mecadetect" \
       org.opencontainers.image.title="mecadetect-front" \
       org.opencontainers.image.description="Interface web de MécaDétect (Angular, Nginx)"
 
+# Correctifs de sécurité d'Alpine publiés depuis la construction de l'image de base
+# (Trivy bloque la publication sur toute faille critique ou haute déjà corrigée).
+# Root le temps de la mise à jour : l'image repasse en utilisateur 101 plus bas.
+USER root
+RUN apk upgrade --no-cache
+
 COPY frontend/nginx/default.conf /etc/nginx/conf.d/default.conf
 # Les fichiers appartiennent à root : Nginx les lit, mais ne peut pas les modifier
 COPY --from=construction /site /usr/share/nginx/mecadetect

@@ -1,0 +1,30 @@
+# Java / Maven (tous les modules : backend, charge…)
+target/
+*.class
+
+# Angular / Node
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/
+frontend/.angular/
+frontend/src/app/core/api/
+
+# Tests de bout en bout (Robot Framework) : environnement Python et rapports
+e2e/.venv/
+e2e/resultats/
+
+# IDE : le dépôt reste indépendant de l'éditeur, à tous les niveaux
+.idea/
+*.iml
+.vscode/
+
+# Secrets et environnement
+.env
+.env.*
+*.env.local
+!.env.example
+!.env.prod.example
+
+# Système
+.DS_Store
+Thumbs.db

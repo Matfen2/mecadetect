@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>4.1.1</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>fr.mecadetect</groupId>
+	<artifactId>backend</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>mecadetect</name>
+	<description>MécaDétect - API de suivi de maintenance industrielle</description>
+	<properties>
+		<java.version>25</java.version>
+		<!-- Correctifs de sécurité en attendant Spring Boot 4.1.2 (analyse Trivy du 15/10/2026).
+		     À retirer quand Spring Boot embarque ces versions ou des plus récentes. -->
+		<tomcat.version>11.0.25</tomcat.version>
+		<jackson-bom.version>3.1.7</jackson-bom.version>
+		<jackson-2-bom.version>2.21.7</jackson-2-bom.version>
+		<!-- Mapping entités / DTO généré à la compilation (pas de réflexion à l'exécution) -->
+		<mapstruct.version>1.6.3</mapstruct.version>
+		<!-- Écriture CSV (échappement RFC 4180) de l'export des interventions -->
+		<commons-csv.version>1.14.0</commons-csv.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-flyway</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webmvc</artifactId>
+		</dependency>
+		<!-- Import du parc d'équipements par lots (Spring Batch 6). Métadonnées des jobs en mémoire :
+		     l'import est synchrone et court, son rapport est renvoyé directement à l'appelant.
+		     Pour historiser les exécutions en base, passer à spring-boot-starter-batch-jdbc. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-batch</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-database-oracle</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.mapstruct</groupId>
+			<artifactId>mapstruct</artifactId>
+			<version>${mapstruct.version}</version>
+		</dependency>
+		<!-- Constructeurs d'injection des beans Spring (@RequiredArgsConstructor), version gérée
+		     par Spring Boot. Interdit dans le domaine et les cas d'usage (ArchitectureHexagonaleTest). -->
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-csv</artifactId>
+			<version>${commons-csv.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.oracle.database.jdbc</groupId>
+			<artifactId>ojdbc17</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-flyway-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webmvc-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-testcontainers</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>testcontainers-junit-jupiter</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>testcontainers-oracle-free</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- Swagger UI (springdoc 3.x = Spring Boot 4) -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>3.1.1</version>
+		</dependency>
+		<!-- Spring Security + support JWT (OAuth2 Resource Server) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security-oauth2-resource-server</artifactId>
+		</dependency>
+		
+		<!-- Outils de test de Spring Security (springSecurity() pour MockMvc) -->
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+			</resource>
+			<!-- Copie du contrat OpenAPI dans les ressources statiques (Swagger UI) -->
+			<resource>
+				<directory>${project.basedir}/../api</directory>
+				<targetPath>static</targetPath>
+				<includes>
+					<include>openapi.yaml</include>
+				</includes>
+			</resource>
+		</resources>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<!-- Lombok ne sert qu'à la compilation : il n'est pas embarqué dans l'application -->
+					<excludes>
+						<exclude>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+			<!-- Compilation : processeur MapStruct, et vérification de la javadoc par le doclint de javac,
+			     sans générer de HTML.
+			     Uniquement sur le code de production : ni les tests, ni les interfaces et DTO générés
+			     depuis le contrat OpenAPI (fr.mecadetect.api).
+			     Une javadoc mal formée (balise inconnue, HTML invalide, référence introuvable) est une
+			     erreur et fait échouer le build ; un @param, un @return ou un commentaire manquant
+			     est un avertissement. -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<!-- Processeurs d'annotations : Lombok (constructeurs), puis MapStruct (mappers) -->
+					<annotationProcessorPaths>
+						<path>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+							<version>${lombok.version}</version>
+						</path>
+						<path>
+							<groupId>org.mapstruct</groupId>
+							<artifactId>mapstruct-processor</artifactId>
+							<version>${mapstruct.version}</version>
+						</path>
+					</annotationProcessorPaths>
+				</configuration>
+				<executions>
+					<execution>
+						<id>default-compile</id>
+						<configuration>
+							<compilerArgs>
+								<arg>-Xdoclint:all/protected</arg>
+								<arg>-Xdoclint/package:fr.mecadetect.*,-fr.mecadetect.api,-fr.mecadetect.api.*</arg>
+								<arg>-Xmaxwarns</arg>
+								<arg>10000</arg>
+							</compilerArgs>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- Couverture des tests (rapport lu par SonarCloud) -->
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.15</version>
+				<configuration>
+					<excludes>
+						<!-- Interfaces et DTO générés depuis le contrat OpenAPI -->
+						<exclude>fr/mecadetect/api/**</exclude>
+					</excludes>
+				</configuration>
+				<executions>
+					<execution>
+						<id>agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>rapport</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- Vulnérabilités connues des dépendances (OWASP Dependency-Check), en local uniquement :
+			     mvn dependency-check:check (clé NVD dans la variable d'environnement NVD_API_KEY).
+			     Pas d'exécution liée au cycle de vie : mvn verify reste rapide.
+			     En CI, c'est Trivy qui analyse les dépendances (workflow dependances.yml) : l'API de la
+			     NVD, dont dépend Dependency-Check, est trop lente pour reconstruire sa base à chaque run. -->
+			<plugin>
+				<groupId>org.owasp</groupId>
+				<artifactId>dependency-check-maven</artifactId>
+				<version>13.0.0</version>
+				<configuration>
+					<!-- Clé lue dans l'environnement : jamais dans le pom ni sur la ligne de commande -->
+					<nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
+					<!-- Échec à partir d'une faille haute (CVSS 7) -->
+					<failBuildOnCVSS>7</failBuildOnCVSS>
+					<formats>
+						<format>HTML</format>
+						<format>SARIF</format>
+					</formats>
+					<suppressionFiles>
+						<suppressionFile>${project.basedir}/dependency-check-suppressions.xml</suppressionFile>
+					</suppressionFiles>
+					<!-- OSS Index exige un compte Sonatype ; la NVD suffit -->
+					<ossIndexAnalyzerEnabled>false</ossIndexAnalyzerEnabled>
+					<!-- Pas de JavaScript ni de .NET côté API : le front est contrôlé par npm audit -->
+					<retireJsAnalyzerEnabled>false</retireJsAnalyzerEnabled>
+					<nodeAnalyzerEnabled>false</nodeAnalyzerEnabled>
+					<nodeAuditAnalyzerEnabled>false</nodeAuditAnalyzerEnabled>
+					<assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>
+				</configuration>
+			</plugin>
+			<!-- Génération des interfaces Spring et des DTO depuis le contrat OpenAPI -->
+			<plugin>
+				<groupId>org.openapitools</groupId>
+				<artifactId>openapi-generator-maven-plugin</artifactId>
+				<version>7.25.0</version>
+				<executions>
+					<execution>
+						<id>generer-api-spring</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>${project.basedir}/../api/openapi.yaml</inputSpec>
+							<generatorName>spring</generatorName>
+							<apiPackage>fr.mecadetect.api</apiPackage>
+							<modelPackage>fr.mecadetect.api.dto</modelPackage>
+							<modelNameSuffix>Dto</modelNameSuffix>
+							<generateSupportingFiles>false</generateSupportingFiles>
+							<configOptions>
+								<interfaceOnly>true</interfaceOnly>
+								<skipDefaultInterface>true</skipDefaultInterface>
+								<useTags>true</useTags>
+								<useSpringBoot3>true</useSpringBoot3>
+								<useBeanValidation>true</useBeanValidation>
+								<openApiNullable>false</openApiNullable>
+								<documentationProvider>none</documentationProvider>
+								<annotationLibrary>none</annotationLibrary>
+								<dateLibrary>java8</dateLibrary>
+								<!-- Préfixe /api/v1 (champ servers du contrat) porté par les interfaces générées -->
+								<requestMappingMode>api_interface</requestMappingMode>
+							</configOptions>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>

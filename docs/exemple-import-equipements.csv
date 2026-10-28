@@ -1,0 +1,10 @@
+reference;nom;date_mise_service;type;zone
+PRS-010;Presse 630 tonnes;2025-03-17;Presse hydraulique;A1
+TCN-010;Tour CN 4 axes;12/06/2024;Tour CN;B1
+CUS-010;"Centre d'usinage; 5 axes grande capacité";2023-11-06;Centre d'usinage;B1
+ROB-010;Robot de soudure ligne 4;2025-01-20;Robot de soudure;C1
+CNV-010;Convoyeur de palettes;2022-09-12;Convoyeur;L9
+PRS-001;Presse 250 tonnes (doublon);2016-03-14;Presse hydraulique;A1
+CMP-010;Compresseur à vis 90 kW;31/02/2024;Compresseur d'air;U1
+CHE-010;Chariot élévateur électrique 3 t
+CHE-011;Chariot élévateur électrique 2 t;2024-05-02;Chariot élévateur;L1

@@ -1,0 +1,19 @@
+# Profil de production (SPRING_PROFILES_ACTIVE=prod).
+# Aucune valeur par défaut : une variable absente empêche le démarrage,
+# plutôt que de laisser l'application tourner avec un secret de développement.
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+
+server:
+  # Derrière Caddy : X-Forwarded-For et X-Forwarded-Proto donnent l'adresse réelle
+  # du client et le schéma https. "native" (Tomcat) ne fait confiance qu'aux
+  # proxys des réseaux privés, dont le réseau Docker.
+  forward-headers-strategy: native
+
+mecadetect:
+  securite:
+    jwt:
+      secret: ${JWT_SECRET}

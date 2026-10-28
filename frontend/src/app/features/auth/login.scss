@@ -1,0 +1,32 @@
+.page-connexion {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.carte {
+  width: 100%;
+  max-width: 400px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.message-erreur {
+  margin: 0;
+  color: var(--mat-sys-error);
+}
+
+button[type='submit'] {
+  height: 44px;
+
+  mat-spinner {
+    margin: 0 auto;
+  }
+}
